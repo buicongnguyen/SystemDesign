@@ -6,8 +6,8 @@
   <meta name="description" content="A visual Systems Engineering field guide covering stakeholder needs, ConOps, requirements, architecture, interfaces, trade studies, risk, integration, verification, validation, and interview practice.">
   <meta name="theme-color" content="#07111f">
   <title>Systems Engineering · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717b">
-  <script src="app.js?v=20260717b" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717d">
+  <script src="app.js?v=20260717d" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -70,7 +70,9 @@ validate(<b>solves the mission</b>)</code></pre>
       <a href="#risk">Risk</a>
       <a href="#integration">Integration</a>
       <a href="#verification">V&amp;V</a>
+      <a href="#evidence-package">Evidence</a>
       <a href="#practice">Practice</a>
+      <a href="#resources">Resources</a>
     </nav>
 
     <section class="section se-context-section" id="context">
@@ -160,8 +162,9 @@ validate(<b>solves the mission</b>)</code></pre>
           <li><span>06</span><div><strong>Alternatives</strong><p>Create genuinely different solution concepts and define evaluation criteria.</p></div><small>Artifact: candidate architectures</small></li>
           <li><span>07</span><div><strong>Allocate</strong><p>Assign functions and requirements to hardware, software, people, and externals.</p></div><small>Artifact: physical architecture</small></li>
           <li><span>08</span><div><strong>Balance</strong><p>Resolve interfaces, budgets, risks, cost, schedule, and technical margins.</p></div><small>Artifact: selected baseline</small></li>
-          <li><span>09</span><div><strong>Integrate</strong><p>Build in planned increments, verify interfaces, and retire integration risk early.</p></div><small>Artifact: qualified system</small></li>
-          <li><span>10</span><div><strong>Validate</strong><p>Validate implemented and integrated products at appropriate levels; final operational validation demonstrates that the complete system solves the stakeholder need.</p></div><small>Artifact: acceptance evidence</small></li>
+          <li><span>09</span><div><strong>Integrate</strong><p>Assemble in risk-retiring increments, exercise interfaces, and preserve the exact configuration under test.</p></div><small>Artifact: integrated configuration + interface evidence</small></li>
+          <li><span>10</span><div><strong>Verify</strong><p>Produce objective evidence that the realized and integrated system meets each allocated requirement.</p></div><small>Artifact: compliance evidence</small></li>
+          <li><span>11</span><div><strong>Validate</strong><p>Evaluate intended use with representative users, missions, and environments; show that the complete system solves the stakeholder need.</p></div><small>Artifact: mission-fit evidence</small></li>
         </ol>
       </div>
 
@@ -200,7 +203,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <article><strong>Actuation system</strong><small>Motors, power electronics, mechanisms</small></article>
           <article><strong>Communications</strong><small>Radio, protocol, cloud services</small></article>
         </div>
-        <figcaption id="allocation-caption">Allocation is many-to-many: one function may span several elements, and one physical element may implement several functions.</figcaption>
+        <figcaption id="allocation-caption">Allocation is many-to-many: one function may span several elements, and one physical element may implement several functions. The aligned rows are illustrative positions, not one-to-one mappings; the allocation matrix is authoritative.</figcaption>
       </figure>
 
       <div class="se-table-wrap" tabindex="0" role="region" aria-label="Example function allocation matrix">
@@ -220,8 +223,8 @@ validate(<b>solves the mission</b>)</code></pre>
     <section class="section se-interface-section" id="interfaces">
       <div class="section-heading centered-heading">
         <p class="eyebrow">05 · Interfaces</p>
-        <h2>Most system failures happen between components</h2>
-        <p>For every interface, define both sides, the exchange, limits, timing, state, faults, ownership, and how compatibility will be verified.</p>
+        <h2>Make boundary assumptions explicit</h2>
+        <p>Interfaces concentrate assumptions, ownership boundaries, timing, tolerances, and change; many costly integration failures emerge there. Define both sides, the exchange, limits, state, faults, ownership, and compatibility evidence.</p>
       </div>
 
       <div class="data-grid se-interface-grid">
@@ -303,6 +306,8 @@ validate(<b>solves the mission</b>)</code></pre>
         </table>
       </div>
 
+      <p class="evidence-note"><b>Sensitivity result:</b> the illustrative winner is fragile. Hybrid scores 3.95 versus onboard-only 3.75; moving ten percentage points of weight from “safe without link” to “lifecycle cost” makes both 3.65. If safe-without-link is mandatory, screen cloud-assisted out before scoring. Otherwise gather better cost evidence, prototype both finalists, and record the trigger that reopens the decision.</p>
+
       <div class="decision-gates se-trade-gates">
         <article><span>Gate 1</span><strong>Mandatory constraints met?</strong><p>A high weighted score cannot compensate for violating a true must-have.</p></article>
         <article><span>Gate 2</span><strong>Evidence comparable?</strong><p>Normalize assumptions, mission scenario, maturity, and lifecycle boundary.</p></article>
@@ -378,7 +383,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <li><span>Requirement evidence</span><strong>System verification</strong><small>Prove the specification.</small></li>
           <li><span>Mission evidence</span><strong>Operational validation</strong><small>Prove fitness for intended use.</small></li>
         </ol>
-        <figcaption id="vmodel-caption">Horizontal trace pairs a definition level with its intended evidence. Verification planning begins before implementation.</figcaption>
+        <figcaption id="vmodel-caption">Horizontal trace pairs a definition level with its intended evidence. Verification planning begins before implementation. The V is a traceability view, not a waterfall schedule: definition, realization, integration, verification, and validation overlap, iterate, and recur at multiple product levels.</figcaption>
       </figure>
 
       <div class="reliability-stack se-integration-ladder">
@@ -425,18 +430,103 @@ validate(<b>solves the mission</b>)</code></pre>
           <caption>Verification Cross-Reference Matrix — every requirement needs planned, attributable evidence</caption>
           <thead><tr><th scope="col">Requirement</th><th scope="col">Method</th><th scope="col">Level</th><th scope="col">Acceptance criterion</th><th scope="col">Evidence</th><th scope="col">Status</th></tr></thead>
           <tbody>
-            <tr><th scope="row">SYS-PERF-014</th><td>Test</td><td>System</td><td>Stop within 4 m at 8 m/s</td><td>Braking test report</td><td>Planned</td></tr>
-            <tr><th scope="row">SYS-ENV-022</th><td>Analysis + test</td><td>Subsystem</td><td>Operate from −10 to 45 °C</td><td>Thermal model + chamber data</td><td>In work</td></tr>
-            <tr><th scope="row">SYS-OPS-031</th><td>Demonstration</td><td>Operational</td><td>Operator assumes control in 2 s</td><td>Representative mission trial</td><td>Planned</td></tr>
+            <tr><th scope="row">SYS-PERF-014</th><td>Test</td><td>System</td><td>At maximum gross mass, on the defined dry test surface, and at 8.0 ± 0.2 m/s, reach zero ground speed within 4.0 m after a valid stop command.</td><td>Calibrated braking test report</td><td>Planned</td></tr>
+            <tr><th scope="row">SYS-ENV-022</th><td>Analysis + test</td><td>Subsystem</td><td>During a 60-minute exposure from −10 to 45 °C, the named flight-compute subsystem performs navigation functions within its allocated latency, accuracy, and power limits.</td><td>Configuration-specific thermal model + chamber data</td><td>In work</td></tr>
+            <tr><th scope="row">SYS-OPS-031</th><td>Demonstration + test</td><td>Operational</td><td>After the declared handover cue in supervised-flight mode, a trained operator obtains command authority and positive confirmation within 2.0 s; failure leaves the vehicle in the defined hold state.</td><td>Timestamped representative mission trial</td><td>Planned</td></tr>
           </tbody>
         </table>
       </div>
       <div class="memory-strip"><b>Evidence rule</b><span>Requirement <i>→</i> acceptance criterion <i>→</i> method <i>→</i> level <i>→</i> procedure <i>→</i> result <i>→</i> anomaly closure.</span></div>
     </section>
 
+    <section class="section deep-dive-section" id="evidence-package">
+      <div class="section-heading">
+        <p class="eyebrow">11 · Review-ready evidence package</p>
+        <h2>Make the decision chain auditable</h2>
+        <p>A strong systems answer does not stop at a block diagram. It shows how a stakeholder outcome becomes a controlled baseline, how changes propagate, and which evidence authorizes the next lifecycle decision.</p>
+      </div>
+
+      <div class="reasoning-workbench">
+        <article class="workbench-main">
+          <span>Worked trace · illustrative drone requirement</span>
+          <h3>Carry one mission statement to operational proof</h3>
+          <p>Numbers below are example assumptions, not universal drone requirements. In an interview, label every value as confirmed, assumed, derived, allocated, estimated, or measured.</p>
+          <ol class="evidence-chain">
+            <li><div><b>Need + operational scenario</b><span>N-01: deliver the declared payload safely within the service area. Scenario records route, wind, temperature, precipitation, communications, operator role, alternates, and emergency landing behavior.</span></div></li>
+            <li><div><b>Measure of effectiveness</b><span>MOE-01: at least 99% of eligible reference missions complete within 25 minutes over the declared operating envelope, with package-condition and safety outcomes reported separately. Define the evaluation window and control every exclusion.</span></div></li>
+            <li><div><b>System requirement</b><span>SYS-ENERGY-014: with a 2.0 kg payload on the reference route and environment, the vehicle shall land with at least 20% usable battery energy. Define the battery state estimator and acceptance tolerance.</span></div></li>
+            <li><div><b>Allocation + interfaces</b><span>Allocate mass, energy, thermal, navigation, propulsion, and reserve budgets to elements; record voltage, current, update rate, units, timing, ownership, and degraded behavior at every crossing.</span></div></li>
+            <li><div><b>Verification + validation</b><span>Verify the requirement with calibrated energy instrumentation and environmental test evidence; validate the route, operator workflow, contingency behavior, turnaround, and customer outcome in representative missions.</span></div></li>
+          </ol>
+        </article>
+
+        <aside class="formula-board">
+          <span>Control the numbers</span>
+          <h3>Budget, margin, and closure</h3>
+          <div class="formula-stack">
+            <div class="formula-line"><b>Absolute margin</b><code>allocated limit − current best estimate</code><small>Keep the definition and sign convention in the budget. A positive number is useful only if uncertainty and growth policy are also visible.</small></div>
+            <div class="formula-line"><b>Margin percentage</b><code>(limit − estimate) ÷ limit × 100%</code><small>Do not compare percentages that use different denominators, lifecycle states, or confidence levels.</small></div>
+            <div class="formula-line"><b>Verification closure</b><code>closed requirements (pass or approved waiver/deviation) + open requirements = baseline requirements</code><small>Track anomalies separately with status and links to affected requirements and evidence; one requirement can have many anomalies. Closure evidence must match the baseline configuration and acceptance criterion.</small></div>
+            <div class="formula-line"><b>Change impact path</b><code>need → requirement → function → element → interface → budget → risk → evidence</code><small>Revisit both upstream rationale and downstream implementation whenever a controlled item changes.</small></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="MOE MOP and TPM trace example" tabindex="0">
+        <table class="detail-table">
+          <caption>Connect mission value to technical evidence. All example values are illustrative and require stakeholder agreement.</caption>
+          <thead><tr><th scope="col">Level</th><th scope="col">Question</th><th scope="col">Drone example</th><th scope="col">How it is used</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Need</th><td>Why does the system exist?</td><td>Deliver a time-sensitive medical package safely.</td><td>Frames the outcome and stakeholder, without prescribing a design.</td></tr>
+            <tr><th scope="row">MOE</th><td>Does the mission create value?</td><td>At least 99% of eligible reference missions deliver within 25 minutes with accepted package condition.</td><td>Judged in the operational context; unsuccessful or excluded missions must not be hidden by averaging.</td></tr>
+            <tr><th scope="row">MOP</th><td>What fielded-system performance enables it?</td><td>10 km reference mission, 2 kg payload, declared weather envelope, bounded package temperature, and safe immediate behavior without the command link.</td><td>Creates measurable system performance and suitability requirements.</td></tr>
+            <tr><th scope="row">TPM</th><td>Is the developing design converging?</td><td>Predicted mission energy and landing reserve, takeoff mass, navigation error, thermal margin, and sensor-to-actuator latency.</td><td>Trend requirement/budget, current estimate, margin, uncertainty, evidence date, and owner across reviews.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Requirement quality examples" tabindex="0">
+        <table class="detail-table">
+          <caption>Requirements that survive review name the subject, action, object, operating condition, measurable threshold or tolerance, and trace identifier.</caption>
+          <thead><tr><th scope="col">Weak statement</th><th scope="col">Defect</th><th scope="col">Better direction</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">“The system shall be user-friendly.”</th><td>No observable threshold or context.</td><td>Keep the intent as a stakeholder need or MOE; derive task-completion time, error rate, workload, accessibility, and training requirements for defined users and tasks.</td></tr>
+            <tr><th scope="row">“The system shall detect and avoid obstacles.”</th><td>Compound behavior; object class, environment, accuracy, false alarms, separation, and response time are absent.</td><td>Split perception and avoidance requirements and define their shared operational envelope and interface assumptions.</td></tr>
+            <tr><th scope="row">“The system shall use LiDAR.”</th><td>Premature implementation unless LiDAR is an externally imposed constraint.</td><td>State the required range/perception performance; retain the technology choice in the architecture decision record.</td></tr>
+            <tr><th scope="row">“The vehicle shall stop within 4 m.”</th><td>Initial speed, mass, surface, trigger, environment, and tolerance are missing.</td><td>Define the initial state and test surface, speed tolerance, valid command, end condition, distance measurement, and applicable operating range.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="source-map" role="group" aria-label="Worked interface control document slice">
+        <article><span>ICD identity</span><strong>Battery monitor → flight computer</strong><p>Name producing and consuming elements, responsible owners, pack voltage/current/temperature/state-of-charge semantics, and authority for declaring data invalid.</p></article>
+        <article><span>Representation</span><strong>Meaning survives the wire</strong><p>Define units, range, resolution, sign, byte order, invalid encoding, timestamp basis, sequence, integrity field, schema version, and compatibility policy.</p></article>
+        <article><span>Timing + modes</span><strong>Age is part of correctness</strong><p>State nominal and worst-case rate, latency, jitter, maximum age, startup/calibration/normal/degraded/reset behavior, and clock-disagreement handling.</p></article>
+        <article><span>Failure evidence</span><strong>Test believable corruption</strong><p>Inject frozen-plausible values, stale data, drops, resets, version mismatch, and shared-power loss. A timeout detects silence—not a value that is wrong but plausible.</p></article>
+      </div>
+
+      <ol class="compact-flow" aria-label="Configuration change control flow">
+        <li><b>Change request</b><span>Identify rationale, affected item, supplier/configuration, and urgency.</span></li>
+        <li><b>Trace impact</b><span>Reopen requirements, interfaces, budgets, hazards, procedures, models, and verification credit.</span></li>
+        <li><b>Review + decide</b><span>Technical, risk, operations, cybersecurity, and decision authority assess evidence and alternatives.</span></li>
+        <li><b>Update baseline</b><span>Approve controlled versions before implementation; preserve as-designed and as-built identity.</span></li>
+        <li><b>Regress + account</b><span>Record procedure, environment, tools, calibration, raw results, anomalies, waivers, approvals, and closure.</span></li>
+      </ol>
+      <p class="evidence-note"><b>Configuration-specific proof:</b> trace requirement version → tested item/version/serial → method and procedure revision → stimulus and environment → tool/equipment/calibration → raw data and analysis → pass/fail → anomaly or waiver → corrective action → approval. “Same specification” is not evidence that a replacement supplier part is interchangeable.</p>
+
+      <div class="workbench-grid">
+        <article class="workbench-card"><span>SRR</span><h3>Is the problem ready?</h3><p>Typical evidence: approved ConOps, stakeholder needs, measurable and feasible requirements, traceability, verification approach, unresolved assumptions, and a credible requirements baseline.</p></article>
+        <article class="workbench-card"><span>PDR / CDR</span><h3>Is the solution credible?</h3><p>Show alternatives, architecture views, allocations, interface control, budgets with margin, analyses, prototypes, risks, producibility, cybersecurity, and evidence that the design can meet the baseline.</p></article>
+        <article class="workbench-card"><span>TRR</span><h3>Is the test valid and safe?</h3><p>Confirm configuration, procedures, trained roles, calibrated equipment, facilities, data capture, acceptance criteria, hazard controls, anomaly rules, and readiness of test articles.</p></article>
+        <article class="workbench-card"><span>ORR / acceptance</span><h3>Can the system be operated?</h3><p>Close critical anomalies; prove procedures, training, support, spares, monitoring, recovery, cybersecurity, regulatory obligations, and the transfer of residual risk to an accountable owner.</p></article>
+      </div>
+
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">NASA SE Handbook ↗</a><a href="https://www.nasa.gov/reference/4-2-technical-requirements-definition/">NASA MOE/MOP/TPM ↗</a><a href="https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/">NASA requirement quality ↗</a><a href="https://www.nasa.gov/reference/6-3-interface-management/">NASA interface management ↗</a><a href="https://www.nasa.gov/reference/6-5-configuration-management/">NASA configuration management ↗</a><a href="https://www.nasa.gov/reference/6-8-decision-analysis/">NASA decision analysis ↗</a><a href="https://www.nasa.gov/reference/2-4-distinctions-between-product-verification-and-product-validation/">NASA V&amp;V distinction ↗</a><a href="https://www.iso.org/standard/81702.html">ISO/IEC/IEEE 15288 ↗</a><a href="https://nodis3.gsfc.nasa.gov/displayAll.cfm?Internal_ID=N_PR_7123_001C_&page_name=all">NPR 7123.1C reviews ↗</a></div>
+    </section>
+
     <section class="section practice-arena se-practice" id="practice">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">11 · Interview practice arena</p>
+        <p class="eyebrow">12 · Interview practice arena</p>
         <h2>Design an autonomous delivery drone system</h2>
         <p>Use the prompts first. Open the coaching only after you have spoken and drawn your answer.</p>
       </div>
@@ -488,7 +578,7 @@ validate(<b>solves the mission</b>)</code></pre>
               <li>After command-link loss, the vehicle shall continue an independently safe contingency plan without requiring remote commands.</li>
               <li>The system shall prevent release unless vehicle position, pad identity, and recipient authorization all satisfy policy.</li>
               <li>The operator shall be able to command hold, reroute to an approved site, or safe termination within the defined authority and latency constraints.</li>
-              <li>No single identified failure in the flight-control path shall lead directly to uncontrolled descent within the approved operating envelope.</li>
+              <li>For every single failure classified as credible in baselined Hazard Analysis HA-001, the vehicle shall maintain controlled flight or reach the defined safe state without uncontrolled descent within the approved operating envelope. Define the credible-failure set, exclusions, response time, “controlled flight,” and “safe state” in controlled terms.</li>
             </ul>
             <p>Define measurable availability, dispatch success, delivery success, containment, geofence, detect-and-avoid range, navigation accuracy, noise, turnaround, maintainability, cybersecurity, audit, RTO, and data retention targets. Mark every number as confirmed, assumed, derived, or allocated.</p>
           </div>
@@ -577,17 +667,21 @@ validate(<b>solves the mission</b>)</code></pre>
 
     <section class="section se-resources" id="resources">
       <div class="section-heading">
-        <p class="eyebrow">12 · Authoritative foundations</p>
+        <p class="eyebrow">13 · Authoritative foundations</p>
         <h2>Use primary guidance, then practice the artifacts</h2>
         <p>These references establish the lifecycle, process, architecture, and vocabulary behind this visual field guide.</p>
       </div>
       <div class="resource-path">
         <article><span>NASA</span><h3>NASA Systems Engineering Handbook</h3><p>A practical lifecycle reference for technical processes, system design, product realization, technical management, and crosscutting engineering methods.</p><a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">Read the official handbook ↗</a></article>
-        <article><span>INCOSE</span><h3>Systems and Systems Engineering</h3><p>Authoritative definitions and orientation for the transdisciplinary, integrative approach used to realize and operate successful systems.</p><a href="https://www.incose.org/about-systems-engineering/system-and-se-definition">Read INCOSE’s definition ↗</a></article>
+        <article><span>INCOSE</span><h3>Systems and Systems Engineering</h3><p>Authoritative definitions and orientation for the transdisciplinary, integrative approach used to realize and operate successful systems.</p><a href="https://www.incose.org/about-systems-engineering/">Read INCOSE’s overview ↗</a></article>
         <article><span>SEBoK</span><h3>Guide to the Systems Engineering Body of Knowledge</h3><p>A community reference connecting foundations, lifecycle processes, methods, applications, enabling systems, and related disciplines.</p><a href="https://sebokwiki.org/wiki/Guide_to_the_Systems_Engineering_Body_of_Knowledge_(SEBoK)">Explore the SEBoK ↗</a></article>
         <article><span>NASA · Design</span><h3>System Design Processes</h3><p>Stakeholder expectations, technical requirements, logical decomposition, and design-solution definition as interdependent, iterative work.</p><a href="https://www.nasa.gov/reference/4-0-system-design-processes/">Review the process guide ↗</a></article>
-        <article><span>SEBoK · Architecture</span><h3>Logical and Physical Architecture</h3><p>Explore how functions, behavior, system elements, allocation, viewpoints, and interfaces form a defensible architecture description.</p><a href="https://sebokwiki.org/wiki/System_Architecture">Study system architecture ↗</a></article>
+        <article><span>SEBoK · Architecture</span><h3>Logical and Physical Architecture</h3><p>Explore how functions, behavior, system elements, allocation, viewpoints, and interfaces form a defensible architecture description.</p><a href="https://sebokwiki.org/wiki/System_Architecture_Design_Definition">Study system architecture design ↗</a></article>
         <article><span>Practice loop</span><h3>Create evidence, not flashcards alone</h3><p>For one case, redraw the context, ConOps, requirements tree, allocation, budget, risk path, V-model, and V&amp;V matrix from memory.</p><a href="#practice">Repeat the drone case ↑</a></article>
+        <article><span>NASA · Evidence</span><h3>Handbook Appendices</h3><p>Requirement quality checks, verification and validation matrices, functional/timing/state analysis, V&amp;V plan content, interface document outlines, and technical peer-review guidance.</p><a href="https://www.nasa.gov/reference/system-engineering-handbook-appendix/">Open the official appendices ↗</a></article>
+        <article><span>NASA · Governance</span><h3>NPR 7123.1C</h3><p>NASA’s systems-engineering process requirements, lifecycle expectations, technical reviews, measurement, verification, and tailoring framework.</p><a href="https://nodis3.gsfc.nasa.gov/displayAll.cfm?Internal_ID=N_PR_7123_001C_&page_name=all">Read the directive ↗</a></article>
+        <article><span>SEBoK · Decisions</span><h3>Decision Management</h3><p>Frame alternatives, criteria, uncertainty, stakeholder values, analysis methods, and a transparent decision record that can be revisited when evidence changes.</p><a href="https://sebokwiki.org/wiki/Decision_Management">Read the SEBoK article ↗</a></article>
+        <article><span>SEBoK · Risk</span><h3>Risk Management</h3><p>Connect scenarios, likelihood, consequence, handling actions, monitoring, ownership, and residual risk across the lifecycle.</p><a href="https://sebokwiki.org/wiki/Risk_Management">Read the SEBoK article ↗</a></article>
       </div>
       <div class="practice-loop"><b>Weekly loop</b><span>Choose a mission</span><i>→</i><span>Draw the boundary</span><i>→</i><span>Write five requirements</span><i>→</i><span>Allocate three functions</span><i>→</i><span>Analyze one failure</span><i>→</i><span>Plan the evidence</span></div>
     </section>

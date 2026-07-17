@@ -14,7 +14,6 @@ function applyTheme(theme) {
   const nextTheme = theme === "light" ? "light" : "dark";
   const targetTheme = nextTheme === "light" ? "dark" : "light";
   root.dataset.theme = nextTheme;
-  themeToggle?.setAttribute("aria-pressed", String(nextTheme === "light"));
   themeToggle?.setAttribute("aria-label", `Switch to ${targetTheme} theme`);
   themeToggle?.setAttribute("title", `Switch to ${targetTheme} theme`);
   themeColor?.setAttribute("content", nextTheme === "light" ? "#f5f8fc" : "#07111f");

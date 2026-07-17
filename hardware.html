@@ -6,8 +6,8 @@
   <meta name="description" content="A visual hardware and computer-system design guide covering workload analysis, memory, compute, interconnect, power, thermal limits, reliability, bottlenecks, and interview practice.">
   <meta name="theme-color" content="#07111f">
   <title>Hardware &amp; Computer Systems · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717b">
-  <script src="app.js?v=20260717b" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717d">
+  <script src="app.js?v=20260717d" defer></script>
   <style>
     .hw-hero h1 span { background-image: linear-gradient(110deg, var(--amber), var(--cyan), var(--blue)); }
     .hw-hero .hero-panel { transform: rotate(-1deg); }
@@ -20,7 +20,7 @@
     .hw-thinking-flow li { position: relative; min-height: 205px; padding: 1.1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-top: 3px solid var(--blue); border-radius: .8rem; background: var(--surface); }
     .hw-thinking-flow li:nth-child(n+5) { border-top-color: var(--violet); }
     .hw-thinking-flow li:not(:nth-child(4)):not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.72rem; z-index: 1; color: var(--blue); transform: translate(50%, -50%); }
-    .hw-thinking-flow li:nth-child(4)::after { content: "↓"; position: absolute; right: 50%; bottom: -.82rem; z-index: 1; color: var(--violet); transform: translate(50%, 50%); }
+    .hw-thinking-flow li:nth-child(4)::after { display: none; }
     .hw-thinking-flow span { color: var(--amber); font: 800 .7rem ui-monospace, monospace; }
     .hw-thinking-flow strong { margin: .9rem 0 .45rem; }
     .hw-thinking-flow p { margin: 0; color: var(--muted); font-size: .8rem; }
@@ -68,12 +68,13 @@
     .hw-memory-layout { display: grid; grid-template-columns: .82fr 1.18fr; gap: 1rem; align-items: stretch; }
     .hw-memory-pyramid { margin: 0; padding: 1.2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .45rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-2); list-style: none; }
     .hw-memory-pyramid li { min-height: 54px; padding: .55rem 1rem; display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; border: 1px solid var(--line); background: var(--surface); }
-    .hw-memory-pyramid li:nth-child(1) { width: 44%; border-color: var(--amber); }
-    .hw-memory-pyramid li:nth-child(2) { width: 54%; }
-    .hw-memory-pyramid li:nth-child(3) { width: 64%; }
-    .hw-memory-pyramid li:nth-child(4) { width: 74%; }
-    .hw-memory-pyramid li:nth-child(5) { width: 86%; }
-    .hw-memory-pyramid li:nth-child(6) { width: 100%; border-color: var(--violet); }
+    .hw-memory-pyramid li:nth-child(1) { width: 40%; border-color: var(--amber); }
+    .hw-memory-pyramid li:nth-child(2) { width: 50%; }
+    .hw-memory-pyramid li:nth-child(3) { width: 60%; }
+    .hw-memory-pyramid li:nth-child(4) { width: 70%; }
+    .hw-memory-pyramid li:nth-child(5) { width: 80%; }
+    .hw-memory-pyramid li:nth-child(6) { width: 90%; }
+    .hw-memory-pyramid li:nth-child(7) { width: 100%; border-color: var(--violet); }
     .hw-memory-pyramid b { font-size: .84rem; }
     .hw-memory-pyramid span { color: var(--muted); font-size: .68rem; text-align: right; }
     .hw-memory-rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
@@ -148,10 +149,10 @@
     .hw-bottleneck-table { width: 100%; min-width: 900px; border-collapse: collapse; }
     .hw-bottleneck-table caption { padding: 1rem; color: var(--muted); text-align: left; }
     .hw-bottleneck-table th, .hw-bottleneck-table td { padding: .85rem 1rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-    .hw-bottleneck-table th { color: var(--amber); background: var(--surface-2); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; }
+    .hw-bottleneck-table thead th { color: var(--amber); background: var(--surface-2); font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; }
+    .hw-bottleneck-table tbody th { color: var(--text); background: transparent; font-size: .8rem; font-weight: 800; }
     .hw-bottleneck-table td { color: var(--muted); font-size: .77rem; }
-    .hw-bottleneck-table td:first-child { color: var(--text); font-weight: 800; }
-    .hw-bottleneck-table tr:last-child td { border-bottom: 0; }
+    .hw-bottleneck-table tr:last-child th, .hw-bottleneck-table tr:last-child td { border-bottom: 0; }
     .hw-diagnose-flow { margin-top: .8rem; padding: 1rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.1rem; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface-2); }
     .hw-diagnose-flow div { position: relative; padding: .8rem; background: var(--surface); }
     .hw-diagnose-flow div:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.75rem; color: var(--blue); transform: translate(50%, -50%); }
@@ -305,7 +306,7 @@ while measured &lt; required:
           <article><strong>Pipeline for throughput</strong><p>Overlap stages so multiple items are in flight. In a dedicated, balanced pipeline, the slowest stage bounds steady-state rate; shared resources, bubbles, variability, and initiation interval can lower it further. Pipeline depth may increase single-item latency.</p></article>
           <article><strong>Reduce the critical path for latency</strong><p>Shorten serial dependencies, avoid queueing, use nearby storage, and reserve capacity for tail behavior—not only the average.</p></article>
           <article><strong>Provision effective bandwidth</strong><p>Account for protocol overhead, access efficiency, bank conflicts, contention, and read/write turnaround. Peak pin rate is not delivered payload.</p></article>
-          <article><strong>Apply Little’s Law carefully</strong><p><span class="hw-formula">work in flight ≈ throughput × latency</span>. It is a useful steady-state check, not permission to create unbounded queues.</p></article>
+          <article><strong>Apply Little’s Law carefully</strong><p><span class="hw-formula">average work in flight = average effective throughput × average time in system</span>, measured over the same stable boundary. Do not multiply peak throughput by p99 latency and call the result Little’s Law.</p></article>
         </div>
       </div>
       <div class="hw-section-note"><b>Interview move:</b> name the unit and percentile every time—“30 fps sustained” and “p99 under 80 ms” are testable; “fast” is not.</div>
@@ -337,10 +338,11 @@ while measured &lt; required:
       <div class="hw-memory-layout">
         <ol class="hw-memory-pyramid" aria-label="Memory hierarchy from closest to farthest">
           <li><b>Registers</b><span>tiny · current operands</span></li>
-          <li><b>L1 / local scratchpad</b><span>very fast · explicit or cached tiles</span></li>
-          <li><b>L2 / shared SRAM</b><span>working set · producer/consumer reuse</span></li>
-          <li><b>Last-level cache</b><span>shared cached working set</span></li>
-          <li><b>HBM / DRAM</b><span>high-capacity main memory · HBM emphasizes bandwidth</span></li>
+          <li><b>L1 cache</b><span>very fast · hardware-managed locality</span></li>
+          <li><b>Local scratchpad</b><span>software/compiler-managed tiles · explicit movement</span></li>
+          <li><b>L2 / last-level cache</b><span>larger hardware-managed working set</span></li>
+          <li><b>Shared on-chip SRAM</b><span>producer/consumer reuse · banks + arbitration</span></li>
+          <li><b>Off-chip DRAM · DDR or HBM</b><span>main memory · HBM emphasizes aggregate bandwidth</span></li>
           <li><b>NVMe / network storage</b><span>persistent · high access latency</span></li>
         </ol>
         <div class="hw-memory-rules">
@@ -380,7 +382,7 @@ while measured &lt; required:
       <div class="hw-choice-grid">
         <article><span>CPU</span><h3>Irregular + latency-sensitive</h3><p>Control-heavy code, branches, operating systems, orchestration, sparse pointer-rich work, and frequently changing algorithms.</p><small>Cost: lower throughput per watt</small></article>
         <article><span>GPU / programmable NPU</span><h3>Massively parallel kernels</h3><p>Regular tensor, graphics, signal, and vector workloads with enough work to amortize launch and transfer overhead.</p><small>Cost: utilization + memory orchestration</small></article>
-        <article><span>FPGA</span><h3>Custom streaming pipeline</h3><p>Deterministic I/O, evolving protocols, bit-level operations, and modest volume where reconfiguration matters.</p><small>Cost: development complexity</small></article>
+        <article><span>FPGA</span><h3>Custom streaming pipeline</h3><p>Cycle-controlled, analyzable I/O paths, evolving protocols, bit-level operations, and modest volume where reconfiguration matters—provided timing, arbitration, and external interfaces are bounded and verified.</p><small>Cost: development complexity</small></article>
         <article><span>ASIC / fixed function</span><h3>Stable, high-volume hotspot</h3><p>Maximum efficiency when the workload and market justify non-recurring engineering, validation, and long lead time.</p><small>Cost: inflexibility + NRE</small></article>
       </div>
       <div class="hw-dataflow-grid">
@@ -454,18 +456,18 @@ while measured &lt; required:
           <caption>Twelve common limits, the evidence to collect, and the first experiment to run.</caption>
           <thead><tr><th scope="col">Bottleneck</th><th scope="col">Typical symptom</th><th scope="col">Measure</th><th scope="col">First useful action</th></tr></thead>
           <tbody>
-            <tr><td>Compute issue rate</td><td>Units stay busy; more data bandwidth does not help.</td><td>IPC, ops/cycle, unit occupancy, instruction mix.</td><td>Increase useful parallel units, vectorize, fuse work, or lower operation count.</td></tr>
-            <tr><td>Serial dependency</td><td>Low occupancy despite ready data; one chain controls completion.</td><td>Critical path, dependency stalls, Amdahl fraction.</td><td>Break dependencies, pipeline stages, speculate, or move serial control to a faster core.</td></tr>
-            <tr><td>Memory bandwidth</td><td>Performance scales with memory clock/channels and plateaus.</td><td>Delivered bytes/s, controller utilization, arithmetic intensity.</td><td>Increase locality, tile/fuse/compress, reduce precision, or add channels.</td></tr>
-            <tr><td>Memory latency</td><td>Small random work stalls; bandwidth remains underused.</td><td>Outstanding requests, miss latency, row hit rate, queue depth.</td><td>Prefetch, batch, reorder, cache indices, add memory-level parallelism.</td></tr>
-            <tr><td>Cache / TLB</td><td>Sharp slowdown when working set crosses a size boundary.</td><td>Miss rates by level, page walks, conflict/eviction counters.</td><td>Change layout, tile, use suitable pages, partition cache, or use scratchpad.</td></tr>
-            <tr><td>On-chip fabric</td><td>Remote agents slow each other; hop or arbitration stalls rise.</td><td>Link occupancy, hotspots, credits, latency by source/destination.</td><td>Place communicating blocks closer, widen links, rebalance routes, add QoS.</td></tr>
-            <tr><td>External I/O</td><td>Compute waits for camera, disk, network, or host transfer.</td><td>Payload rate, packet size, retries, DMA gaps, link state.</td><td>Overlap transfers, batch, use zero-copy, compress, or upgrade the link.</td></tr>
-            <tr><td>Synchronization</td><td>More cores reduce scaling; lock or barrier time rises.</td><td>Lock wait, atomic retries, barrier skew, coherence invalidations.</td><td>Partition ownership, reduce shared writes, shard locks, use message passing.</td></tr>
-            <tr><td>Load imbalance</td><td>Some engines idle while one queue or tile is full.</td><td>Per-engine utilization, queue depth, task duration distribution.</td><td>Change partitioning, use work stealing, dynamic tiles, or split long tasks.</td></tr>
-            <tr><td>Conversion / formatting</td><td>Copy, layout, precision, or protocol conversion dominates.</td><td>Time and bytes in adapters; accelerator-to-accelerator gaps.</td><td>Standardize layouts, fuse conversion, support the format in hardware.</td></tr>
-            <tr><td>Power / thermal</td><td>Fast initially, slower after seconds or minutes.</td><td>Rail power, clocks, temperature, throttle residency.</td><td>Reduce movement/switching, improve cooling, schedule bursts, resize peak.</td></tr>
-            <tr><td>Reliability margin</td><td>Errors appear at voltage, temperature, frequency, or age corners.</td><td>ECC events, retries, droop, timing margin, fault logs.</td><td>Add detection/recovery, margin critical paths, derate, isolate faulty resources.</td></tr>
+            <tr><th scope="row">Compute execution throughput</th><td>Execution units are saturated; more data bandwidth does not help.</td><td>IPC, useful ops/cycle, unit occupancy, instruction mix, dependency stalls.</td><td>Increase useful parallelism, vectorize, fuse work, or lower operation count.</td></tr>
+            <tr><th scope="row">Serial dependency</th><td>Low occupancy despite ready data; one chain controls completion.</td><td>Critical path, dependency stalls, Amdahl fraction.</td><td>Break dependencies, pipeline stages, speculate, or move serial control to a faster core.</td></tr>
+            <tr><th scope="row">Memory bandwidth</th><td>Performance scales with memory clock/channels and plateaus.</td><td>Delivered bytes/s, controller utilization, arithmetic intensity.</td><td>Increase locality, tile/fuse/compress, reduce precision, or add channels.</td></tr>
+            <tr><th scope="row">Memory latency</th><td>Small random work stalls; bandwidth remains underused.</td><td>Outstanding requests, miss latency, row hit rate, queue depth.</td><td>Prefetch, batch, reorder, cache indices, add memory-level parallelism.</td></tr>
+            <tr><th scope="row">Cache / TLB</th><td>Sharp slowdown when working set crosses a size boundary.</td><td>Miss rates by level, page walks, conflict/eviction counters.</td><td>Change layout, tile, use suitable pages, partition cache, or use scratchpad.</td></tr>
+            <tr><th scope="row">On-chip fabric</th><td>Remote agents slow each other; hop or arbitration stalls rise.</td><td>Link occupancy, hotspots, credits, latency by source/destination.</td><td>Place communicating blocks closer, widen links, rebalance routes, add QoS.</td></tr>
+            <tr><th scope="row">External I/O</th><td>Compute waits for camera, disk, network, or host transfer.</td><td>Payload rate, packet size, retries, DMA gaps, link state.</td><td>Overlap transfers, batch, share mapped buffers when ownership/coherency permits, compress, or upgrade the link.</td></tr>
+            <tr><th scope="row">Synchronization</th><td>More cores reduce scaling; lock or barrier time rises.</td><td>Lock wait, atomic retries, barrier skew, coherence invalidations.</td><td>Partition ownership, reduce shared writes, shard locks, use message passing.</td></tr>
+            <tr><th scope="row">Load imbalance</th><td>Some engines idle while one queue or tile is full.</td><td>Per-engine utilization, queue depth, task duration distribution.</td><td>Change partitioning, use work stealing, dynamic tiles, or split long tasks.</td></tr>
+            <tr><th scope="row">Conversion / formatting</th><td>Copy, layout, precision, or protocol conversion dominates.</td><td>Time and bytes in adapters; accelerator-to-accelerator gaps.</td><td>Standardize layouts, fuse conversion, support the format in hardware.</td></tr>
+            <tr><th scope="row">Power / thermal</th><td>Fast initially, slower after seconds or minutes.</td><td>Rail power, clocks, temperature, throttle residency.</td><td>Reduce movement/switching, improve cooling, schedule bursts, resize peak.</td></tr>
+            <tr><th scope="row">Reliability margin</th><td>Errors appear at voltage, temperature, frequency, or age corners.</td><td>ECC events, retries, droop, timing margin, fault logs.</td><td>Add detection/recovery, margin critical paths, derate, isolate faulty resources.</td></tr>
           </tbody>
         </table>
       </div>
@@ -478,9 +480,80 @@ while measured &lt; required:
       </div>
     </section>
 
+    <section class="section deep-dive-section" id="sizing-workbench">
+      <div class="section-heading">
+        <p class="eyebrow">09 · Quantitative sizing workbench</p>
+        <h2>Follow bytes, operations, and heat together</h2>
+        <p>Peak TOPS is only one ceiling. A defensible hardware proposal estimates the full data path, states the operation-count convention, budgets sustained utilization, and checks the steady thermal state.</p>
+      </div>
+
+      <div class="reasoning-workbench">
+        <article class="workbench-main">
+          <span>Worked example · four-camera edge perception</span>
+          <h3>Find the first resource that can invalidate the concept</h3>
+          <p>Assume four uncompressed 1920 × 1080 cameras at 30 frames/s, YUV 4:2:0 at 1.5 bytes/pixel, and an illustrative model requiring 30 GOP per camera frame. Here 30 billion operations are already counted under the convention one MAC = two operations. Treat every value as an input to verify on the selected sensor, ISP, model, and counting convention.</p>
+          <ol class="evidence-chain">
+            <li><div><b>Sensor payload</b><span>4 × 1920 × 1080 × 30 ≈ 249 million pixels/s. At 1.5 bytes/pixel, one full-stream traversal is about 373 MB/s before blanking, metadata, padding, packetization, or error traffic.</span></div></li>
+            <li><div><b>Memory movement</b><span>If capture, preprocessing, inference, and display/storage create four full-frame DRAM traversals, payload traffic is already about 1.49 GB/s. Count every read and write; do not multiply by “number of stages” without drawing ownership.</span></div></li>
+            <li><div><b>Compute demand</b><span>30 GOP/camera-frame × 120 camera-frames/s = 3.6 TOPS sustained under the stated convention; at 50% measured end-to-end utilization, start near 7.2 peak TOPS. If the input were 30 GMAC/frame instead, demand would be 7.2 TOPS sustained and about 14.4 peak TOPS at the same utilization.</span></div></li>
+            <li><div><b>Locality test</b><span>Tile the pipeline so the ISP, accelerator, and encoder reuse line or tile buffers. Keeping one intermediate off DRAM may save more energy and latency than adding another arithmetic unit.</span></div></li>
+            <li><div><b>Steady-state proof</b><span>Measure delivered bandwidth, engine occupancy, queue depth, rail power, junction temperature, and throttle residency after thermal equilibrium—not only during a short benchmark burst.</span></div></li>
+          </ol>
+        </article>
+
+        <aside class="formula-board">
+          <span>Bound the design</span>
+          <h3>Four equations to keep visible</h3>
+          <div class="formula-stack">
+            <div class="formula-line"><b>Stream bandwidth</b><code>width × height × frames/s × bytes/pixel × streams</code><small>Add padding, protocol, retries, compression behavior, and each distinct memory traversal separately.</small></div>
+            <div class="formula-line"><b>Arithmetic intensity</b><code>useful operations ÷ bytes transferred at the chosen memory boundary</code><small>The answer changes when the boundary moves from HBM/DRAM to LLC, SRAM, or a register file.</small></div>
+            <div class="formula-line"><b>Roofline ceiling</b><code>min(peak compute, delivered bandwidth × arithmetic intensity)</code><small>It is an upper bound; dependencies, imbalance, launch cost, conversion, and bubbles can keep performance below both roofs.</small></div>
+            <div class="formula-line"><b>Energy per frame</b><code>average subsystem power ÷ sustained frames/s</code><small>A 5 W average accelerator at 120 frames/s is about 41.7 mJ/frame; include memory, converters, fabric, CPU, and idle power separately.</small></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Hardware sizing evidence ledger" tabindex="0">
+        <table class="detail-table">
+          <caption>Carry the same workload through every boundary. A peak number is useful only when its counting convention, duty cycle, and measurement boundary are explicit.</caption>
+          <thead><tr><th scope="col">Boundary</th><th scope="col">Budget</th><th scope="col">Evidence to collect</th><th scope="col">Decision trigger</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Sensor ingress</th><td>Payload + blanking/packet overhead + error/retry traffic per port and aggregate.</td><td>Lane utilization, CRC/error counts, timestamp skew, receiver FIFO high-water mark, dropped frames.</td><td>Add lanes, lower format/rate, isolate a faulty stream, or reserve ingress bandwidth.</td></tr>
+            <tr><th scope="row">On-chip fabric</th><td>Read/write bytes per producer–consumer edge, burst shape, multicast, QoS class, and worst concurrency.</td><td>Per-link occupancy, arbitration stalls, credits, hop latency, backpressure, deadline misses.</td><td>Change placement/routes, widen a link, reserve service, split traffic classes, or reduce crossings.</td></tr>
+            <tr><th scope="row">DRAM</th><td>Every read and write, row/bank behavior, refresh, ECC, controller efficiency, and recovery headroom.</td><td>Delivered bytes/s rather than pin rate, queue depth, row hits, latency distribution, corrected errors.</td><td>Improve locality/layout, add channels, compress, keep intermediates on chip, or reduce precision.</td></tr>
+            <tr><th scope="row">Compute engines</th><td>Supported useful operations, issue/execute rate, occupancy, synchronization, conversion, and fallback.</td><td>Useful ops/cycle, busy versus stalled cycles, critical path, queue gaps, unsupported-op time.</td><td>Remap/fuse/vectorize, rebalance engines, change precision, accelerate the serial path, or simplify the model.</td></tr>
+            <tr><th scope="row">Power + thermal</th><td>Rail-average and transient power, heat path, ambient, fanless enclosure, aging/dirty cooling, and safe limits.</td><td>Voltage droop, subsystem energy, junction/board temperature, clock residency, throttle time after soak.</td><td>Lower movement/activity, stagger engines, adjust DVFS/admission, improve cooling, or reduce sustained throughput.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Hardware recovery contract" tabindex="0">
+        <table class="detail-table">
+          <caption>Close each fault with detection, containment, recovery, and proof; “reset it” is incomplete when memory ownership or outputs may already be ambiguous.</caption>
+          <thead><tr><th scope="col">Fault</th><th scope="col">Containment</th><th scope="col">Recovery</th><th scope="col">Proof</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">NPU command timeout</th><td>Stop admission, mark output invalid, quiesce or revoke DMA, preserve fault context.</td><td>Abort job → reset engine → restore mappings/state → run self-test → resume or enter declared fallback.</td><td>Injected hang at every command phase; verify no stale completion or partial output is accepted.</td></tr>
+            <tr><th scope="row">Uncorrectable memory error</th><td>Poison the affected line/page, identify consumers, prevent silent propagation.</td><td>Retry only where semantics permit, reconstruct replicated state, retire memory, or degrade service.</td><td>Error injection from controller through software notification and user-visible behavior.</td></tr>
+            <tr><th scope="row">Camera error flood</th><td>Bound retries/interrupt rate and isolate its queue so other streams keep their reserved service.</td><td>Reinitialize receiver/sensor, rejoin with timestamp resynchronization, or declare the stream unavailable.</td><td>Malformed packet and disconnect campaigns at aggregate peak load.</td></tr>
+            <tr><th scope="row">Thermal or rail excursion</th><td>Throttle or shed workload before violating electrical, temperature, latency, or accuracy limits.</td><td>Use hysteresis, staged clocks/power, controlled restart, and a latched service state after repeated failure.</td><td>Worst-ambient thermal soak, load steps, brownout, sensor fault, and recovery-loop testing.</td></tr>
+            <tr><th scope="row">Interrupted update</th><td>Authenticate before activation; keep boot-critical state and rollback metadata power-fail safe.</td><td>Boot a compatible signed A/B image, confirm health, enforce anti-rollback policy, and retain a recovery path.</td><td>Cut power at every update stage and test old/new firmware, model, schema, and calibration compatibility.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="workbench-grid">
+        <article class="workbench-card"><span>Memory</span><h3>Budget capacity and traffic</h3><p>Model weights, worst-live activations, camera buffers, double buffering, descriptors, firmware, OS, fragmentation, ECC, debug capture, and update slots. Capacity and bandwidth are different constraints.</p></article>
+        <article class="workbench-card"><span>Fabric</span><h3>Define ordering and ownership</h3><p>For every producer–consumer edge state address space, coherency mode, cache maintenance, DMA direction, fences/events, QoS, backpressure, timeout, reset scope, and what happens to in-flight writes.</p></article>
+        <article class="workbench-card"><span>Compute</span><h3>Match engine to operator</h3><p>Separate regular dense kernels, vector/reduction work, scalar control, ISP/codec functions, and unsupported fallbacks. Include layout conversion and synchronization in the accelerator boundary.</p></article>
+        <article class="workbench-card"><span>Physical</span><h3>Close PPA and RAS</h3><p>Show rail and thermal budgets, voltage/frequency corners, ECC/parity coverage, poison and retry behavior, watchdog/reset hierarchy, diagnostic visibility, aging assumptions, and degraded service.</p></article>
+      </div>
+
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1145/1498765.1498785">Original Roofline paper ↗</a><a href="https://doi.org/10.1145/1465482.1465560">Amdahl’s Law paper ↗</a><a href="https://www.intel.com/content/www/us/en/docs/vtune-profiler/cookbook/2025-4/top-down-microarchitecture-analysis-method.html">Intel Top-Down analysis ↗</a><a href="https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/IHI0022H_amba_axi_protocol_spec.pdf">Arm AXI/ACE specification ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA mapping ↗</a><a href="https://docs.kernel.org/driver-api/dma-buf.html">Linux dma-buf + fences ↗</a><a href="https://docs.amd.com/r/en-US/am011-versal-acap-trm/HBM-Interface">AMD HBM interface ↗</a><a href="https://www.ti.com/lit/an/spra953c/spra953c.pdf">TI semiconductor thermal metrics ↗</a></div>
+    </section>
+
     <section class="section" id="practice">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">09 · Hardware interview practice</p>
+        <p class="eyebrow">10 · Hardware interview practice</p>
         <h2>Design an edge AI computer</h2>
         <p>Speak through the checkpoints before revealing the coaching notes. The goal is a defensible allocation—not a single “correct” chip.</p>
       </div>
@@ -490,7 +563,7 @@ while measured &lt; required:
       </div>
       <ol class="hw-case-flow" aria-label="Edge AI computer main data flow">
         <li><b>Cameras</b><small>capture + timestamps</small></li>
-        <li><b>ISP</b><small>decode · resize · normalize</small></li>
+        <li><b>Receiver + ISP</b><small>unpack · demosaic · resize</small></li>
         <li><b>NPU</b><small>detection inference</small></li>
         <li><b>CPU</b><small>tracking + policy</small></li>
         <li><b>Storage</b><small>ring buffer + evidence</small></li>
@@ -499,7 +572,7 @@ while measured &lt; required:
       <ol class="hw-case-checkpoints">
         <li><header><span>00–07 min</span><strong>Clarify the contract</strong></header><p>Ask about model accuracy, stream format, simultaneous frames, event rate, retention, safety impact, security, environment, size, cost, and field update.</p><details><summary>Reveal coaching notes</summary><div>Separate perception latency from end-to-end event latency. Ask whether dropped frames are allowed, whether all cameras must be synchronized, and what degraded behavior is acceptable when a sensor or accelerator fails.</div></details></li>
         <li><header><span>07–15 min</span><strong>Build workload + movement budgets</strong></header><p>Estimate decoded pixels, tensor bytes, operations per frame, model/activation footprint, storage/day, network payload, and peak concurrency.</p><details><summary>Reveal coaching notes</summary><div>Four 1080p30 streams are about 249 million pixels/s before format factors. Do not route every full frame through general DRAM repeatedly: use the ISP, tiled buffers, producer-consumer pipelines, and zero-copy surfaces where possible.</div></details></li>
-        <li><header><span>15–25 min</span><strong>Allocate compute and memory</strong></header><p>Choose engines for decode/ISP, inference, tracking, control, encryption, and storage; size DRAM and on-chip buffers.</p><details><summary>Reveal coaching notes</summary><div>Use fixed-function decode/ISP for stable pixel operations, an NPU for supported model layers, and CPU/vector fallback for control and unsupported operators. Preserve headroom for model growth, telemetry, and failover—not only benchmark throughput.</div></details></li>
+        <li><header><span>15–25 min</span><strong>Allocate compute and memory</strong></header><p>Choose engines for sensor receive/ISP, any actual compressed-video decode, inference, tracking, control, encryption, and storage; size DRAM and on-chip buffers.</p><details><summary>Reveal coaching notes</summary><div>Use the camera receiver and fixed-function ISP for stable unpacking, demosaic, color, and resize operations; use a codec only if the input is compressed. Map supported model layers to an NPU and keep CPU/vector fallback for control and unsupported operators. Preserve headroom for model growth, telemetry, and failover—not only benchmark throughput.</div></details></li>
         <li><header><span>25–33 min</span><strong>Draw the fabric and I/O</strong></header><p>Place camera inputs, memory controllers, compute, storage, network, DMA, coherency boundaries, QoS, clocks, and reset domains.</p><details><summary>Reveal coaching notes</summary><div>Reserve fabric and DRAM service for camera capture so inference bursts cannot drop frames. Define buffer ownership and completion explicitly. Isolate the management/security plane from bulk video traffic.</div></details></li>
         <li><header><span>33–40 min</span><strong>Close physical + failure budgets</strong></header><p>Explain sustained 25 W operation, thermal path, brownouts, watchdog/reset, ECC, storage wear, sensor loss, NPU hang, network loss, and safe update.</p><details><summary>Reveal coaching notes</summary><div>Model the worst ambient and dirty or aging cooling path. Use staged recovery: restart a job, reset the engine, restart the pipeline, then reboot. Keep a local health channel and signed A/B firmware/model images.</div></details></li>
         <li><header><span>40–45 min</span><strong>Verify and summarize</strong></header><p>Name representative benchmarks, instrumentation, corner tests, acceptance thresholds, and the first likely bottleneck.</p><details><summary>Reveal coaching notes</summary><div>Replay timestamped worst-case scenes while measuring p50/p99 latency, frames dropped, DRAM/fabric utilization, power, junction temperature, throttling, and accuracy. Run steady-state thermal soak—not only a short demo.</div></details></li>
@@ -515,17 +588,21 @@ while measured &lt; required:
 
     <section class="section" id="resources">
       <div class="section-heading">
-        <p class="eyebrow">10 · Primary references</p>
+        <p class="eyebrow">11 · Primary references</p>
         <h2>Deepen the models behind the diagrams</h2>
         <p>Use vendor and project documentation for interfaces; use laboratory work for performance models; verify every estimate on the target platform.</p>
       </div>
       <div class="hw-source-grid">
         <article><span>Performance model</span><strong>Berkeley Lab Roofline Model</strong><p>Arithmetic intensity, bandwidth ceilings, compute ceilings, and bottleneck-oriented performance analysis.</p><a href="https://amcr.lbl.gov/departments/computer-science-department/ppan/roofline-performance-model/">Berkeley Lab guide ↗</a></article>
-        <article><span>On-chip fabric</span><strong>Arm AMBA</strong><p>Official architecture family for AXI, CHI, AHB, APB, coherency, and SoC component communication.</p><a href="https://developer.arm.com/Architectures/AMBA">Arm architecture page ↗</a></article>
+        <article><span>On-chip fabric</span><strong>Arm AMBA</strong><p>Official architecture family for AXI, CHI, AHB, APB, coherency, and SoC component communication.</p><a href="https://www.arm.com/architecture/system-architectures/amba/amba-specifications">Arm AMBA specifications ↗</a></article>
         <article><span>Device movement</span><strong>Linux DMA Mapping Guide</strong><p>CPU, physical, bus, and IOMMU addresses; coherent versus streaming mappings; buffer lifecycle.</p><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Kernel documentation ↗</a></article>
         <article><span>Expansion I/O</span><strong>PCI-SIG specifications</strong><p>Primary specification hub for PCI Express architecture and related interconnect technologies.</p><a href="https://pcisig.com/specifications">PCI-SIG ↗</a></article>
-        <article><span>Processor interface</span><strong>RISC-V specifications</strong><p>Open ISA specifications and profiles useful for reasoning about the hardware/software contract.</p><a href="https://riscv.org/technical/specifications/">RISC-V International ↗</a></article>
+        <article><span>Processor interface</span><strong>RISC-V specifications</strong><p>Open ISA specifications and profiles useful for reasoning about the hardware/software contract.</p><a href="https://riscv.org/specifications/ratified/">RISC-V ratified specifications ↗</a></article>
         <article><span>Next track</span><strong>NPU + Analog Compute-in-Memory</strong><p>Continue from workload and memory reasoning into analog-aware compilation, mapping, calibration, and runtime design.</p><a href="npu-acim.html">Open the ACiM track →</a></article>
+        <article><span>Foundational model</span><strong>Original Roofline Paper</strong><p>Williams, Waterman, and Patterson’s model for relating arithmetic intensity to compute and memory-bandwidth ceilings.</p><a href="https://doi.org/10.1145/1498765.1498785">Read via DOI ↗</a></article>
+        <article><span>Coherent fabric</span><strong>AMBA AXI and ACE Specification</strong><p>Channels, transactions, ordering, barriers, coherency extensions, atomic behavior, and the contracts connecting processors, memory, and accelerators.</p><a href="https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/IHI0022H_amba_axi_protocol_spec.pdf">Arm specification PDF ↗</a></article>
+        <article><span>Shared buffers</span><strong>Linux dma-buf</strong><p>Cross-device buffer sharing, reservation objects, DMA fences, explicit synchronization, and the deadlock risks around indefinite dependencies.</p><a href="https://docs.kernel.org/driver-api/dma-buf.html">Kernel documentation ↗</a></article>
+        <article><span>High-bandwidth memory</span><strong>AMD HBM Interface</strong><p>A concrete vendor reference showing channelized HBM connectivity, NoC integration, capacity, and system-level bandwidth considerations.</p><a href="https://docs.amd.com/r/en-US/am011-versal-acap-trm/HBM-Interface">AMD technical reference ↗</a></article>
       </div>
       <div class="hw-track-grid" role="group" aria-label="All System Design Atlas tracks">
         <a href="backend.html"><span>Backend</span><strong>Distributed software</strong><small>APIs, data, caching, queues, reliability.</small></a>

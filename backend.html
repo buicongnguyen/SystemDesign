@@ -6,8 +6,8 @@
   <meta name="description" content="A visual system design atlas covering scalable architecture, data, caching, queues, reliability, and interview strategy.">
   <meta name="theme-color" content="#07111f">
   <title>Backend &amp; Distributed Systems — System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717b">
-  <script src="app.js?v=20260717b" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717d">
+  <script src="app.js?v=20260717d" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -86,7 +86,7 @@ measure_and_iterate()</code></pre>
       <div class="section-heading centered-heading">
         <p class="eyebrow">02 · Scaling ladder</p>
         <h2>Scale only when the bottleneck asks</h2>
-        <p>Each rung solves a specific pressure and introduces a new operational cost.</p>
+        <p>Each rung is a candidate intervention—not a required migration sequence. Measure the limiting resource, change the smallest useful boundary, and verify the result before climbing again.</p>
       </div>
       <div class="scale-ladder">
         <article><span>Level 0</span><h3>Single server</h3><p>App + database. Simple, fast to change, one failure domain.</p><small>Start here</small></article>
@@ -133,12 +133,12 @@ measure_and_iterate()</code></pre>
         <article><span>Flexible aggregate</span><h3>Document DB</h3><p>Profiles, catalogs, content records.</p><b>Nested data · schema evolution</b></article>
         <article><span>Massive key access</span><h3>Key-value</h3><p>Sessions, counters, preferences.</p><b>Predictable lookup · easy partitioning</b></article>
         <article><span>Relationship traversal</span><h3>Graph DB</h3><p>Social edges, fraud rings, knowledge graphs.</p><b>Multi-hop queries · connected data</b></article>
-        <article><span>Ordered event history</span><h3>Wide-column</h3><p>Telemetry, feeds, time-bucketed events.</p><b>Write scale · partition-key queries</b></article>
+        <article><span>High-write partitioned access</span><h3>Wide-column</h3><p>Telemetry, feeds, and time-bucketed records queried by partition key.</p><b>Partition-local clustering order · denormalized query model</b></article>
         <article><span>Text relevance</span><h3>Search index</h3><p>Full-text search, autocomplete, filtering.</p><b>Inverted index · ranking</b></article>
       </div>
       <div class="replication-diagram" role="group" aria-label="Replication and sharding comparison">
         <div class="diagram-title"><span>Copy vs split</span><strong>Replication can increase read capacity and fault tolerance. Sharding increases total capacity.</strong></div>
-        <div class="replica-map"><i>Primary</i><b>→</b><i>Replica A</i><b>→</b><i>Replica B</i></div>
+        <div class="replica-map" role="group" aria-label="One primary independently replicates to two replicas"><i>Primary</i><b>→</b><div class="replica-fanout"><span>Replica A</span><span>Replica B</span></div></div>
         <div class="shard-map"><i>Users A–H</i><i>Users I–P</i><i>Users Q–Z</i></div>
       </div>
     </section>
@@ -202,7 +202,7 @@ measure_and_iterate()</code></pre>
         <article><span>Degrade</span><strong>Fallback · stale read · shed load</strong><small>Preserve the most important user path.</small></article>
         <article><span>Recover</span><strong>Replication · backup · failover</strong><small>Restore service and data.</small></article>
       </div>
-      <div class="slo-equation"><span>Reliability contract</span><strong>SLI</strong><i>measured behavior</i><b>→</b><strong>SLO</strong><i>target</i><b>→</b><strong>Error budget</strong><i>allowed failure</i></div>
+      <div class="slo-equation"><span>Reliability contract</span><strong>SLI</strong><i>measured behavior</i><b>→</b><strong>SLO</strong><i>target over a defined window</i><b>→</b><strong>Error budget</strong><i>1 − SLO target over that window</i></div>
     </section>
 
     <section class="section" id="interview">
@@ -409,11 +409,11 @@ measure_and_iterate()</code></pre>
         </details>
         <details>
           <summary><span>14</span><strong>Consistent hashing</strong><small>Distribute keys while minimizing movement when nodes change</small></summary>
-          <div><p><b>Use when:</b> partitioned caches or stores frequently add/remove nodes and simple modulo hashing would remap most keys.</p><p><b>How:</b> place nodes and keys on a ring, assign virtual nodes for balance, and replicate clockwise to multiple owners.</p><p><b>Watch:</b> skew, coordinated membership, replication during churn, and the fact that hot keys remain hot.</p></div>
+          <div><p><b>Use when:</b> partitioned caches or stores frequently add/remove nodes and simple modulo hashing would remap most keys.</p><p><b>How:</b> map keys and nodes into an ordered hash space so membership changes remap only part of the keyspace; use virtual nodes or another balancing method. Replication to successor nodes is an optional layer, not a property of consistent hashing itself.</p><p><b>Watch:</b> skew, coordinated membership, replication during churn, and the fact that hot keys remain hot.</p></div>
         </details>
         <details>
           <summary><span>15</span><strong>Leader election / lease</strong><small>Ensure one active coordinator for a scoped responsibility</small></summary>
-          <div><p><b>Use when:</b> one node must schedule work, own a partition, allocate IDs, or perform a singleton task.</p><p><b>How:</b> use a consensus-backed lease, renew before expiry, include fencing tokens, and stop work immediately when ownership is lost.</p><p><b>Watch:</b> split brain, clock assumptions, long pauses, stale leaders, and making the leader a throughput bottleneck.</p></div>
+          <div><p><b>Use when:</b> one node must schedule work, own a partition, allocate IDs, or perform a singleton task.</p><p><b>How:</b> acquire a consensus-backed lease and attach a monotonically increasing fencing token to every protected operation. The protected resource must reject stale tokens; do not rely only on a paused former owner noticing lease loss.</p><p><b>Watch:</b> split brain, clock assumptions, long pauses, stale leaders, and making the leader a throughput bottleneck.</p></div>
         </details>
       </div>
 
@@ -426,9 +426,90 @@ measure_and_iterate()</code></pre>
       <div class="memory-strip"><b>Design sentence</b><span>Because requirement <i>R</i> and estimate <i>E</i> create bottleneck <i>B</i>, choose pattern <i>P</i>, accepting trade-off <i>T</i>, measured by <i>M</i>.</span></div>
     </section>
 
+    <section class="section deep-dive-section" id="workbench">
+      <div class="section-heading">
+        <p class="eyebrow">10 · Quantitative design workbench</p>
+        <h2>Turn estimates into architecture pressure</h2>
+        <p>Interview arithmetic is not a capacity promise. It is a fast way to expose the dominant path, choose a first design, and name what must be measured before production.</p>
+      </div>
+
+      <div class="reasoning-workbench">
+        <article class="workbench-main">
+          <span>Worked example · flash-sale checkout</span>
+          <h3>Follow one assumption until it changes the design</h3>
+          <p>Assume two million purchase attempts arrive over ten minutes, peak traffic is five times the average, the synchronous path targets 250 ms, responses average 2 kB, and one percent of attempts become orders.</p>
+          <ol class="evidence-chain">
+            <li><div><b>Expose the peak</b><span>2,000,000 ÷ 600 s ≈ 3.3k attempts/s average; a stated 5× burst means approximately 16.7k attempts/s at peak.</span></div></li>
+            <li><div><b>Estimate in-flight work</b><span>If 16.7k/s is sustained and the mean time in the same stable system boundary is 0.25 s, Little’s Law gives about 4,200 requests in flight on average. Queueing inside that boundary is already part of the mean time; if 250 ms is only a p99 target, treat this multiplication as a rough capacity envelope rather than a theorem-backed average.</span></div></li>
+            <li><div><b>Separate browse from commit</b><span>At a 1% conversion assumption, the durable order path is about 167 orders/s. Inventory reservation, payment intent, and idempotency need stronger semantics than catalog reads.</span></div></li>
+            <li><div><b>Price the network path</b><span>16.7k responses/s × 2 kB is about 33 MB/s (≈267 Mb/s) of response payload before request bytes, TLS, headers, replication, or observability traffic.</span></div></li>
+            <li><div><b>Stop retry multiplication</b><span>With one original attempt plus two retries at each of three nested layers, a single request can cause 3³ = 27 downstream attempts. Put a bounded retry policy at one owning layer and add backoff, jitter, and a retry budget.</span></div></li>
+          </ol>
+        </article>
+
+        <aside class="formula-board">
+          <span>Reusable estimates</span>
+          <h3>Write units beside every number</h3>
+          <div class="formula-stack">
+            <div class="formula-line"><b>Peak request rate</b><code>requests ÷ active seconds × burst factor</code><small>Show average and peak separately; state whether retries and internal fan-out are included.</small></div>
+            <div class="formula-line"><b>Average in-flight work</b><code>L = λ × W</code><small>Use consistent units and a clearly named boundary. It is an average relation, not a tail-latency bound.</small></div>
+            <div class="formula-line"><b>Raw logical storage</b><code>writes/s × bytes/write × retention seconds</code><small>Add indexes, metadata, replication, allocator overhead, backups, and compression as explicit factors.</small></div>
+            <div class="formula-line"><b>30-day error budget</b><code>(1 − availability target) × 43,200 minutes</code><small>99.9% allows about 43.2 minutes; 99.99% about 4.32 minutes. Define which requests and failure classes count.</small></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Correctness invariant examples" tabindex="0">
+        <table class="detail-table">
+          <caption>Make correctness local: write the invariant, choose its smallest consistency scope, then test the ambiguous outcome.</caption>
+          <thead><tr><th scope="col">Invariant</th><th scope="col">Scope</th><th scope="col">Candidate mechanism</th><th scope="col">Failure test</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">One business effect per payment request</th><td>Idempotency key</td><td>Stable key plus an atomic mutation/result record; add an outbox when an event must follow.</td><td>The commit succeeds, the response is lost, and the client retries with the same and then a conflicting payload.</td></tr>
+            <tr><th scope="row">Sellable inventory never drops below zero</th><td>SKU or reservation</td><td>Transactional conditional decrement, or a durable expiring reservation with an explicit release path.</td><td>Many buyers race for the last unit; a checkout crashes after reservation but before payment.</td></tr>
+            <tr><th scope="row">Messages stay ordered inside one conversation</th><td>Conversation</td><td>Per-conversation sequence numbers or one ordered partition; reject, buffer, or reconcile gaps.</td><td>Two devices send concurrently while one reconnects and replays an earlier request.</td></tr>
+            <tr><th scope="row">A short alias names at most one URL</th><td>Alias key</td><td>Conditional insert or unique constraint at the authoritative store.</td><td>Two creators claim the same custom alias at the same time.</td></tr>
+            <tr><th scope="row">A feed meets its freshness objective</th><td>Feed read</td><td>Event watermark, consumer-age SLI, and a declared stale-read policy.</td><td>Pause a consumer, build backlog, recover, and prove drain time without overloading the source.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ol class="compact-flow" aria-label="Transactional outbox and replay flow">
+        <li><b>Accept mutation</b><span>Validate deadline, identity, idempotency key, and expected version.</span></li>
+        <li><b>Commit once</b><span>Write business state, saved result, and outbox record in one local transaction.</span></li>
+        <li><b>Acknowledge</b><span>A retry reads the stored result even if the first response disappeared.</span></li>
+        <li><b>Relay event</b><span>A relay may publish more than once; the consumer must tolerate duplicate delivery.</span></li>
+        <li><b>Build derived state</b><span>Track watermark, replay progress, poison work, and reconciliation evidence.</span></li>
+      </ol>
+
+      <div class="detail-table-wrap" role="region" aria-label="Backend failure contract examples" tabindex="0">
+        <table class="detail-table">
+          <caption>Design the failure contract before failover. A useful row names user behavior, overload guardrail, data risk, detection, and the proof of recovery.</caption>
+          <thead><tr><th scope="col">Failure</th><th scope="col">User-visible behavior</th><th scope="col">Guardrail + data risk</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Cache unavailable</th><td>Serve a bounded stale result, shed optional reads, or bypass only while origin headroom remains.</td><td>Prevent a cache miss storm from saturating the source of truth; no silent indefinite staleness.</td><td>Cache-disabled peak test; hit rate, origin QPS, saturation, and stale-age SLI.</td></tr>
+            <tr><th scope="row">Primary store unavailable</th><td>Reject or delay consistency-sensitive writes, or enter a tested promotion path.</td><td>Fence stale leaders; state RPO and which reads may become stale during promotion.</td><td>Leader-loss exercise; commit latency, replica lag, stale-token rejection, recovery time.</td></tr>
+            <tr><th scope="row">Queue backlog</th><td>Preserve accepted durable work while exposing freshness degradation.</td><td>Slow noncritical producers, bound retries, and isolate poison work from the main queue.</td><td>Oldest-message age, lag, DLQ rate, drain-rate estimate, and a peak-backlog recovery test.</td></tr>
+            <tr><th scope="row">Region unavailable</th><td>Route only to healthy, pre-provisioned capacity; declare reduced features if necessary.</td><td>State RTO, RPO, consistency impact, DNS/routing delay, and dependency locality.</td><td>Regional evacuation exercise with measured capacity, data convergence, and rollback.</td></tr>
+            <tr><th scope="row">Bad deployment</th><td>Halt the canary and restore the last compatible code, schema, and configuration.</td><td>Limit blast radius and avoid a rollback that cannot read forward-written data.</td><td>SLO burn correlated with change events; rollback-time and compatibility rehearsal.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="evidence-note"><b>Interview close:</b> leave a decision ledger, contract sheet, capacity sheet, failure matrix, observability plan, and open-risk register. “Exactly once” is useful only after naming the source, processing boundary, destination, and replay behavior.</p>
+
+      <div class="workbench-grid">
+        <article class="workbench-card"><span>Correctness</span><h3>Name the invariant</h3><p>Examples: one charge per idempotency key, no negative sellable inventory, ordered messages within one conversation. Then choose the smallest transaction or consensus boundary that protects it.</p></article>
+        <article class="workbench-card"><span>Overload</span><h3>Choose who waits or loses</h3><p>Bound queues, shed optional work, reserve critical capacity, and return a deliberate response. An unbounded queue converts overload into memory pressure and unusable tail latency.</p></article>
+        <article class="workbench-card"><span>Recovery</span><h3>Design the replay path</h3><p>Record durable intent, make consumers duplicate-tolerant, quarantine poison work, reconcile derived views, and prove that failover cannot expose two owners without fencing.</p></article>
+        <article class="workbench-card"><span>Evidence</span><h3>Connect claim to signal</h3><p>For each major decision name an SLI, load or fault test, saturation threshold, alert, rollback signal, and capacity owner. “Highly available” is not measurable until the request contract is defined.</p></article>
+      </div>
+
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1287/opre.9.3.383">Little’s Law paper ↗</a><a href="https://www.rfc-editor.org/rfc/rfc9110.html">RFC 9110 HTTP semantics ↗</a><a href="https://www.rfc-editor.org/rfc/rfc9111.html">RFC 9111 caching ↗</a><a href="https://kafka.apache.org/43/design/design/">Kafka delivery semantics ↗</a><a href="https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter">AWS retries + jitter ↗</a><a href="https://sre.google/sre-book/addressing-cascading-failures/">Google SRE cascading failures ↗</a><a href="https://cassandra.apache.org/doc/latest/cassandra/developing/cql/ddl.html">Cassandra data model ↗</a><a href="https://people.csail.mit.edu/karger/Papers/web.pdf">Consistent hashing paper ↗</a><a href="https://research.google/pubs/the-chubby-lock-service-for-loosely-coupled-distributed-systems/">Chubby + fencing context ↗</a></div>
+    </section>
+
     <section class="section practice-arena" id="practice">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">10 · Interview practice arena</p>
+        <p class="eyebrow">11 · Interview practice arena</p>
         <h2>Practice the conversation—not a memorized diagram</h2>
         <p>Choose a prompt, work through each checkpoint aloud, and reveal the coaching notes only after committing to an answer.</p>
       </div>
@@ -517,17 +598,22 @@ measure_and_iterate()</code></pre>
 
     <section class="section" id="resources">
       <div class="section-heading">
-        <p class="eyebrow">11 · Deliberate study path</p>
+        <p class="eyebrow">12 · Deliberate study path</p>
         <h2>Read in layers, then design from memory</h2>
         <p>Use interview material for structure, foundational books for depth, and open repositories for repetition.</p>
       </div>
       <div class="resource-path">
         <article><span>01 · Begin</span><h3>System Design Interview, Vol. 1</h3><p>Framework, estimation, and approachable designs such as rate limiting, URL shortening, feeds, chat, and storage.</p><a href="https://blog.bytebytego.com/p/system-design-interview-books-volume">Official overview ↗</a></article>
         <article><span>02 · Practice</span><h3>System Design Primer</h3><p>Free topic summaries, trade-offs, interview questions, sample solutions, diagrams, and Anki decks.</p><a href="https://github.com/donnemartin/system-design-primer">GitHub repository ↗</a></article>
-        <article><span>03 · Deepen</span><h3>Designing Data-Intensive Applications</h3><p>Reliability, scalability, data models, storage, replication, partitioning, transactions, and streams from first principles.</p><a href="https://www.oreilly.com/library/view/designing-data-intensive-applications/9781491903063/">O’Reilly book ↗</a></article>
+        <article><span>03 · Deepen</span><h3>Designing Data-Intensive Applications, 2nd ed.</h3><p>Updated coverage of reliability, scalability, data models, storage, replication, partitioning, transactions, streams, and modern distributed-data practice.</p><a href="https://www.oreilly.com/library/view/designing-data-intensive-applications/9781098119058/">Official 2nd-edition page ↗</a></article>
         <article><span>04 · Operate</span><h3>Google SRE books</h3><p>Availability, latency, capacity, monitoring, incident response, error budgets, and reliable production practice.</p><a href="https://sre.google/books/">Read online ↗</a></article>
         <article><span>05 · Expand</span><h3>Awesome System Design Resources</h3><p>A broad free index spanning fundamentals, networking, APIs, databases, distributed systems, and case studies.</p><a href="https://github.com/ashishps1/awesome-system-design-resources">GitHub repository ↗</a></article>
         <article><span>06 · Advance</span><h3>System Design Interview, Vol. 2</h3><p>Deeper bottlenecks and trade-offs across queues, metrics, payments, object storage, maps, email, and exchanges.</p><a href="https://blog.bytebytego.com/p/system-design-interview-books-volume">Official overview ↗</a></article>
+        <article><span>07 · Protocol contract</span><h3>HTTP Semantics and Caching</h3><p>The IETF standards for methods, status codes, validators, conditional requests, freshness, shared caches, and cache-control behavior.</p><a href="https://www.rfc-editor.org/rfc/rfc9110.html">RFC 9110 semantics ↗</a><a href="https://www.rfc-editor.org/rfc/rfc9111.html">RFC 9111 caching ↗</a></article>
+        <article><span>08 · Queueing</span><h3>A Proof for L = λW</h3><p>John Little’s foundational result connecting average arrival rate, time in a boundary, and average work in that boundary.</p><a href="https://doi.org/10.1287/opre.9.3.383">INFORMS paper ↗</a></article>
+        <article><span>09 · Consensus</span><h3>In Search of an Understandable Consensus Algorithm</h3><p>The extended Raft paper covering leader election, replicated logs, safety, membership changes, and the assumptions behind a consensus group.</p><a href="https://raft.github.io/raft.pdf">Raft paper ↗</a></article>
+        <article><span>10 · Global data</span><h3>Spanner</h3><p>Google’s paper on synchronous replication, external consistency, automatic sharding, and explicit clock uncertainty at global scale.</p><a href="https://research.google.com/archive/spanner-osdi2012.pdf">Google Research paper ↗</a></article>
+        <article><span>11 · Failure control</span><h3>Timeouts, Retries, and Backoff with Jitter</h3><p>Operational guidance on timeout selection, retry amplification, token budgets, exponential backoff, and breaking correlated retry storms.</p><a href="https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter">AWS Builders’ Library ↗</a></article>
       </div>
       <div class="practice-loop"><b>Weekly loop</b><span>Study one concept</span><i>→</i><span>Redraw it without notes</span><i>→</i><span>Design one product</span><i>→</i><span>List three trade-offs</span><i>→</i><span>Review after 1, 7, and 30 days</span></div>
     </section>

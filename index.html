@@ -6,8 +6,8 @@
   <meta name="description" content="A visual atlas for backend, systems engineering, hardware, embedded, and ACiM NPU system design.">
   <meta name="theme-color" content="#07111f">
   <title>System Design Atlas — Choose Your Track</title>
-  <link rel="stylesheet" href="styles.css?v=20260717b">
-  <script src="app.js?v=20260717b" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717d">
+  <script src="app.js?v=20260717d" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -78,6 +78,13 @@ state_requirements_and_tradeoffs()</code></pre>
         <li><span>10</span><strong>Operate</strong><p>Observe, recover, evolve and eventually retire.</p></li>
       </ol>
       <div class="atlas-formula"><b>Reasoning sentence</b><span>Because requirement <i>R</i> and estimate <i>E</i> expose constraint <i>C</i>, choose architecture <i>A</i>, accepting trade-off <i>T</i>, verified by measure <i>M</i>.</span></div>
+      <div class="source-map" role="group" aria-label="How the Atlas uses sources">
+        <article><span>Standards + protocols</span><strong>Define the contract</strong><p>Use exact semantics and compatibility rules from sources such as <a href="https://www.rfc-editor.org/rfc/rfc9110.html">RFC 9110</a>, then state which revision and subset the design implements.</p></article>
+        <article><span>Foundational research</span><strong>Know the assumptions</strong><p>Papers such as <a href="https://doi.org/10.1145/1498765.1498785">Roofline</a> explain a model and its boundary; they do not replace workload-specific measurement.</p></article>
+        <article><span>Official implementation docs</span><strong>Close ownership details</strong><p>References such as the <a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA guide</a> turn “move data” into mappings, direction, synchronization, barriers, and cleanup.</p></article>
+        <article><span>Measured evidence</span><strong>Prove this configuration</strong><p>Use representative load/fault tests, calibrated equipment, raw traces, versions, and acceptance criteria. The <a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">NASA SE Handbook</a> is a useful evidence-planning anchor.</p></article>
+      </div>
+      <p class="evidence-note"><b>Reference rule:</b> every detailed track now links sources beside the decision they support. Treat examples and Atlas schemas as illustrative; current product specifications, safety obligations, silicon manuals, and measured target behavior remain authoritative.</p>
     </section>
 
     <section class="section decision-section" id="selector">

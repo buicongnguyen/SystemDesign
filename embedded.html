@@ -6,8 +6,8 @@
   <meta name="description" content="A visual embedded and cyber-physical system design guide covering control loops, hardware/software partitioning, real-time scheduling, DMA, power modes, protocols, safety, verification, and interview practice.">
   <meta name="theme-color" content="#07111f">
   <title>Embedded &amp; Cyber-Physical Systems · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717b">
-  <script src="app.js?v=20260717b" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717d">
+  <script src="app.js?v=20260717d" defer></script>
   <style>
     .em-hero h1 span { background-image: linear-gradient(110deg, var(--green), var(--cyan), var(--violet)); }
     .em-label { color: var(--amber); font: 800 .68rem ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
@@ -101,7 +101,7 @@
     .em-state-transitions article { padding: 1rem; border-top: 2px solid var(--green); background: var(--surface); }
     .em-state-transitions span { color: var(--green); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
     .em-state-transitions p { margin: .45rem 0 0; color: var(--muted); font-size: .76rem; }
-    .em-energy-budget { margin-top: .8rem; padding: 1rem; display: grid; grid-template-columns: auto 1fr auto 1fr auto; gap: .8rem; align-items: center; border: 1px solid var(--line); background: var(--surface-2); }
+    .em-energy-budget { margin-top: .8rem; padding: 1rem; display: grid; grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); gap: .8rem; align-items: center; border: 1px solid var(--line); background: var(--surface-2); }
     .em-energy-budget b { color: var(--blue); }
     .em-energy-budget i { color: var(--amber); font-style: normal; text-align: center; }
     .em-energy-budget span { color: var(--muted); font-size: .78rem; }
@@ -110,10 +110,10 @@
     .em-protocol-table { width: 100%; min-width: 920px; border-collapse: collapse; }
     .em-protocol-table caption { padding: 1rem; color: var(--muted); text-align: left; }
     .em-protocol-table th, .em-protocol-table td { padding: .85rem 1rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-    .em-protocol-table th { color: var(--amber); background: var(--surface-2); font-size: .69rem; letter-spacing: .08em; text-transform: uppercase; }
+    .em-protocol-table thead th { color: var(--amber); background: var(--surface-2); font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; }
+    .em-protocol-table tbody th { color: var(--text); background: transparent; font-size: .8rem; font-weight: 800; }
     .em-protocol-table td { color: var(--muted); font-size: .76rem; }
-    .em-protocol-table td:first-child { color: var(--text); font-weight: 800; }
-    .em-protocol-table tr:last-child td { border-bottom: 0; }
+    .em-protocol-table tr:last-child th, .em-protocol-table tr:last-child td { border-bottom: 0; }
     .em-protocol-factors { margin-top: .8rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: .6rem; }
     .em-protocol-factors div { padding: .8rem; display: grid; background: var(--surface-2); text-align: center; }
     .em-protocol-factors b { color: var(--blue); font-size: .78rem; }
@@ -336,12 +336,12 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         </aside>
         <div class="em-schedule-selector">
           <article><span>Simple + static periods</span><strong>Cyclic executive</strong><p>A repeating table is easy to inspect and deterministic when activities are few, known, and fit cleanly.</p><small>Watch: poor flexibility + long task blocking</small></article>
-          <article><span>Periodic / sporadic critical tasks</span><strong>Fixed-priority preemptive</strong><p>Assign priorities from criticality and analyzed relative deadlines. Shorter-period-higher (rate monotonic) is justified only under its classic independent, periodic, preemptive, deadline-equals-period assumptions; include blocking, ISR interference, release jitter, and overload in response-time analysis.</p><small>Watch: priority inversion + starvation</small></article>
+          <article><span>Periodic / sporadic critical tasks</span><strong>Fixed-priority preemptive</strong><p>Assign priorities from criticality and analyzed relative deadlines. The classic rate-monotonic optimality and utilization guarantees apply only under their independent, periodic, preemptive, deadline-equals-period assumptions; period-based priorities can still be used outside that model when an applicable response-time analysis proves schedulability. Include blocking, ISR interference, release jitter, and overload.</p><small>Watch: priority inversion + starvation</small></article>
           <article><span>Dynamic deadlines</span><strong>Earliest Deadline First</strong><p>Schedule the ready job with the nearest deadline when the platform and certification approach support dynamic priority.</p><small>Watch: overload behavior + implementation cost</small></article>
           <article><span>Soft background work</span><strong>Best effort below the critical lane</strong><p>Run logging, uploads, UI, and maintenance at bounded lower priority or under a server/budget.</p><small>Watch: background backpressure + memory growth</small></article>
         </div>
       </div>
-      <div class="em-timing-equation"><b>For each critical task</b><span>response time</span><i>=</i><span>execution + blocking + higher-priority interference + release jitter</span><i>≤</i><span>deadline</span></div>
+      <div class="em-timing-equation"><b>For each critical task</b><span>response</span><i>=</i><span>execution + blocking + interference(response)</span><i>≤</i><span>deadline</span></div>
       <div class="em-note"><b>Practical anchor:</b> FreeRTOS documents fixed-priority preemptive scheduling as its default policy, with time slicing among equal priorities. A policy name is only the start; the application still needs measured execution times and schedulability analysis.</div>
     </section>
 
@@ -349,16 +349,16 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
       <div class="section-heading">
         <p class="eyebrow">04 · Interrupts, DMA, and ownership</p>
         <h2>Capture quickly. Move efficiently. Process outside the ISR.</h2>
-        <p>The interrupt path protects timing; the task path owns complex work. DMA offloads bulk transfer from the CPU; it is zero-copy only when producer and consumer share the same correctly owned and mapped buffer. Drivers still prepare mappings or descriptors, handle completion and errors, and may perform cache maintenance.</p>
+        <p>The interrupt path protects timing; the task path owns complex work. In a pre-armed streaming path, the peripheral request—not an initial ISR—drives DMA. Avoiding a copy still requires compatible shared buffers, explicit ownership, mappings, synchronization, and any required cache maintenance.</p>
       </div>
       <div class="em-irq-board">
         <ol class="em-irq-flow" aria-label="Interrupt and DMA processing flow">
-          <li><b>Peripheral event</b><span>sample ready · packet · timer</span></li>
-          <li><b>ISR</b><span>acknowledge · capture status · timestamp</span></li>
-          <li><b>DMA</b><span>transfer into owned buffer</span></li>
-          <li><b>Completion</b><span>publish descriptor · wake task</span></li>
-          <li><b>Task</b><span>validate · process · respond</span></li>
-          <li><b>Recycle</b><span>return buffer · rearm · account</span></li>
+          <li><b>Own + prepare</b><span>reserve buffer · map/sync · set descriptor</span></li>
+          <li><b>Arm path</b><span>configure DMA + peripheral before data arrives</span></li>
+          <li><b>Peripheral request</b><span>hardware moves data without per-item CPU work</span></li>
+          <li><b>Completion / error IRQ</b><span>DMA reports terminal count or fault</span></li>
+          <li><b>ISR publishes</b><span>ack · timestamp · status · wake task</span></li>
+          <li><b>Task + recycle</b><span>sync · validate · process · unmap/return/rearm</span></li>
         </ol>
         <div class="em-irq-lanes">
           <article><strong>CPU-driven path</strong><p>Good for tiny, infrequent register transfers. Cost grows with interrupt rate, copies, and per-item overhead.</p></article>
@@ -390,11 +390,12 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <div class="em-state-transitions">
           <article><span>Entry guard</span><p>No transfer in flight; output safe; queues persisted or discarded intentionally.</p></article>
           <article><span>Wake source</span><p>Timer, GPIO, comparator, radio, sensor, watchdog, charger—qualified against false wakes.</p></article>
-          <article><span>Restore order</span><p>Rails → clocks → memory → buses → devices → tasks → external outputs.</p></article>
+          <article><span>Example restore order</span><p>One common dependency chain is rails → clocks → retained memory → buses → devices → tasks → external outputs. Derive the actual sequence from the selected silicon and system hazards.</p></article>
           <article><span>Fault escape</span><p>Every state has timeout, reset, rollback, or safe-state behavior if entry/exit fails.</p></article>
         </div>
       </div>
-      <div class="em-energy-budget"><b>Daily energy</b><span>Σ(state power × time in state)</span><i>+</i><span>Σ(transition energy × transition count)</span><i>+</i><span>conversion and battery margin</span></div>
+      <div class="em-energy-budget"><b>Daily load energy</b><span>Σ(load-side state power × residency)</span><i>+</i><span>Σ(load-side transition energy × transition count)</span></div>
+      <div class="em-note"><b>Keep one energy boundary:</b> if powers are measured load-side, estimate battery-terminal demand once as <code>E_battery ≈ E_load ÷ η_conversion</code>; alternatively measure at the battery terminal directly, but do not do both. Derate usable battery capacity separately for temperature, aging, self-discharge, depth-of-discharge limits, cell variation, and a named product reserve.</div>
     </section>
 
     <section class="section" id="protocols">
@@ -408,14 +409,14 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
           <caption>Common starting points. Final electrical limits and timing come from the selected controller, transceiver, board, cable, and current specification.</caption>
           <thead><tr><th scope="col">Protocol</th><th scope="col">Best fit</th><th scope="col">Strength</th><th scope="col">Watch closely</th></tr></thead>
           <tbody>
-            <tr><td>I²C</td><td>Short board-level control and low-rate sensors.</td><td>Few wires, static addressing, broad device ecosystem.</td><td>Passive pull-ups, capacitance, clock stretching, stuck bus, and static-address conflicts.</td></tr>
-            <tr><td>I3C</td><td>Board-level sensors needing higher rates, a low-pin-count bus, and richer bus management.</td><td>Dynamic address assignment, in-band interrupts, push-pull phases, and legacy-I²C coexistence.</td><td>Controller/target capabilities, mixed open-drain and push-pull timing, error recovery, and coexistence rules.</td></tr>
-            <tr><td>SPI</td><td>Short board-level sensors, converters, displays, and flash.</td><td>Simple, full-duplex, low protocol overhead, higher rates.</td><td>Chip-select count, no universal framing/error recovery, signal integrity.</td></tr>
-            <tr><td>UART</td><td>Point-to-point debug, modules, bootloaders, simple links.</td><td>Minimal hardware and easy observability.</td><td>Clock mismatch, framing, flow control, no native multi-drop contract.</td></tr>
-            <tr><td>CAN / CAN FD</td><td>Robust multi-node control networks in noisy environments.</td><td>Arbitration, error detection, fault confinement, message priority.</td><td>Bus load, identifier design, termination, latency under contention.</td></tr>
-            <tr><td>Ethernet</td><td>High-rate, longer-reach, routable or switched systems.</td><td>Large ecosystem, diagnostics, scale, power/data options.</td><td>Stack complexity, queues, switch delay, synchronization, security.</td></tr>
-            <tr><td>USB</td><td>Host-controlled peripherals, cameras, storage, service ports.</td><td>Standard classes, power, high bandwidth, broad hosts.</td><td>Host/device roles, enumeration, cabling, suspend, certification.</td></tr>
-            <tr><td>Bluetooth LE</td><td>Low-power personal-area links and phone-connected products.</td><td>Phone ecosystem, profiles, discovery, low-duty-cycle operation.</td><td>Connection interval, radio coexistence, pairing, privacy, variable latency.</td></tr>
+            <tr><th scope="row">I²C</th><td>Short board-level control and low-rate sensors.</td><td>Few wires, static addressing, broad device ecosystem.</td><td>Passive pull-ups, capacitance, clock stretching, stuck bus, and static-address conflicts.</td></tr>
+            <tr><th scope="row">I3C</th><td>Board-level sensors needing higher rates, a low-pin-count bus, and richer bus management.</td><td>Dynamic address assignment, in-band interrupts, and push-pull phases; selected legacy I²C targets may coexist when they satisfy the specified electrical/protocol restrictions.</td><td>Controller/target feature levels, legacy-target compatibility, mixed open-drain/push-pull timing, hot-join roles, and error recovery.</td></tr>
+            <tr><th scope="row">SPI</th><td>Short board-level sensors, converters, displays, and flash.</td><td>Simple, full-duplex, low protocol overhead, higher rates.</td><td>Chip-select count, no universal framing/error recovery, signal integrity.</td></tr>
+            <tr><th scope="row">UART</th><td>Point-to-point debug, modules, bootloaders, simple links.</td><td>Minimal hardware and easy observability.</td><td>Clock mismatch, framing, flow control, no native multi-drop contract.</td></tr>
+            <tr><th scope="row">CAN / CAN FD</th><td>Robust multi-node control networks in noisy environments.</td><td>Nondestructive arbitration, error detection, fault confinement, and identifier-based priority; lower numeric identifiers win arbitration.</td><td>Worst-case bus load, identifier design, bit timing, termination, error states, and latency under contention.</td></tr>
+            <tr><th scope="row">Ethernet</th><td>High-rate, longer-reach, routable or switched systems.</td><td>Large ecosystem, diagnostics, scale, power/data options.</td><td>Stack complexity, queues, switch delay, synchronization, security.</td></tr>
+            <tr><th scope="row">USB</th><td>Host-controlled peripherals, cameras, storage, service ports.</td><td>Standard classes, power, high bandwidth, broad hosts.</td><td>Host/device roles, enumeration, cabling, suspend, certification.</td></tr>
+            <tr><th scope="row">Bluetooth LE</th><td>Low-power personal-area links and phone-connected products.</td><td>Phone ecosystem, profiles, discovery, low-duty-cycle operation.</td><td>Connection interval, radio coexistence, pairing, privacy, variable latency.</td></tr>
           </tbody>
         </table>
       </div>
@@ -433,7 +434,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <div class="em-safety-node"><span>Decision</span><strong>Control + bounds</strong><small>state validity · command limits · deadline</small></div>
         <div class="em-safety-node"><span>Output</span><strong>Drive + observe</strong><small>command versus feedback · open/short · saturation</small></div>
         <div class="em-safety-node"><span>Outcome</span><strong>Normal or safe state</strong><small>stop · hold · isolate · degrade · alert</small></div>
-        <div class="em-supervisor"><b>Independent supervisor lane</b><span>Windowed watchdog, clock/power monitors, memory protection, heartbeat, external cutoff, and fault latch observe enough of the main path to force the defined safe outcome.</span></div>
+        <div class="em-supervisor"><b>Supervisor lane with justified independence</b><span>Windowed watchdog, clock/power monitors, memory protection, heartbeat, external cutoff, and fault latch can force the defined outcome only when power, clock, software, sensing, and actuation common-cause dependencies are analyzed and verified.</span></div>
       </div>
       <div class="em-fmea-grid">
         <article><span>Sensor stuck</span><strong>Detect</strong><p>Freshness, rate-of-change, cross-sensor comparison, stimulus/self-test.</p></article>
@@ -454,7 +455,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <li><span>MIL</span><strong>Model-in-the-loop</strong><p>Controller and plant are models.</p><small>Catches: algorithm, stability, scenario logic</small></li>
         <li><span>SIL</span><strong>Software-in-the-loop</strong><p>Production-like code against a simulated plant.</p><small>Catches: numeric, generated code, state logic</small></li>
         <li><span>PIL</span><strong>Processor-in-the-loop</strong><p>Code executes on target processor or representative core.</p><small>Catches: precision, timing, compiler, memory</small></li>
-        <li><span>HIL</span><strong>Hardware-in-the-loop</strong><p>Target electronics interact with real-time plant and I/O simulation.</p><small>Catches: buses, clocks, electrical/timing faults</small></li>
+        <li><span>HIL</span><strong>Hardware-in-the-loop</strong><p>Target electronics interact with real-time plant and I/O simulation.</p><small>Catches: modeled buses, clocks, timing, and injected electrical faults</small></li>
         <li><span>System</span><strong>Physical integration</strong><p>Real sensors, actuators, mechanics, environment, and users.</p><small>Catches: interfaces + emergent behavior</small></li>
         <li><span>Field</span><strong>Operational evidence</strong><p>Controlled rollout, telemetry, service diagnostics, and feedback.</p><small>Catches: diversity, aging, misuse, rare combinations</small></li>
       </ol>
@@ -467,9 +468,80 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
       <div class="memory-strip"><b>Verification asks</b><span>Did we build it to the requirements?</span><i>→</i><b>Validation asks</b><span>Does it solve the real operational need?</span></div>
     </section>
 
+    <section class="section deep-dive-section" id="timing-workbench">
+      <div class="section-heading">
+        <p class="eyebrow">09 · Timing and reliability workbench</p>
+        <h2>Prove value, time, ownership, and recovery</h2>
+        <p>Averages are useful for sizing, but real-time correctness depends on worst credible interference, blocking, transitions, and fault behavior. Keep the task model and hardware assumptions beside every schedulability claim.</p>
+      </div>
+
+      <div class="reasoning-workbench">
+        <article class="workbench-main">
+          <span>Worked example · single-core control lane</span>
+          <h3>Build the task model before choosing priorities</h3>
+          <p>Illustrative measured WCET values: sensor capture 80 μs every 1 ms, estimator 350 μs every 5 ms, control update 250 μs every 5 ms, and communications service 800 μs every 20 ms.</p>
+          <ol class="evidence-chain">
+            <li><div><b>Compute a screening load</b><span>Utilizations are 0.08 + 0.07 + 0.05 + 0.04 = 0.24. That is encouraging capacity evidence, but not a schedulability proof.</span></div></li>
+            <li><div><b>Add missing interference</b><span>Measure ISR execution and arrival bursts; include critical sections, DMA completion work, cache or flash stalls, release jitter, context switches, bus arbitration, and non-preemptive regions.</span></div></li>
+            <li><div><b>Analyze each deadline</b><span>Assign priorities from the chosen policy, iterate fixed-priority response time under its assumptions, and check every task—not only total utilization—against its relative deadline.</span></div></li>
+            <li><div><b>Size ownership queues</b><span>Bound the backlog accumulated while a consumer is unavailable; define free, DMA-owned, ready, processing, and returning states so timeout/reset cannot create aliasing or reuse a live buffer.</span></div></li>
+            <li><div><b>Measure on the target</b><span>Trace release-to-completion latency and jitter at voltage, temperature, clock, memory, and bus corners. Inject overrun and missed-completion faults; confirm the stated degraded or safe behavior.</span></div></li>
+          </ol>
+        </article>
+
+        <aside class="formula-board">
+          <span>Analysis anchors</span>
+          <h3>Use the formula that matches the model</h3>
+          <div class="formula-stack">
+            <div class="formula-line"><b>Periodic utilization screen</b><code>U = Σ(Cᵢ ÷ Tᵢ)</code><small>Useful for first-pass capacity. It does not by itself include deadlines, priorities, blocking, jitter, ISR work, or multiprocessor effects.</small></div>
+            <div class="formula-line"><b>Jitter-aware fixed-priority response</b><code>wᵢ⁽ᵏ⁺¹⁾ = Cᵢ + Bᵢ + Σⱼ∈hp(i) ceil((wᵢ⁽ᵏ⁾ + Jⱼ) ÷ Tⱼ) Cⱼ</code><small>A common single-core fixed-priority model in which higher-priority release jitter enters interference. Add the task’s own jitter only when the measured boundary begins at arrival rather than release, and extend the model to match shared resources, scheduler policy, sporadic interference, and implementation overhead.</small></div>
+            <div class="formula-line"><b>Buffer backlog estimate</b><code>arrivals during worst consumer gap + burst/retry margin</code><small>Validate with arrival and service traces. A large buffer delays overflow; it does not repair an unstable average producer/consumer rate.</small></div>
+            <div class="formula-line"><b>Daily load energy</b><code>E_load = Σ(P_state,load × residency) + Σ(E_transition,load × count)</code><small>Convert once to battery-terminal demand or measure there directly. Then derate usable capacity separately for temperature, aging, self-discharge, depth of discharge, cell variation, and product reserve.</small></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Real-time task evidence ledger" tabindex="0">
+        <table class="detail-table">
+          <caption>A response-time claim is only as good as its task model. Record the assumptions beside the result so a later software or hardware change can invalidate it visibly.</caption>
+          <thead><tr><th scope="col">Model field</th><th scope="col">What to record</th><th scope="col">Common miss</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Release</th><td>Periodic/sporadic source, minimum inter-arrival time, burst limit, phase, release jitter, and mode.</td><td>Using average sensor or network rate when arrivals can burst.</td><td>Timestamped arrival traces plus a justified bound for unobserved corners.</td></tr>
+            <tr><th scope="row">Execution</th><td>WCET or conservative bound by path, cache/flash state, voltage/frequency, compiler, inputs, and instrumentation overhead.</td><td>Treating a benchmark mean or isolated hot-cache run as WCET.</td><td>Static analysis where applicable, target measurements at corners, and code/configuration identity.</td></tr>
+            <tr><th scope="row">Interference</th><td>Higher-priority tasks, ISRs, non-preemptive sections, DMA completion work, bus/memory contention, and multicore effects.</td><td>Counting only RTOS tasks while drivers and shared hardware steal service.</td><td>Response-time analysis matched to the scheduler and measured contention tests.</td></tr>
+            <tr><th scope="row">Blocking</th><td>Mutex/resource protocol, maximum critical section, priority inversion control, and lower-priority non-preemptive work.</td><td>Assuming high priority means “never waits.”</td><td>Lock/critical-section traces, ceiling/inheritance configuration, and worst-holder injection.</td></tr>
+            <tr><th scope="row">Acceptance</th><td>Relative deadline, end-to-end chain deadline, allowed misses, safe/degraded response, and measurement points.</td><td>Proving each task separately while the sensor-to-actuator chain still misses.</td><td>Target trace from physical event through actuation and recovery at operating corners.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Embedded transition and recovery contract" tabindex="0">
+        <table class="detail-table">
+          <caption>Transitions deserve the same rigor as steady states. Define entry guard, authority, timeout, cleanup, output validity, and proof for every edge.</caption>
+          <thead><tr><th scope="col">Transition fault</th><th scope="col">Required behavior</th><th scope="col">What can remain ambiguous</th><th scope="col">Test</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">DMA timeout during capture</th><td>Stop or drain the peripheral, invalidate the buffer, revoke ownership, clear status in the documented order, and rearm or reset the smallest safe scope.</td><td>A late write or completion can corrupt a buffer already recycled to another task.</td><td>Delay/drop completion and inject bus faults at every descriptor boundary.</td></tr>
+            <tr><th scope="row">Brownout during flash write</th><td>Hold outputs safe, protect boot metadata, detect incomplete records, and recover the last committed state.</td><td>Torn data may look structurally valid without CRC/version/commit markers.</td><td>Sweep power removal across each program/erase and metadata update phase.</td></tr>
+            <tr><th scope="row">Wake dependency fails</th><td>Bound each rail/clock/device wait, clean up partially enabled domains, log the failing dependency, and enter a defined low-power or service state.</td><td>One powered device may back-power another or leave the bus stuck.</td><td>Stuck-ready, missing clock, false wake, repeated wake, and power-sequence injection.</td></tr>
+            <tr><th scope="row">Watchdog reset loop</th><td>Persist bounded reset history, prevent unsafe output replay, escalate after the retry budget, and expose a diagnosable latched state.</td><td>A reset can repeatedly recreate the hazardous condition before monitoring is ready.</td><td>Hang each supervised layer, corrupt progress signals, and fail the recovery itself.</td></tr>
+            <tr><th scope="row">Update interrupted or incompatible</th><td>Authenticate, enforce version policy, select a bootable compatible image, confirm health before commitment, and retain recovery access.</td><td>Firmware, configuration, calibration, secure storage, and rollback counters can disagree.</td><td>Power-cut matrix across download/install/boot/confirm plus forward/backward compatibility tests.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="workbench-grid">
+        <article class="workbench-card"><span>Sampling</span><h3>Protect the signal contract</h3><p>State bandwidth, sample rate, aperture/jitter, synchronization, anti-alias filtering, quantization, calibration, stale-data timeout, timestamp source, and what the controller does when confidence is lost.</p></article>
+        <article class="workbench-card"><span>Concurrency</span><h3>Make ownership explicit</h3><p>Use bounded queues and immutable descriptors; define who may read, write, cancel, recycle, or reset a buffer. Pair data publication with the memory ordering required by the CPU and device.</p></article>
+        <article class="workbench-card"><span>Recovery</span><h3>Layer watchdogs deliberately</h3><p>Monitor progress, not merely task liveness. Use an independent clock or external supervisor when the hazard requires it; log reset cause and prevent reset loops from repeatedly driving unsafe outputs.</p></article>
+        <article class="workbench-card"><span>Evidence</span><h3>Test timing faults in context</h3><p>Combine MIL/SIL/PIL/HIL with bus delay, clock drift, corrupt samples, brownout, partial update, stuck actuator, thermal throttling, and repeated recovery. Preserve seeds, traces, versions, and acceptance limits.</p></article>
+      </div>
+
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1145/321738.321743">Liu–Layland scheduling ↗</a><a href="https://doi.org/10.1093/comjnl/29.5.390">Joseph–Pandya response time ↗</a><a href="https://doi.org/10.1007/BF01088593">Jitter-aware response time ↗</a><a href="https://docs.zephyrproject.org/latest/kernel/services/scheduling/index.html">Zephyr scheduling ↗</a><a href="https://docs.zephyrproject.org/latest/services/pm/index.html">Zephyr power management ↗</a><a href="https://freertos.org/Documentation/02-Kernel/02-Kernel-features/01-Tasks-and-co-routines/04-Task-scheduling">FreeRTOS scheduling ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA ownership ↗</a><a href="https://www.mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator_v1-0p.pdf">MIPI I3C integration ↗</a><a href="https://docs.mcuboot.com/design.html">MCUboot image + recovery design ↗</a><a href="https://docs.kernel.org/watchdog/watchdog-api.html">Linux watchdog contract ↗</a></div>
+    </section>
+
     <section class="section" id="practice">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">09 · Embedded interview practice</p>
+        <p class="eyebrow">10 · Embedded interview practice</p>
         <h2>Design a battery smart camera</h2>
         <p>Commit to requirements, an energy budget, task timing, states, and failure behavior before revealing the coaching notes.</p>
       </div>
@@ -488,10 +560,10 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
       </ol>
       <ol class="em-case-checkpoints">
         <li><header><span>00–07 min</span><strong>Clarify mission and privacy</strong></header><p>Ask about detection classes, missed/false event cost, clip length, image quality, night operation, connectivity, local retention, response, tamper, and user controls.</p><details><summary>Reveal coaching notes</summary><div>Define “six months” with event and temperature assumptions. Separate wake detection from confirmed event recording. Ask what images may leave the device and what the product does when storage, battery, or connectivity is constrained.</div></details></li>
-        <li><header><span>07–15 min</span><strong>Create the energy budget</strong></header><p>Convert 8 Wh over 180 days into a daily and average-power envelope. Allocate sleep, wakes, confirmed captures, uploads, conversion loss, temperature, and aging.</p><details><summary>Reveal coaching notes</summary><div>The envelope is about 44.4 mWh/day, or 1.85 mW average before margin. Keep the always-on lane far below that. Budget energy per wake and per upload, not just active watts; reduce false wakes because their count multiplies every active cost.</div></details></li>
+        <li><header><span>07–15 min</span><strong>Create the energy budget</strong></header><p>Convert 8 Wh over 180 days into a daily and average-power envelope. Budget load-side sleep, wakes, confirmed captures, and uploads; convert once to the battery boundary and derate usable capacity for temperature and aging.</p><details><summary>Reveal coaching notes</summary><div>The nameplate envelope is about 44.4 mWh/day, or 1.85 mW average before conversion and capacity derating. Keep the always-on lane far below that. Budget energy per wake and per upload, not just active watts; reduce false wakes because their count multiplies every active cost.</div></details></li>
         <li><header><span>15–25 min</span><strong>Partition hardware and tasks</strong></header><p>Choose wake sensing, MCU/RTOS, image/ISP path, accelerator, memory, storage, radios, security element, and power domains.</p><details><summary>Reveal coaching notes</summary><div>Keep a tiny always-on controller or wake sensor. Power the main image/AI/radio islands only when needed. Use DMA for frames, fixed function for ISP, an accelerator for supported inference, and software for policy and recovery. Avoid waking Wi-Fi for rejected events.</div></details></li>
         <li><header><span>25–33 min</span><strong>Schedule the event path</strong></header><p>Trace wake interrupt, rail/clock sequencing, sensor readiness, capture DMA, inference deadline, storage, radio association, upload, and return to sleep.</p><details><summary>Reveal coaching notes</summary><div>Assign deadlines to stages and reserve buffers before enabling capture. Keep ISR work to acknowledge/timestamp/defer. Bound every wait with a timeout and make cancellation safe if battery, thermal, or privacy policy changes mid-event.</div></details></li>
-        <li><header><span>33–40 min</span><strong>Design modes and failures</strong></header><p>Cover shipping, setup, armed, capture, upload, offline, low battery, update, degraded, over-temperature, tamper, and recovery.</p><details><summary>Reveal coaching notes</summary><div>Store clips locally with a retention and wear policy when offline; upload later under an energy/data budget. Use signed A/B images, rollback, monotonic version policy, unique device identity, encrypted storage, protected keys, and explicit factory reset.</div></details></li>
+        <li><header><span>33–40 min</span><strong>Design modes and failures</strong></header><p>Cover shipping, setup, armed, capture, upload, offline, low battery, update, degraded, over-temperature, tamper, and recovery.</p><details><summary>Reveal coaching notes</summary><div>Store clips locally with a retention and wear policy when offline; upload later under an energy/data budget. Use signed A/B images with anti-rollback policy, old/new schema and bootloader compatibility, post-boot confirmation, bounded retry, a recovery image/path, unique device identity, encrypted storage, protected keys, and explicit factory reset.</div></details></li>
         <li><header><span>40–45 min</span><strong>Verify and close</strong></header><p>Name tests for energy, timing, accuracy, transitions, radio loss, corrupt storage, brownout, temperature, update interruption, and privacy behavior.</p><details><summary>Reveal coaching notes</summary><div>Automate event-cycle energy integration across temperature and battery state. Replay labeled scenes for detection quality, inject failures during every transition, HIL-test the power and sensor interfaces, then run accelerated long-duration and controlled field trials.</div></details></li>
       </ol>
       <div class="em-pressure-grid">
@@ -505,7 +577,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
 
     <section class="section" id="resources">
       <div class="section-heading">
-        <p class="eyebrow">10 · Primary references</p>
+        <p class="eyebrow">11 · Primary references</p>
         <h2>Ground the design in implementation contracts</h2>
         <p>Read the exact silicon, RTOS, protocol, and safety requirements for the product. These references provide durable starting points.</p>
       </div>
@@ -516,6 +588,10 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <article><span>MCU interfaces</span><strong>Arm CMSIS 6</strong><p>Common processor, driver, RTOS, DSP, and neural-network software interfaces for Cortex-based systems.</p><a href="https://arm-software.github.io/CMSIS_6/latest/General/index.html">CMSIS documentation ↗</a></article>
         <article><span>Product realization</span><strong>NASA Systems Engineering Handbook</strong><p>Verification methods, validation, integration, transition, evidence, and requirement closure in complete systems.</p><a href="https://www.nasa.gov/reference/5-0-product-realization/">NASA product realization ↗</a></article>
         <article><span>Power management</span><strong>Zephyr power management</strong><p>System and device power states, policies, residency, wake latency, and runtime device power concepts.</p><a href="https://docs.zephyrproject.org/latest/services/pm/index.html">Zephyr documentation ↗</a></article>
+        <article><span>Foundational scheduling</span><strong>Liu and Layland</strong><p>The classic single-processor periodic-task model, rate-monotonic priority assignment, utilization bound, and earliest-deadline-first result—with assumptions that must be stated.</p><a href="https://doi.org/10.1145/321738.321743">Read via ACM DOI ↗</a></article>
+        <article><span>RTOS behavior</span><strong>Zephyr Scheduling</strong><p>Official details for cooperative and preemptive threads, static priorities, time slicing, scheduler locks, deadlines, and power-management interaction.</p><a href="https://docs.zephyrproject.org/latest/kernel/services/scheduling/index.html">Zephyr documentation ↗</a></article>
+        <article><span>Sensor bus</span><strong>MIPI I3C System Integrator Guide</strong><p>Dynamic address assignment, in-band interrupts, mixed I²C/I3C operation, arbitration, roles, and integration responsibilities.</p><a href="https://www.mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator_v1-0p.pdf">MIPI application note ↗</a></article>
+        <article><span>Recovery</span><strong>Linux Watchdog API</strong><p>A concrete reference for timeouts, pretimeouts, boot status, nowayout behavior, and the limits of assuming every watchdog implementation behaves identically.</p><a href="https://docs.kernel.org/watchdog/watchdog-api.html">Kernel documentation ↗</a></article>
       </div>
       <div class="em-track-grid" role="group" aria-label="All System Design Atlas tracks">
         <a href="backend.html"><span>Backend</span><strong>Distributed software</strong><small>APIs, data, caching, queues, reliability.</small></a>

@@ -6,8 +6,8 @@
   <meta name="description" content="A visual field guide to designing the compiler, runtime, firmware, and calibration loop for a hybrid digital and analog compute-in-memory NPU.">
   <meta name="theme-color" content="#07111f">
   <title>NPU + ACiM Software Stack · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717b">
-  <script src="app.js?v=20260717b" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717d">
+  <script src="app.js?v=20260717d" defer></script>
   <style>
     .acim-hero h1 span {
       background-image: linear-gradient(110deg, var(--green), var(--cyan), var(--violet));
@@ -184,7 +184,7 @@
     .acim-runtime-flow article:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.72rem; z-index: 2; color: var(--cyan); transform: translate(50%, -50%); }
     .acim-runtime-flow span { color: var(--amber); font: 800 .62rem ui-monospace, monospace; }
     .acim-runtime-flow strong { display: block; margin: .55rem 0; font-size: .86rem; }
-    .acim-runtime-flow p { margin: 0; color: var(--muted); font-size: .7rem; }
+    .acim-runtime-flow p { margin: 0; color: var(--muted); font-size: .8rem; }
 
     .acim-control-loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.25rem; }
     .acim-control-loop article { position: relative; min-height: 190px; padding: 1rem; border: 1px solid var(--line); border-radius: 50% 50% .75rem .75rem / 16% 16% .75rem .75rem; background: var(--surface); }
@@ -200,12 +200,13 @@
 
     .acim-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); }
     .acim-table { width: 100%; min-width: 900px; border-collapse: collapse; }
+    .acim-table caption { padding: 1rem; color: var(--muted); font-size: .82rem; line-height: 1.5; text-align: left; }
     .acim-table th, .acim-table td { padding: .9rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-    .acim-table th { background: var(--surface-2); color: var(--amber); font: 800 .66rem ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; }
+    .acim-table thead th { background: var(--surface-2); color: var(--amber); font: 800 .76rem ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; }
+    .acim-table tbody th { background: transparent; color: var(--text); font-size: .8rem; font-weight: 800; }
     .acim-table td { color: var(--muted); font-size: .76rem; line-height: 1.45; }
-    .acim-table td:first-child { color: var(--text); font-weight: 800; }
     .acim-table td:nth-child(4) { color: var(--green); }
-    .acim-table tr:last-child td { border-bottom: 0; }
+    .acim-table tr:last-child th, .acim-table tr:last-child td { border-bottom: 0; }
 
     .acim-interview-brief { padding: clamp(1.2rem, 3vw, 2rem); display: grid; grid-template-columns: 1.35fr .65fr; gap: 2rem; align-items: start; border: 1px solid color-mix(in srgb, var(--cyan) 42%, var(--line)); border-radius: 1rem; background: radial-gradient(circle at 92% 12%, rgba(182,156,255,.13), transparent 15rem), var(--surface); }
     .acim-interview-brief > div > span { color: var(--amber); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
@@ -254,15 +255,15 @@
 
     @media (max-width: 1050px) {
       .acim-hybrid-flow { grid-template-columns: repeat(2, 1fr); }
-      .acim-hybrid-node:nth-child(2)::after { content: "↓"; top: auto; right: auto; bottom: -.95rem; left: 50%; transform: translate(-50%, 50%); }
       .acim-decision-flow { grid-template-columns: repeat(3, 1fr); }
-      .acim-decision-flow > li:nth-child(3)::after { content: "↓"; top: auto; right: auto; bottom: -.95rem; left: 50%; transform: translate(-50%, 50%); }
       .acim-runtime-flow { grid-template-columns: repeat(4, 1fr); }
-      .acim-runtime-flow article:nth-child(4)::after { content: "↓"; top: auto; right: auto; bottom: -.72rem; left: 50%; transform: translate(-50%, 50%); }
       .acim-control-loop { grid-template-columns: repeat(3, 1fr); }
-      .acim-control-loop article:nth-child(3)::after { content: "↓"; top: auto; right: auto; bottom: -.9rem; left: 50%; transform: translate(-50%, 50%); }
       .acim-artifacts { grid-template-columns: repeat(2, 1fr); }
       .acim-scorecard { grid-template-columns: repeat(3, 1fr); }
+      .acim-hybrid-node::after,
+      .acim-decision-flow > li::after,
+      .acim-runtime-flow article::after,
+      .acim-control-loop article::after { display: none; }
     }
 
     @media (max-width: 760px) {
@@ -287,6 +288,7 @@
       .acim-decision-flow > li:not(:last-child)::after,
       .acim-runtime-flow article:not(:last-child)::after,
       .acim-control-loop article:not(:last-child)::after {
+        display: block;
         content: "↓";
         top: auto;
         right: auto;
@@ -294,18 +296,16 @@
         left: 50%;
         transform: translate(-50%, 50%);
       }
-      .acim-control-loop article:last-child::after { content: "↺"; }
+      .acim-control-loop article:last-child::after { display: block; content: "↺"; }
       .acim-range-flow { grid-template-columns: 1fr; }
       .acim-range-flow div:not(:last-child)::after { content: "↓"; right: auto; bottom: -.55rem; left: 50%; transform: translate(-50%, 50%); }
-      .acim-interview-flow { grid-template-columns: repeat(2, 1fr); }
-      .acim-interview-flow div:nth-child(2)::after,
-      .acim-interview-flow div:nth-child(4)::after { content: "↓"; right: auto; bottom: -.7rem; left: 50%; transform: translate(-50%, 50%); }
+      .acim-interview-flow { grid-template-columns: 1fr; }
+      .acim-interview-flow div:not(:last-child)::after { content: "↓"; right: auto; bottom: -.7rem; left: 50%; transform: translate(-50%, 50%); }
     }
 
     @media (max-width: 520px) {
       .acim-chip-grid,
-      .acim-engine-pair,
-      .acim-interview-flow { grid-template-columns: 1fr; }
+      .acim-engine-pair { grid-template-columns: 1fr; }
       .acim-tile-map { grid-template-columns: 1fr; }
       .acim-tile-map > b { text-align: center; transform: rotate(90deg); }
       .acim-bit-slices { flex-wrap: wrap; }
@@ -353,13 +353,13 @@
       </div>
 
       <section class="acim-hero-panel" aria-label="Hybrid NPU architecture preview">
-        <div class="acim-chip-title"><span>Hybrid edge NPU</span><small>control + deterministic digital + efficient analog</small></div>
+        <div class="acim-chip-title"><span>Hybrid edge NPU</span><small>control + higher-precision/reproducible digital paths + efficient analog</small></div>
         <div class="acim-chip-grid">
-          <article><span>Host</span><strong>CPU</strong><small>Model lifecycle, control flow, unsupported operators</small></article>
+          <article><span>Host</span><strong>CPU</strong><small>Model lifecycle, control flow, orchestration, recovery</small></article>
           <article><span>Fabric</span><strong>DMA + NoC + SRAM</strong><small>Move and reuse activations without starving engines</small></article>
-          <article><span>Deterministic path</span><strong>Digital vector cores</strong><small>Nonlinear, reduction, control, fallback</small></article>
+          <article><span>Digital path</span><strong>Digital vector cores</strong><small>Nonlinear, reduction, fallback, and reproducible execution when the implementation guarantees it</small></article>
           <article><span>Analog path</span><strong>ACiM tiles</strong><small>Weight-stationary matrix-vector multiply</small></article>
-          <article class="acim-chip-wide"><span>Periphery</span><strong>DAC → crossbar → ADC → digital accumulation</strong><small>Conversion range, precision, noise, and data movement decide the real benefit</small></article>
+          <article class="acim-chip-wide"><span>Periphery</span><strong>Input encoding / DAC → compute array → sensing / ADC → digital accumulation</strong><small>The exact physical path is technology-specific; conversion, precision, noise, and movement decide the real benefit</small></article>
         </div>
         <div class="acim-chip-note"><b>Design rule:</b> accelerate the end-to-end layer, not an isolated analog MAC.</div>
       </section>
@@ -369,17 +369,32 @@
       <div class="section-heading">
         <p class="eyebrow">01 · System boundary</p>
         <h2>Give each engine the work it handles best</h2>
-        <p>An ACiM tile is one execution resource inside a heterogeneous system. The software stack must coordinate control, transfers, deterministic or higher-precision digital work, analog computation, and recovery.</p>
+        <p>An ACiM tile is one execution resource inside a heterogeneous system. The software stack must coordinate control, transfers, higher-precision or reproducible digital work when required, analog computation, and recovery.</p>
       </div>
 
       <div class="acim-callout"><b>Technology scope</b><span>The detailed conductance programming, drift, and endurance path below assumes a nonvolatile resistive or phase-change crossbar. SRAM or charge-domain ACiM uses the same partitioning and mapping ideas, but loads volatile weights and emphasizes PVT, parasitics, mismatch, noise, compute linearity, and converter calibration instead.</span></div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Resistive and SRAM analog compute in memory comparison" tabindex="0">
+        <table class="detail-table">
+          <caption>Resistive and SRAM/charge-domain ACiM can share graph partitioning, tiling, scheduling, and fallback passes—but not one device lifecycle.</caption>
+          <thead><tr><th scope="col">Concern</th><th scope="col">Resistive / PCM / RRAM ACiM</th><th scope="col">SRAM / charge-domain ACiM</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Weight state</th><td>Nonvolatile conductance, usually programmed and verified against a target distribution.</td><td>Volatile SRAM state loaded after boot, wake, eviction, or model switch; charge/voltage/current behavior performs computation.</td></tr>
+            <tr><th scope="row">Main error sources</th><td>Programming/read error, drift, endurance, stuck devices, line resistance/IR drop, and converter/periphery limits.</td><td>PVT variation, mismatch, parasitics, gain/offset, linearity, reference and converter error, retention/residency integrity.</td></tr>
+            <tr><th scope="row">Profile data</th><td>Weight-to-conductance map, program/read distributions, drift time origin/model, fault state, verify history, and endurance policy.</td><td>Per-macro/lane gain, offset, nonlinearity, valid PVT corners, weight-image identity/checksum, and disabled resources.</td></tr>
+            <tr><th scope="row">Recovery</th><td>Bounded re-pulse/readback, remap, quarantine, recalibrate, recompile, or digital fallback.</td><td>Reload weights, recalibrate, disable a macro/lane, remap/recompile, or digital fallback.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="evidence-note"><b>Schema rule:</b> keep technology-specific data in tagged variants. Do not require conductance, drift, or endurance fields in a generic ACiM profile, and do not apply the resistive equation <code>Iⱼ ≈ Σᵢ VᵢGᵢⱼ</code> to a charge-domain SRAM macro.</p>
+      <div class="reference-trail"><strong>Device evidence</strong><a href="https://www.nature.com/articles/s41467-020-16108-9">Computational PCM inference ↗</a><a href="https://doi.org/10.1109/JSSC.2022.3232601">Charge-domain SRAM ACiM ↗</a></div>
 
       <div class="acim-hybrid-flow" role="group" aria-label="Hybrid CPU digital NPU and ACiM execution architecture">
         <article class="acim-hybrid-node">
           <span>Control plane</span>
           <h3>Host CPU</h3>
-          <p>Loads model bundles, selects profiles, submits work, and handles dynamic or unsupported operations.</p>
-          <ul><li>Application API</li><li>Model lifecycle</li><li>Fallback and recovery</li></ul>
+          <p>Loads model bundles, selects profiles, submits work, and orchestrates dynamic or unsupported regions; a digital vector NPU may execute fallback subgraphs rather than the CPU itself.</p>
+          <ul><li>Application API</li><li>Model lifecycle</li><li>Fallback orchestration + recovery</li></ul>
         </article>
         <article class="acim-hybrid-node">
           <span>Data plane</span>
@@ -392,7 +407,7 @@
           <h3>Hybrid NPU</h3>
           <p>Uses a costed partition rather than sending every nominal matrix operation to analog.</p>
           <div class="acim-engine-pair">
-            <div><b>Digital engine</b><small>Activation, pooling, reduction, control, deterministic fallback math</small></div>
+            <div><b>Digital engine</b><small>Activation, pooling, reduction, and higher-precision/reproducible fallback when specified</small></div>
             <div><b>ACiM engine</b><small>Dense or convolutional matrix-vector kernels with reusable weights</small></div>
           </div>
         </article>
@@ -420,7 +435,7 @@
           <li><span class="acim-stack-number">03</span><strong>Legalization and fusion</strong><p>Rewrite unsupported forms, fold constants, canonicalize convolution/GEMM, fuse activation or bias where legal, and expose boundaries where analog-to-digital transfers would erase the gain.</p></li>
           <li><span class="acim-stack-number">04</span><strong>Analog-aware optimization</strong><p>Choose weight/activation precision, scaling and clipping; run quantization-aware or noise-aware training; model device variation, drift, nonlinearity, saturation, and finite ADC resolution.</p></li>
           <li><span class="acim-stack-number">05</span><strong>ACiM versus digital partition</strong><p>Use capability, accuracy, latency, energy, conversion, transfer, and fallback costs. Keep irregular, higher-precision, small, or poorly utilized work on CPU/digital engines.</p></li>
-          <li><span class="acim-stack-number">06</span><strong>Tensor mapping and placement</strong><p>Tile matrices to physical arrays; bit-slice precision; encode signed weights; place tiles around faults and bandwidth; route partial sums; assign ADC/DAC ranges and digital accumulation widths.</p></li>
+          <li><span class="acim-stack-number">06</span><strong>Tensor mapping and placement</strong><p>Tile matrices to physical arrays; bit-slice precision; encode signed weights; place tiles around faults and bandwidth; route partial sums; choose tensor quantization scales separately from physical input-drive and ADC reference/full-scale settings; size digital accumulation widths.</p></li>
           <li><span class="acim-stack-number">07</span><strong>Memory planning and scheduling</strong><p>Allocate activation SRAM, arrange DMA, double-buffer stages, overlap CPU/digital/ACiM work, preserve dependencies, enforce thermal/power limits, and prevent the converters from becoming the serialized path.</p></li>
           <li><span class="acim-stack-number">08</span><strong>Code generation and model bundle</strong><p>Emit command buffers, microcode, DMA descriptors, barriers, weight-loading or programming payloads, fallback code, relocation data, calibration-profile IDs, and trace metadata.</p></li>
           <li><span class="acim-stack-number">09</span><strong>Runtime, driver, firmware, and hardware</strong><p>Load and authenticate bundles, load weights or program-and-verify target cells, submit queues, handle interrupts and faults, apply calibration, collect counters, reset safely, and feed measured behavior back to the toolchain.</p></li>
@@ -439,6 +454,21 @@
           </ol>
         </aside>
       </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="ACiM intermediate representation levels and proof obligations" tabindex="0">
+        <table class="detail-table">
+          <caption>Four IR levels, four proof obligations: lowering is not merely changing syntax. Each IR preserves earlier promises while making one new class of decisions explicit.</caption>
+          <thead><tr><th scope="col">IR level</th><th scope="col">Makes explicit</th><th scope="col">Required proof before lowering</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Model IR · semantic</th><td>Operators, tensors, shapes, layouts, control flow, opset/version, source metadata.</td><td>Imported semantics, shapes, types, attributes, and version conversions are valid.</td></tr>
+            <tr><th scope="row">Quantized IR · numeric</th><td>Storage and expressed types, scale, zero point, clipping, rounding, overflow, per-tensor/per-channel rules.</td><td>Dequantized behavior and task metric remain inside the allocated numeric/accuracy budget.</td></tr>
+            <tr><th scope="row">Device IR · spatial</th><td>Engine partition, tile coordinates, bit slices, physical ranges, profile constraints, buffers/lifetimes, transfers, events, fallback.</td><td>Every operation, mapping, dependency, resource, and profile requirement is legal for the selected capability manifest.</td></tr>
+            <tr><th scope="row">Command IR · executable</th><td>DMA descriptors, loads/programming, dispatches, barriers, relocations, completion/error records, recovery points.</td><td>Buffer bounds, dependency closure, ABI compatibility, reset generation, and replay behavior are verified.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="evidence-note"><b>Compiler invariant:</b> every lowering pass must prove legality, materialize an explicit conversion/fallback, or fail compilation. It must never silently change layout, clipping, rounding, overflow, or synchronization behavior.</p>
+      <div class="reference-trail"><strong>Compiler trail</strong><a href="https://onnx.ai/onnx/repo-docs/IR.html">ONNX IR ↗</a><a href="https://mlir.llvm.org/docs/DialectConversion/">MLIR dialect conversion ↗</a><a href="https://mlir.llvm.org/docs/Dialects/QuantDialect/">MLIR Quant dialect ↗</a><a href="https://iree.dev/reference/mlir-dialects/Stream/">IREE Stream dialect ↗</a></div>
     </section>
 
     <section class="section" id="decision">
@@ -476,10 +506,10 @@
           <span>Array-aware tiling</span>
           <h3>Split dimensions that do not fit</h3>
           <p>This guide assumes input channels drive rows and column currents encode outputs; some arrays transpose that convention. Split the input dimension into digitally accumulated partial sums and the output dimension into independent result slices.</p>
-          <div class="acim-tile-map" role="group" aria-label="Logical matrix split across four crossbar tiles">
+          <div class="acim-tile-map" role="group" aria-label="Logical matrix split across four compute-array tiles">
             <div class="acim-matrix" role="img" aria-label="Logical weight matrix divided into a four by four grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
             <b aria-hidden="true">→</b>
-            <div class="acim-tiles"><i>Tile 0<br>rows 0–R</i><i>Tile 1<br>cols C–2C</i><i>Tile 2<br>rows R–2R</i><i>Tile 3<br>partial sum</i></div>
+            <div class="acim-tiles"><i>(K0, M0)<br>input block 0 · output block 0</i><i>(K0, M1)<br>input block 0 · output block 1</i><i>(K1, M0)<br>input block 1 · output block 0</i><i>(K1, M1)<br>input block 1 · output block 1</i></div>
           </div>
         </article>
 
@@ -496,8 +526,8 @@
         <article class="acim-mapping-card">
           <span>Analog range</span>
           <h3>Use the converters’ useful window</h3>
-          <p>Choose per-tensor scales—or per-channel scales when the target and compiler support them—that limit clipping without wasting ADC levels on unused range.</p>
-          <div class="acim-range-flow" role="group" aria-label="DAC crossbar and ADC range flow"><div>Quantized activation</div><div>DAC code + pulse</div><div>Crossbar current sum</div><div>ADC range + code</div><div>Scale + accumulate</div></div>
+          <p>Tensor quantization scales map stored integers to expressed values. Physical drive and ADC reference/full-scale settings map device signals to codes. Calibration connects these separate contracts; it does not make them the same knob.</p>
+          <div class="acim-range-flow" role="group" aria-label="Input encoding compute array sensing and accumulation flow"><div>Quantized activation + tensor scale</div><div>Input encoding / DAC setting</div><div>Technology-specific array response</div><div>Sensing / ADC setting + code</div><div>Dequantize + accumulate</div></div>
           <div class="acim-callout"><b>Watch</b><span>Saturation, low signal-to-noise ratio, periphery energy, calibration mismatch, and range changes across batches.</span></div>
         </article>
 
@@ -520,17 +550,29 @@
       <div class="section-heading">
         <p class="eyebrow">05 · Hardware/software contract</p>
         <h2>Make every boundary a versioned artifact</h2>
-        <p>A production stack is debuggable when the compiler, runtime, firmware, and silicon agree on explicit formats rather than hidden assumptions.</p>
+        <p>A production stack is debuggable when the compiler, runtime, firmware, and silicon agree on explicit formats rather than hidden assumptions. The names and sample filenames below are illustrative Atlas design proposals, not ONNX, MLIR, IREE, or PJRT standards.</p>
       </div>
 
       <div class="acim-artifacts">
-        <article><span>Compiler input</span><h3>Capability manifest</h3><p>Operator/data-type support, array geometry, tile topology, SRAM banks, DMA alignment, converter modes, accumulator widths, command limits, and cost tables.</p><code>target_v3.capabilities.json</code></article>
+        <article><span>Compiler input · illustrative</span><h3>Capability manifest</h3><p>Legal operator forms, shapes/layouts/alignments, precision and signed encoding, array geometry, topology, SRAM/DMA/coherency, converter/accumulator limits, queues/reset/power states, ABI range, errata, and versioned cost tables.</p><code>target_v3.capabilities.json</code></article>
         <article><span>Compiler middle</span><h3>Multi-level IR</h3><p>Graph IR preserves model meaning; device IR records partitions, tiles, buffers, synchronization, analog attributes, and digital fallback.</p><code>graph → quantized → scheduled → command IR</code></article>
-        <article><span>Compiler output</span><h3>Signed model bundle</h3><p>Commands, weights, relocations, buffer plan, calibration references, compatibility range, debug map, golden outputs, and security metadata.</p><code>model.acim.bundle</code></article>
-        <article><span>Device state</span><h3>Calibration profile</h3><p>Tile/cell corrections, converter offsets/gains, operating range, temperature band, fault mask, timestamp, firmware version, and confidence.</p><code>{device, tile, temp, age, firmware}</code></article>
-        <article><span>Runtime input</span><h3>Execution request</h3><p>Model/profile ID, tensor descriptors, deadlines, priority, power mode, determinism level, fallback policy, and trace correlation ID.</p><code>enqueue(context, tensors, deadline)</code></article>
+        <article><span>Compiler output · illustrative</span><h3>Signed model bundle</h3><p>Commands, weights, relocations, buffer plan, profile requirements, compatibility range, fallback entry points, debug map, golden outputs, and security metadata.</p><code>model.acim.bundle</code></article>
+        <article><span>Device state · target-specific</span><h3>Calibration profile</h3><p>Target/stepping/ABI identity, method and provenance, validity domain, uncertainty/confidence, fault/spare state, and corrections at a practical macro/tile/row/column/converter—or selected-cell—granularity.</p><code>{target, health generation, PVT, age}</code></article>
+        <article><span>Runtime input · illustrative</span><h3>Execution request</h3><p>Bundle/profile ID, context and reset generation, tensor descriptors, dependency events, deadline, priority, power hint, reproducibility requirement, retry class, fallback policy, and trace ID.</p><code>enqueue(context, tensors, deadline)</code></article>
         <article><span>Runtime output</span><h3>Telemetry schema</h3><p>Per-stage latency, bytes moved, converter activity, saturation, retries, program failures, temperature, power, fault events, and output checks.</p><code>trace → profiler → cost model → recompile</code></article>
       </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Capability and calibration contract comparison" tabindex="0">
+        <table class="detail-table">
+          <caption>Capabilities describe what a hardware design can legally do; a calibration profile describes how one physical device behaves now. Do not hide both behind one “target config.”</caption>
+          <thead><tr><th scope="col">Contract</th><th scope="col">Required fields</th><th scope="col">Consumer</th><th scope="col">Failure behavior</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Capability manifest</th><td>Vendor/device/revision, firmware ABI, legal ops/dtypes/layouts/shapes, effective geometry and signed encoding, periphery/accumulator limits, memory/DMA/coherency, queues/reset/power, cost-model version/units, errata.</td><td>Compiler proves legality and estimates cost; runtime confirms the loaded bundle still matches device and firmware identity.</td><td>Reject, explicitly convert, partition elsewhere, or compile a declared fallback—never silently approximate an illegal form.</td></tr>
+            <tr><th scope="row">Calibration/health profile</th><td>Target/stepping/ABI/schema/health generation, method/provenance/time/expiry, units/sample count/uncertainty/confidence, valid temperature-voltage-frequency-load-age domain, corrections, faults/spares/effective geometry, integrity and rollback policy.</td><td>Compiler maps against effective capacity/error; runtime selects only a profile valid for this device, operating point, and bundle.</td><td>Select another profile, recalibrate, remap/recompile, or execute digital fallback; do not extrapolate outside the measured validity domain without an explicit bound.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="evidence-note"><b>Runtime predicate:</b> <code>usable = target_match ∧ abi_match ∧ profile_schema_match ∧ health_generation_match ∧ operating_point ∈ validity_domain ∧ not_expired</code>. Sign the identity and compatibility fields that protect this decision.</p>
     </section>
 
     <section class="section" id="runtime">
@@ -543,13 +585,43 @@
       <div class="acim-runtime-flow" role="group" aria-label="Runtime driver and firmware execution flow">
         <article><span>01</span><strong>Authenticate bundle</strong><p>Verify signature, versions, target compatibility, limits, and permissions.</p></article>
         <article><span>02</span><strong>Select profile</strong><p>Match device, tile health, temperature, age, and required accuracy.</p></article>
-        <article><span>03</span><strong>Load or program weights</strong><p>Load volatile SRAM/charge-domain state, or program nonvolatile conductance with bounded retries, wear policy, and interruption safety.</p></article>
+        <article><span>03</span><strong>Load or program weights</strong><p>Load volatile SRAM weight bits for SRAM/charge-domain macros—the charge is transient during computation. For resistive targets, read current conductance and resume bounded program-and-verify under a wear and interruption policy.</p></article>
         <article><span>04</span><strong>Verify readiness</strong><p>Check weight integrity and calibration state; for resistive targets, read back conductance, adjust pulses, quarantine failures, and update the fault map.</p></article>
         <article><span>05</span><strong>Submit queues</strong><p>Bind buffers, DMA, commands, events, deadlines, and power hints.</p></article>
         <article><span>06</span><strong>Run + observe</strong><p>Handle interrupts, saturation, ECC/fault events, timeouts, thermal throttling, and traces.</p></article>
         <article><span>07</span><strong>Complete or recover</strong><p>Return outputs, retry safely, fall back digitally, reset scoped engines, or invalidate a profile.</p></article>
       </div>
       <div class="acim-callout"><b>Runtime invariant</b><span>A timeout or reset must never leave unknown weights, aliased buffers, or a stale ownership token visible to the next request.</span></div>
+
+      <div class="detail-table-wrap" role="region" aria-label="ACiM runtime ownership by layer" tabindex="0">
+        <table class="detail-table">
+          <caption>Draw who owns every unsafe transition. Shared responsibility without one decision owner becomes a recovery gap.</caption>
+          <thead><tr><th scope="col">Layer</th><th scope="col">Owns</th><th scope="col">Must expose across the boundary</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Compiler + bundle</th><td>Static partition, placement, schedule, relocations, profile requirements, fallback entry points, debug/source map.</td><td>Compatibility range, resource assumptions, reset-sensitive residency, numeric behavior, and golden/reference outputs.</td></tr>
+            <tr><th scope="row">Userspace runtime</th><td>Sessions, admission, priority/deadlines, profile selection, isolation policy, fallback decision, lifecycle telemetry.</td><td>Request/context ID, bundle hash, profile, dependencies, retry class, deadline, power hint, and fallback policy.</td></tr>
+            <tr><th scope="row">Kernel driver</th><td>IOMMU/DMA mappings, synchronization, buffer lifetime, queues, interrupts, process isolation, timeout/reset interface.</td><td>Atomic completion/error record, output-valid flag, fault scope, retryability, reset generation, counters.</td></tr>
+            <tr><th scope="row">Firmware</th><td>Privileged register and power/clock sequences, safe load/program-and-verify, local health, scoped reset, device journal/operation ID where needed.</td><td>State transition, partial-side-effect status, resident-weight/profile generation, self-test result, quarantined capacity.</td></tr>
+            <tr><th scope="row">Hardware</th><td>Protection checks, atomic completion/error capture, counters, fault containment, and documented reset domains.</td><td>Which writes may still arrive after abort/reset and which state is actually cleared or retained.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="ACiM failure response matrix" tabindex="0">
+        <table class="detail-table">
+          <caption>Failure is a state machine, not a footer. Recovery completes only after ownership, state, profile validity, and self-test are re-established.</caption>
+          <thead><tr><th scope="col">Failure class</th><th scope="col">Required response</th><th scope="col">Recovery proof</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Bundle/version/shape rejected</th><td>Reject before any hardware side effect and explain the failed legality/compatibility predicate.</td><td>Negative corpus across malformed metadata, boundary shapes, ABI ranges, and downgrade attempts.</td></tr>
+            <tr><th scope="row">Profile mismatch or expiry</th><td>Stop ACiM dispatch; select another valid profile, recalibrate, remap/recompile, or fall back digitally.</td><td>Temperature/voltage/age boundary tests and stale health-generation injection.</td></tr>
+            <tr><th scope="row">Weight load/program failure</th><td>For SRAM, use bounded same-version chunk rewrite plus checksum. For resistive devices, read current conductance and resume program-and-verify under an operation ID, interruption journal, and pulse/endurance budget; replaying pulses is not idempotent. Remap or quarantine persistent failures.</td><td>Interrupt every chunk/pulse/verify phase and prove residency identity before use.</td></tr>
+            <tr><th scope="row">DMA/IOMMU/execution timeout</th><td>Mark output invalid, stop/drain, revoke descriptors, increment reset generation, invalidate affected queues/handles/residency, then reset the smallest safe scope.</td><td>Late completion/write injection; confirm no partial result or stale handle becomes valid.</td></tr>
+            <tr><th scope="row">Thermal or accuracy sentinel excursion</th><td>Throttle/reschedule/fallback; invalidate a profile outside its domain, run golden vectors, recalibrate or remap.</td><td>Worst-valid operating corners followed by recovery and renewed health publication.</td></tr>
+            <tr><th scope="row">Persistent tile fault</th><td>Quarantine resource, change health generation, invalidate placements built for old capacity, and remap/recompile.</td><td>Fault injection plus end-to-end task metric, latency, and capacity verification on degraded geometry.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="evidence-note"><b>Reset rule:</b> a scoped reset increments a generation and invalidates every queue, handle, weight residency, and profile assumption in that scope. Retry only an idempotent command or a transaction protected by a firmware operation ID/journal; never return a partial result as valid.</p>
     </section>
 
     <section class="section" id="feedback">
@@ -568,12 +640,12 @@
       </div>
 
       <div class="acim-nonidealities">
-        <article><b>Device variation</b><p>Model per-cell programming error; use verify, remapping, redundancy, or training-aware distributions.</p></article>
+        <article><b>Resistive programming variation</b><p>For PCM/RRAM targets, model programming/read distributions; use verify, remapping, redundancy, or training-aware distributions.</p></article>
         <article><b>Temporal/read noise</b><p>Estimate output variance; improve margins, average selectively, or adjust precision and range.</p></article>
-        <article><b>Drift and aging</b><p>Timestamp profiles, monitor sentinels, compensate scale, and schedule recalibration before budget violation.</p></article>
+        <article><b>Drift, retention, and aging</b><p>Use the target-appropriate time model, timestamp profiles, monitor sentinels, and recalibrate or reload before budget violation.</p></article>
         <article><b>Nonlinearity</b><p>Calibrate response curves, constrain operating regions, and include the effect in simulation/training.</p></article>
-        <article><b>ADC/DAC offset</b><p>Store per-channel gain/offset corrections and detect saturation or dead converter lanes.</p></article>
-        <article><b>Stuck/faulty cells</b><p>Maintain a fault map; use spares, structured remapping, error-aware placement, or digital correction.</p></article>
+        <article><b>Converter/reference error</b><p>Where converters are present, store target-appropriate gain/offset/nonlinearity corrections and detect saturation or dead lanes.</p></article>
+        <article><b>Faulty cells or macros</b><p>Maintain a target-appropriate fault map; use spares, structured remapping, resource quarantine, or digital correction.</p></article>
         <article><b>Temperature/voltage</b><p>Select profiles by operating band and throttle or migrate when a bound is crossed.</p></article>
         <article><b>Model accuracy drift</b><p>Run representative golden vectors or sentinels; connect observed error to a rollback/fallback policy.</p></article>
       </div>
@@ -588,28 +660,94 @@
 
       <div class="acim-table-wrap" role="region" aria-label="ACiM bottleneck matrix" tabindex="0">
         <table class="acim-table">
-          <thead><tr><th>Bottleneck</th><th>What you observe</th><th>Likely cause</th><th>Design response</th><th>Trade-off to state</th></tr></thead>
+          <caption>Common full-inference limits, their evidence, likely cause, first response, and the trade-off an interview answer must state.</caption>
+          <thead><tr><th scope="col">Bottleneck</th><th scope="col">What you observe</th><th scope="col">Likely cause</th><th scope="col">Design response</th><th scope="col">Trade-off to state</th></tr></thead>
           <tbody>
-            <tr><td>ADC energy / latency</td><td>Converters dominate cycles or joules; arrays wait for output conversion.</td><td>High resolution, too many conversions, narrow reuse, serialized lanes.</td><td>Lower precision/range, fuse work, share or parallelize ADCs, reduce partial sums, keep more work local.</td><td>Accuracy, area, calibration, and converter contention.</td></tr>
-            <tr><td>DAC / activation delivery</td><td>Input path cannot feed arrays; poor tile occupancy.</td><td>Activation bandwidth, broadcast limits, high input precision, routing conflict.</td><td>Reuse/broadcast activations, compress, double-buffer, choose dataflow and placement around fan-out.</td><td>SRAM capacity, decode cost, and scheduling constraints.</td></tr>
-            <tr><td>Array underutilization</td><td>Many empty rows/columns; theoretical TOPS far above sustained throughput.</td><td>Small/irregular shapes, depthwise/grouped ops, excess precision slices.</td><td>Pack compatible matrices, reshape/fuse, specialized mapping, or keep the operator digital.</td><td>Packing complexity, isolation, and longer compile time.</td></tr>
-            <tr><td>Weight load / programming</td><td>Cold-start or model-switch latency; for nonvolatile arrays, verify retries and endurance consumption.</td><td>Weight-transfer bandwidth or, on resistive targets, slow writes, tight tolerance, model churn, and worn cells.</td><td>Cache resident models, preload in the background, batch loads; use adaptive tolerance and wear leveling when the device requires programming.</td><td>Memory capacity, accuracy, power, endurance, and model freshness.</td></tr>
-            <tr><td>Inter-tile traffic</td><td>NoC queues and partial-sum transfers dominate.</td><td>Fragmented placement, row splits, multicast pressure, remote accumulation.</td><td>Co-locate producer/consumer tiles, minimize cuts, multicast efficiently, place accumulation near data.</td><td>Fragmentation and reduced placement flexibility.</td></tr>
-            <tr><td>Digital accumulation</td><td>ACiM finishes but outputs wait in digital reduction.</td><td>Many tile/bit-slice partials, narrow accumulator throughput.</td><td>Wider/tree accumulators, schedule overlap, reduce splits, accumulate locally, tune precision.</td><td>Area, power, and overflow/error behavior.</td></tr>
-            <tr><td>Unsupported operators</td><td>Frequent CPU/digital fallback and synchronization.</td><td>Control flow, nonlinear/reduction ops, dynamic shapes, missing kernels.</td><td>Fuse boundaries, add digital kernels, improve legalization, keep contiguous digital subgraphs.</td><td>Compiler scope and digital silicon area.</td></tr>
-            <tr><td>Accuracy recovery</td><td>Mapping passes performance but violates task accuracy.</td><td>Noise, range saturation, quantization, drift, weak cells.</td><td>Noise-aware/QAT retraining, remap, recalibrate, increase precision selectively, fall back critical layers.</td><td>Training cost, latency, energy, and model portability.</td></tr>
-            <tr><td>Calibration overhead</td><td>Too much downtime or foreground latency; profiles expire often.</td><td>Fine-grained calibration, unstable conditions, excessive sweeps.</td><td>Hierarchical/targeted calibration, sentinels, background work, profile bands, confidence thresholds.</td><td>Residual error and fleet-management complexity.</td></tr>
-            <tr><td>Host ↔ NPU transfer</td><td>End-to-end latency tracks copy time, not compute.</td><td>Small partitions, redundant layout conversion, off-chip tensors.</td><td>Keep larger subgraphs resident, zero-copy where safe, fuse transforms, batch requests, reuse buffers.</td><td>Memory pressure, latency from batching, and isolation.</td></tr>
-            <tr><td>Thermal / power limit</td><td>Frequency drops, queue latency spikes, accuracy profile mismatch.</td><td>Concurrent tiles/converters, sustained duty cycle, weak cooling.</td><td>Power-aware scheduling, stagger tiles, DVFS, thermal profiles, admission control.</td><td>Throughput, tail latency, and scheduling predictability.</td></tr>
-            <tr><td>Fault / drift churn</td><td>Increasing remaps, verify failures, accuracy alarms.</td><td>Aging, device defects, environmental changes.</td><td>Spare capacity, fault-aware placement, health scoring, predictive maintenance, digital escape path.</td><td>Usable capacity and long-term fleet variance.</td></tr>
+            <tr><th scope="row">ADC energy / latency</th><td>Converters dominate cycles or joules; arrays wait for output conversion.</td><td>High resolution, too many conversions, narrow reuse, serialized lanes.</td><td>Lower precision/range, fuse work, share or parallelize ADCs, reduce partial sums, keep more work local.</td><td>Accuracy, area, calibration, and converter contention.</td></tr>
+            <tr><th scope="row">Input encoding / activation delivery</th><td>Input path cannot feed arrays; poor tile occupancy.</td><td>Drive/conversion phases, activation bandwidth, broadcast limits, high input precision, routing conflict.</td><td>Reuse/broadcast activations, compress, double-buffer, choose dataflow and placement around fan-out.</td><td>SRAM capacity, decode cost, and scheduling constraints.</td></tr>
+            <tr><th scope="row">Array underutilization</th><td>Many empty rows/columns; theoretical TOPS far above sustained throughput.</td><td>Small/irregular shapes, depthwise/grouped ops, excess precision slices.</td><td>Pack compatible matrices, reshape/fuse, specialized mapping, or keep the operator digital.</td><td>Packing complexity, isolation, and longer compile time.</td></tr>
+            <tr><th scope="row">Weight load / programming</th><td>Cold-start or model-switch latency; for nonvolatile arrays, verify retries and endurance consumption.</td><td>Weight-transfer bandwidth or, on resistive targets, slow writes, tight tolerance, model churn, and worn cells.</td><td>Cache resident models, preload in the background, batch loads; use adaptive tolerance and wear leveling when the device requires programming.</td><td>Memory capacity, accuracy, power, endurance, and model freshness.</td></tr>
+            <tr><th scope="row">Inter-tile traffic</th><td>NoC queues and partial-sum transfers dominate.</td><td>Fragmented placement, row splits, multicast pressure, remote accumulation.</td><td>Co-locate producer/consumer tiles, minimize cuts, multicast efficiently, place accumulation near data.</td><td>Fragmentation and reduced placement flexibility.</td></tr>
+            <tr><th scope="row">Digital accumulation</th><td>ACiM finishes but outputs wait in digital reduction.</td><td>Many tile/bit-slice partials, narrow accumulator throughput.</td><td>Wider/tree accumulators, schedule overlap, reduce splits, accumulate locally, tune precision.</td><td>Area, power, and overflow/error behavior.</td></tr>
+            <tr><th scope="row">Unsupported operators</th><td>Frequent CPU/digital fallback and synchronization.</td><td>Control flow, nonlinear/reduction ops, dynamic shapes, missing kernels.</td><td>Fuse boundaries, add digital kernels, improve legalization, keep contiguous digital subgraphs.</td><td>Compiler scope and digital silicon area.</td></tr>
+            <tr><th scope="row">Accuracy recovery</th><td>Mapping passes performance but violates task accuracy.</td><td>Noise, range saturation, quantization, drift, weak cells.</td><td>Noise-aware/QAT retraining, remap, recalibrate, increase precision selectively, fall back critical layers.</td><td>Training cost, latency, energy, and model portability.</td></tr>
+            <tr><th scope="row">Calibration overhead</th><td>Too much downtime or foreground latency; profiles expire often.</td><td>Fine-grained calibration, unstable conditions, excessive sweeps.</td><td>Hierarchical/targeted calibration, sentinels, background work, profile bands, confidence thresholds.</td><td>Residual error and fleet-management complexity.</td></tr>
+            <tr><th scope="row">Host ↔ NPU transfer</th><td>End-to-end latency tracks copy time, not compute.</td><td>Small partitions, redundant layout conversion, off-chip tensors.</td><td>Keep larger subgraphs resident, share mapped buffers only where ownership/coherency permits, fuse transforms, batch requests, and reuse buffers.</td><td>DMA setup/synchronization, cache maintenance, memory pressure, batching latency, and isolation.</td></tr>
+            <tr><th scope="row">Thermal / power limit</th><td>Frequency drops, queue latency spikes, accuracy profile mismatch.</td><td>Concurrent tiles/converters, sustained duty cycle, weak cooling.</td><td>Power-aware scheduling, stagger tiles, DVFS, thermal profiles, admission control.</td><td>Throughput, tail latency, and scheduling predictability.</td></tr>
+            <tr><th scope="row">Fault / drift churn</th><td>Increasing remaps, verify failures, accuracy alarms.</td><td>Aging, device defects, environmental changes.</td><td>Spare capacity, fault-aware placement, health scoring, predictive maintenance, digital escape path.</td><td>Usable capacity and long-term fleet variance.</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
+    <section class="section deep-dive-section" id="compiler-workbench">
+      <div class="section-heading">
+        <p class="eyebrow">09 · Compiler + runtime quantitative workbench</p>
+        <h2>Prove fit before quoting TOPS</h2>
+        <p>Carry one matrix through effective geometry, signed encoding, precision slices, converter phases, residency waves, movement, critical-path latency, energy, and composed task accuracy.</p>
+      </div>
+
+      <div class="reasoning-workbench">
+        <article class="workbench-main">
+          <span>Worked interview fit test · illustrative target</span>
+          <h3>Map a 512 × 512 matrix onto 16 one-array tiles</h3>
+          <p>Assume <code>y = Wx</code>, <code>W ∈ R^(M×K)</code>, K maps to rows, M maps to sensed columns, each array is 256 × 128, differential signed encoding costs two physical columns per logical value, weights are 4-bit in 2-bit cells, and 8-bit activations use a 2-bit drive path.</p>
+          <ol class="evidence-chain">
+            <li><div><b>Compute effective geometry</b><span><code>R_eff = 256</code> and <code>C_logical = floor(128 ÷ 2) = 64</code>. Faults, spares, reserved columns, or converter topology can reduce these values further.</span></div></li>
+            <li><div><b>Split K and M</b><span><code>N_K = ceil(512 ÷ 256) = 2</code> input blocks; <code>N_M = ceil(512 ÷ 64) = 8</code> output blocks. K splits create partial sums to reduce; M splits create independent outputs to concatenate.</span></div></li>
+            <li><div><b>Pay for weight precision</b><span><code>S_w = ceil(4 ÷ 2) = 2</code>, so a fully spatial mapping needs <code>2 × 8 × 2 = 32</code> array placements. Sixteen one-array tiles require at least two time-multiplexed residency waves. A request therefore needs a wave switch unless requests are batched by resident wave, which trades programming work for activation/partial-result storage and added latency.</span></div></li>
+            <li><div><b>Pay for activation precision</b><span><code>ceil(8 ÷ 2) = 4</code> input phases when two activation bits are applied per digit-serial phase. Weight slices and input phases may be spatial, temporal, or mixed, so they affect capacity, cycles, or both.</span></div></li>
+            <li><div><b>Close the fit decision</b><span>One vector performs <code>512 × 512 = 262,144</code> MACs under the stated convention. Ask whether reuse or resident-wave batching amortizes load/program and wave switching without unacceptable storage or latency, then include conversion, reductions, and engine transitions; otherwise keep it digital.</span></div></li>
+          </ol>
+        </article>
+
+        <aside class="formula-board">
+          <span>Mapping equations</span>
+          <h3>Make hidden multipliers visible</h3>
+          <div class="formula-stack">
+            <div class="formula-line"><b>Dimension splits</b><code>N_K = ceil(K / R_eff); C_logical = floor(C_eff / c_sign); N_M = ceil(M / C_logical)</code><small><code>c_sign</code> is the physical-column cost of the selected signed encoding; it is not universally two.</small></div>
+            <div class="formula-line"><b>Precision cost</b><code>S_w = ceil(weight_bits / cell_bits); placements = N_K × N_M × S_w</code><small>Use this placement formula only when each slice occupies a distinct array; a temporal design converts placement pressure into cycles.</small></div>
+            <div class="formula-line"><b>Input phases</b><code>phases = ceil(activation_bits / drive_bits)</code><small>Add encoding overhead and target-specific sign handling; converter lanes may serialize additional work.</small></div>
+            <div class="formula-line"><b>Shape utilization</b><code>U_shape = (M × K) / ((N_K × R_eff) × (N_M × C_logical))</code><small>Keep shape fill separate from disabled capacity, precision phases, queue duty cycle, converter stalls, and useful sustained throughput.</small></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="ACiM latency energy and accuracy budget" tabindex="0">
+        <table class="detail-table">
+          <caption>Budget the scheduled critical path and composed accuracy envelope. Do not sum stages that overlap, and do not add interacting task-metric losses blindly.</caption>
+          <thead><tr><th scope="col">Budget</th><th scope="col">Include</th><th scope="col">Correct reasoning</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Latency</th><td>DMA, layout conversion, weight load/program, input encoding, array evaluation, sensing/ADC, digital accumulation/activation, synchronization, fallback.</td><td><code>T_region = critical_path(scheduled event graph)</code>. Overlapped transfer and compute contribute through dependencies, not a naïve sum.</td><td>Warm and cold p50/p95/p99 by shape, arrival rate, batch, concurrency, profile, and operating corner.</td></tr>
+            <tr><th scope="row">Energy</th><td>Movement, amortized load/program, input drive, array, sensing/conversion, accumulation, digital work, leakage/idle, retries, calibration, fallback.</td><td><code>E_region = E_nominal + Σ(E_load,wave ÷ inferences sharing residency) + E_retry,expected + E_calibration,window ÷ N_inferences,window + E_fallback,expected</code>. Define <code>E_nominal</code> at the same boundary and report nominal and worst-case separately.</td><td>Per-rail or modeled component energy with synchronized counters and a declared SoC/accelerator boundary.</td></tr>
+            <tr><th scope="row">Accuracy</th><td>Quantization/rounding/overflow, clipping, mapping, analog noise/nonlinearity/saturation, PVT, drift/retention, faults, calibration, fallback boundaries.</td><td>Validate the composed system on representative data; use layer sensitivity to allocate an error budget. One percentage point and one percent relative loss are different.</td><td>Named metric/dataset from FP baseline through worst valid temperature, age, profile, and degraded geometry.</td></tr>
+            <tr><th scope="row">Sustained benefit</th><td>Useful operations, wall time, occupancy, queue gaps, converter duty, bytes moved, transitions, fallback, throttling, health maintenance.</td><td>Compare end-to-end against the best digital baseline with equal accuracy and power boundary—not against isolated array peak.</td><td>Representative models and request mixes after thermal equilibrium, including model switches and recovery.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ol class="compact-flow" aria-label="ACiM accuracy funnel">
+        <li><b>FP baseline</b><span>Name model, dataset, metric, preprocessing, and reproducibility settings.</span></li>
+        <li><b>Quantized ideal</b><span>Isolate storage type, scale, zero point, clipping, rounding, and overflow loss.</span></li>
+        <li><b>Mapped ideal</b><span>Add tiling, bit slices, accumulator behavior, and digital/analog boundaries without device noise.</span></li>
+        <li><b>Calibrated nominal</b><span>Apply measured target profile and compare prediction with device output.</span></li>
+        <li><b>Worst valid state</b><span>Verify temperature, voltage, age, fault map, converter saturation, and declared fallback.</span></li>
+      </ol>
+
+      <div class="source-map" role="group" aria-label="ACiM interview decision evidence">
+        <article><span>Fit</span><strong>Geometry is only the first gate</strong><p>Ask what one “tile” contains, signed-column cost, whether slices are spatial or temporal, effective geometry after faults/spares, and simultaneous converter lanes.</p></article>
+        <article><span>Residency</span><strong>Program/load cost needs reuse</strong><p>State whether weights load once per model residency, wake, switch, or inference; include interrupted load, checksum/readback, eviction, and health-generation changes.</p></article>
+        <article><span>Runtime</span><strong>Output validity is explicit</strong><p>Carry request/context/reset generation, bundle/profile identity, buffer descriptors, dependencies, deadline, retry class, and fallback policy into an atomic completion record.</p></article>
+        <article><span>Evidence</span><strong>Models and silicon close the loop</strong><p>Differential-test each IR against a digital reference, simulate calibrated distributions, then measure many devices/corners so profiles and cost/error models can be updated.</p></article>
+      </div>
+
+      <p class="evidence-note"><b>One-minute follow-up:</b> Would you still choose ACiM if only eight converter lanes operate simultaneously, weights change every request, the worst-temperature profile loses two percentage points, or a reset invalidates resident weights? Recalculate waves, conversions, bytes, critical path, and fallback—not only placements.</p>
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://onnx.ai/onnx/repo-docs/IR.html">ONNX IR ↗</a><a href="https://mlir.llvm.org/docs/DialectConversion/">MLIR legality ↗</a><a href="https://mlir.llvm.org/docs/Bufferization/">MLIR bufferization ↗</a><a href="https://iree.dev/reference/bindings/c-api/">IREE HAL + C API ↗</a><a href="https://onnxruntime.ai/docs/reference/high-level-design.html">ONNX Runtime partitioning ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA ownership ↗</a><a href="https://github.com/IBM/aihwkit">IBM AIHWKit ↗</a><a href="https://github.com/sandialabs/cross-sim">Sandia CrossSim ↗</a><a href="https://github.com/Accelergy-Project/accelergy">Accelergy modeling framework ↗</a><a href="https://github.com/mit-emze/cimloop">CiMLoop repository ↗</a><a href="https://www.nature.com/articles/s41928-023-01010-1">64-core mixed-signal PCM chip ↗</a></div>
+    </section>
+
     <section class="section" id="practice">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">09 · Full interview practice</p>
+        <p class="eyebrow">10 · Full interview practice</p>
         <h2>Design an edge hybrid NPU software stack</h2>
         <p>Work each checkpoint aloud before opening the coaching note. The goal is a defensible system—not a memorized compiler diagram.</p>
       </div>
@@ -618,10 +756,10 @@
         <div>
           <span>45-minute prompt</span>
           <h3>Deploy vision and audio models on a 5 W edge SoC</h3>
-          <p>The SoC contains a quad-core CPU, digital vector NPU, 16 ACiM tiles, shared SRAM, DMA/NoC, and analog converter periphery. Design the model compiler, runtime, driver/firmware contract, and calibration feedback loop.</p>
+          <p>The SoC contains a quad-core CPU, digital vector NPU, 16 one-array ACiM tiles, shared SRAM, DMA/NoC, and analog converter periphery. Assume warm batch-1 inference at the stated arrival rate, 5 W for the complete SoC, and less than one percentage-point task-metric loss on a named dataset unless you explicitly revise those assumptions.</p>
         </div>
         <ul class="acim-interview-signals" aria-label="Interview constraints">
-          <li>PyTorch + ONNX</li><li>p95 &lt; 20 ms</li><li>5 W SoC</li><li>&lt; 1% accuracy loss</li><li>multi-model</li><li>field drift</li><li>secure updates</li><li>digital fallback</li>
+          <li>PyTorch + ONNX</li><li>warm batch-1 p95 &lt; 20 ms</li><li>5 W complete SoC</li><li>&lt; 1 percentage-point metric loss</li><li>multi-model</li><li>field drift</li><li>secure updates</li><li>digital fallback</li>
         </ul>
       </div>
 
@@ -658,7 +796,7 @@
           <header><span>25–32 min</span><strong>Map, place, and schedule</strong></header>
           <p>Translate selected regions into arrays, buffers, routes, and time.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>How do precision, faults, and converters change placement?</span></div>
-          <details><summary>Reveal coaching</summary><div><ul><li>Tile rows/input channels and columns/output channels; bit-slice logical precision; encode signed weights; reserve spare rows/columns.</li><li>Use the fault map to avoid bad capacity and co-locate producers/consumers to reduce partial-sum traffic.</li><li>Choose ADC/DAC ranges from calibrated activation/output distributions; size digital accumulators for all slices/tiles.</li><li>Double-buffer SRAM and overlap DMA, ACiM, accumulation, activation, and CPU work with explicit events and deadlines.</li></ul></div></details>
+          <details><summary>Reveal coaching</summary><div><ul><li>Tile input dimension K onto effective rows and output dimension M onto logical columns; bit-slice logical precision; encode signed weights; reserve target-specific spare capacity.</li><li>Use the fault map to avoid bad resources and co-locate producers/consumers to reduce partial-sum traffic.</li><li>Keep tensor quantization scales distinct from physical input-drive and sensing/ADC ranges; size digital accumulators for all slices and tiles.</li><li>Double-buffer SRAM and overlap DMA, ACiM, accumulation, activation, and digital-engine work with explicit events and deadlines.</li></ul></div></details>
         </li>
         <li>
           <header><span>32–37 min</span><strong>Design load and execution</strong></header>
@@ -691,16 +829,26 @@
 
     <section class="section" id="sources">
       <div class="section-heading">
-        <p class="eyebrow">10 · Primary references</p>
+        <p class="eyebrow">11 · Primary references</p>
         <h2>Study the stack from model to device</h2>
-        <p>These sources anchor the page’s framework integration, compiler interface, CPU integration, and nonideality simulation topics.</p>
+        <p>Start with portable graph and compiler contracts, then runtime/DMA ownership, architecture-level cost modeling, and device-specific accuracy evidence. Each source below anchors a different claim; no one simulator covers semantics, accuracy, latency, energy, area, and lifecycle.</p>
       </div>
 
       <div class="acim-sources">
         <article><span>Framework + simulation</span><h3>IBM Analog Hardware Acceleration Kit</h3><p>Open-source Python tooling with PyTorch integration for exploring in-memory computing devices and analog neural-network behavior.</p><a href="https://github.com/IBM/aihwkit">IBM AIHWKit on GitHub ↗</a></article>
+        <article><span>Portable model semantics</span><h3>ONNX IR Specification</h3><p>Graph, tensor, type, shape, version, metadata, and operator-set contracts that an importer must preserve before target lowering.</p><a href="https://onnx.ai/onnx/repo-docs/IR.html">Read the ONNX IR specification ↗</a></article>
+        <article><span>Compiler legality</span><h3>MLIR Dialect Conversion</h3><p>Conversion targets, legal/illegal operations, rewrite patterns, and type conversion—the core vocabulary for “lower, explicitly convert, or fail.”</p><a href="https://mlir.llvm.org/docs/DialectConversion/">Read the MLIR guide ↗</a></article>
+        <article><span>Numeric contract</span><h3>MLIR Quant Dialect</h3><p>Stored and expressed types, scales, zero points, per-axis quantization, and the separation between tensor semantics and target converter settings.</p><a href="https://mlir.llvm.org/docs/Dialects/QuantDialect/">Read the Quant dialect docs ↗</a></article>
+        <article><span>Scheduling + lifetimes</span><h3>IREE Stream and HAL</h3><p>Asynchronous resource lifetimes, scheduling, devices, buffers, executables, command submission, and synchronization patterns for heterogeneous execution.</p><a href="https://iree.dev/reference/mlir-dialects/Stream/">Study IREE Stream ↗</a></article>
+        <article><span>Heterogeneous partitioning</span><h3>ONNX Runtime architecture</h3><p>Execution-provider capability discovery, graph partitioning, compilation, kernel execution, and fallback as a concrete heterogeneous-runtime reference.</p><a href="https://onnxruntime.ai/docs/reference/high-level-design.html">Read the architecture guide ↗</a></article>
+        <article><span>Buffer ownership</span><h3>Linux DMA mapping guide</h3><p>DMA mappings, direction, coherency, synchronization, barriers, descriptor ordering, and why a mapped/shared buffer is not automatically zero-copy-safe.</p><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Read the kernel guide ↗</a></article>
         <article><span>Compiler architecture</span><h3>Compiling Neural Networks for a Computational Memory Accelerator</h3><p>A research software stack centered on the hardware/software interface and mapping neural-network models onto a multi-core computational-memory accelerator.</p><a href="https://arxiv.org/abs/2003.04293">Read the paper on arXiv ↗</a></article>
         <article><span>CPU + accelerator integration</span><h3>ALPINE</h3><p>A system architecture for tight integration of analog in-memory acceleration with multi-core CPUs, including an ISA extension and software library.</p><a href="https://arxiv.org/abs/2205.10042">Read the ALPINE paper ↗</a></article>
-        <article><span>Crossbar nonidealities</span><h3>Sandia CrossSim</h3><p>An open-source crossbar simulator for exploring analog hardware effects and neural-network inference with Torch- and Keras-compatible layers.</p><a href="https://github.com/sandialabs/cross-sim">Sandia CrossSim on GitHub ↗</a></article>
+        <article><span>Crossbar accuracy + nonidealities</span><h3>Sandia CrossSim</h3><p>An open-source resistive-crossbar accuracy/co-design simulator for analog hardware effects and neural-network inference. Its own scope excludes energy, area, and speed modeling.</p><a href="https://github.com/sandialabs/cross-sim">Sandia CrossSim on GitHub ↗</a></article>
+        <article><span>Architecture cost modeling</span><h3>Accelergy</h3><p>Architecture-level component action/count energy and area modeling; use measured target data to calibrate estimates and pair it with a dedicated compute-in-memory mapper/model.</p><a href="https://github.com/Accelergy-Project/accelergy">Explore Accelergy on GitHub ↗</a></article>
+        <article><span>Compute-in-memory modeling</span><h3>CiMLoop</h3><p>A compute-in-memory modeling framework that connects architecture, mapping, technology, and component models for energy, area, and performance exploration.</p><a href="https://github.com/mit-emze/cimloop">Explore CiMLoop on GitHub ↗</a></article>
+        <article><span>Resistive-device evidence</span><h3>Accurate DNN inference using PCM</h3><p>Differential conductance mapping, programming/read error, drift, compensation, and experiment-backed analog-inference accuracy.</p><a href="https://www.nature.com/articles/s41467-020-16108-9">Read the Nature Communications paper ↗</a></article>
+        <article><span>End-to-end mixed-signal system</span><h3>64-core PCM inference chip</h3><p>Evidence that digital operations and on-chip communication remain necessary for useful end-to-end inference—not merely isolated array efficiency.</p><a href="https://www.nature.com/articles/s41928-023-01010-1">Read the Nature Electronics paper ↗</a></article>
         <article><span>SRAM ACiM</span><h3>A Charge Domain SRAM Compute-in-Memory Macro</h3><p>An IEEE Journal of Solid-State Circuits design using C-2C ladder-based 8-bit MAC units, with analysis of PVT, parasitics, mismatch, noise, and multibit linearity.</p><a href="https://doi.org/10.1109/JSSC.2022.3232601">Read the IEEE paper ↗</a></article>
       </div>
       <div class="acim-callout"><b>Practice loop</b><span>Choose one model → establish a digital baseline → add calibrated nonidealities → partition and map → measure end-to-end → explain the trade-off.</span></div>
