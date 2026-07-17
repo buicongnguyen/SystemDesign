@@ -1,0 +1,12 @@
+{
+  "name": "system-design-atlas",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "check": "node scripts/check-site.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

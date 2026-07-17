@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A visual hardware and computer-system design guide covering workload analysis, memory, compute, interconnect, power, thermal limits, reliability, bottlenecks, and interview practice.">
+  <meta name="theme-color" content="#07111f">
+  <title>Hardware &amp; Computer Systems · System Design Atlas</title>
+  <link rel="stylesheet" href="styles.css?v=20260717a">
+  <script src="app.js?v=20260717a" defer></script>
+  <style>
+    .hw-hero h1 span { background-image: linear-gradient(110deg, var(--amber), var(--cyan), var(--blue)); }
+    .hw-hero .hero-panel { transform: rotate(-1deg); }
+    .hw-kicker { color: var(--green); }
+    .hw-inline-label { color: var(--amber); font: 800 .68rem ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .hw-section-note { margin-top: 1rem; padding: 1rem 1.2rem; border-left: 3px solid var(--green); background: var(--surface-2); color: var(--muted); }
+    .hw-section-note b { color: var(--green); }
+
+    .hw-thinking-flow { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.3rem; list-style: none; }
+    .hw-thinking-flow li { position: relative; min-height: 205px; padding: 1.1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-top: 3px solid var(--blue); border-radius: .8rem; background: var(--surface); }
+    .hw-thinking-flow li:nth-child(n+5) { border-top-color: var(--violet); }
+    .hw-thinking-flow li:not(:nth-child(4)):not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.72rem; z-index: 1; color: var(--blue); transform: translate(50%, -50%); }
+    .hw-thinking-flow li:nth-child(4)::after { content: "↓"; position: absolute; right: 50%; bottom: -.82rem; z-index: 1; color: var(--violet); transform: translate(50%, 50%); }
+    .hw-thinking-flow span { color: var(--amber); font: 800 .7rem ui-monospace, monospace; }
+    .hw-thinking-flow strong { margin: .9rem 0 .45rem; }
+    .hw-thinking-flow p { margin: 0; color: var(--muted); font-size: .8rem; }
+    .hw-thinking-flow small { margin-top: auto; padding-top: .8rem; color: var(--green); }
+
+    .hw-triangle-layout { display: grid; grid-template-columns: 1fr .9fr; gap: 1rem; align-items: stretch; }
+    .hw-triangle { position: relative; min-height: 470px; border: 1px solid var(--line); border-radius: 1rem; background: radial-gradient(circle at 50% 52%, rgba(104,167,255,.1), transparent 13rem), var(--surface); }
+    .hw-triangle::before, .hw-triangle::after { content: ""; position: absolute; top: 47%; left: 50%; width: 55%; height: 1px; background: color-mix(in srgb, var(--blue) 42%, var(--line)); transform-origin: left; }
+    .hw-triangle::before { transform: rotate(148deg); }
+    .hw-triangle::after { transform: rotate(32deg); }
+    .hw-metric { position: absolute; z-index: 2; width: 170px; min-height: 135px; padding: 1rem; display: grid; align-content: center; text-align: center; border: 1px solid var(--line); border-radius: .9rem; background: var(--surface-2); box-shadow: var(--shadow); }
+    .hw-metric b { color: var(--blue); font-size: 1.2rem; }
+    .hw-metric span { color: var(--muted); font-size: .76rem; }
+    .hw-metric small { margin-top: .4rem; color: var(--green); }
+    .hw-metric.hw-latency { top: 1.3rem; left: 50%; transform: translateX(-50%); }
+    .hw-metric.hw-throughput { bottom: 1.3rem; left: 1.3rem; }
+    .hw-metric.hw-bandwidth { right: 1.3rem; bottom: 1.3rem; }
+    .hw-triangle-center { position: absolute; top: 51%; left: 50%; z-index: 3; width: 145px; padding: .8rem; border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--line)); border-radius: 50%; background: var(--bg); text-align: center; transform: translate(-50%, -50%); }
+    .hw-triangle-center b { display: block; color: var(--amber); }
+    .hw-triangle-center small { color: var(--muted); }
+    .hw-metric-rules { display: grid; gap: .7rem; }
+    .hw-metric-rules article { padding: 1.1rem; border-left: 3px solid var(--cyan); background: var(--surface); }
+    .hw-metric-rules article:nth-child(2) { border-left-color: var(--amber); }
+    .hw-metric-rules article:nth-child(3) { border-left-color: var(--violet); }
+    .hw-metric-rules article:nth-child(4) { border-left-color: var(--green); }
+    .hw-metric-rules strong { display: block; margin-bottom: .3rem; }
+    .hw-metric-rules p { margin: 0; color: var(--muted); font-size: .8rem; }
+    .hw-formula { color: var(--blue-2); font-family: ui-monospace, monospace; }
+
+    .hw-constraint-compass { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }
+    .hw-constraint-compass article { min-height: 195px; padding: 1.1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface); }
+    .hw-constraint-compass article:nth-child(1) { border-top: 3px solid var(--blue); }
+    .hw-constraint-compass article:nth-child(2) { border-top: 3px solid var(--amber); }
+    .hw-constraint-compass article:nth-child(3) { border-top: 3px solid var(--green); }
+    .hw-constraint-compass article:nth-child(4) { border-top: 3px solid var(--violet); }
+    .hw-constraint-compass span { color: var(--amber); font: 800 .7rem ui-monospace, monospace; text-transform: uppercase; }
+    .hw-constraint-compass strong { margin: .75rem 0 .4rem; font-size: 1.1rem; }
+    .hw-constraint-compass p { margin: 0; color: var(--muted); font-size: .78rem; }
+    .hw-constraint-compass small { margin-top: auto; padding-top: .8rem; color: var(--green); }
+    .hw-tradeoff-line { margin-top: .8rem; padding: 1.1rem; display: grid; grid-template-columns: auto 1fr auto 1fr auto 1fr auto; gap: .7rem; align-items: center; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface-2); text-align: center; }
+    .hw-tradeoff-line b { color: var(--blue); }
+    .hw-tradeoff-line i { color: var(--violet); font-style: normal; }
+    .hw-tradeoff-line span { color: var(--muted); font-size: .78rem; }
+
+    .hw-memory-layout { display: grid; grid-template-columns: .82fr 1.18fr; gap: 1rem; align-items: stretch; }
+    .hw-memory-pyramid { margin: 0; padding: 1.2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .45rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-2); list-style: none; }
+    .hw-memory-pyramid li { min-height: 54px; padding: .55rem 1rem; display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; border: 1px solid var(--line); background: var(--surface); }
+    .hw-memory-pyramid li:nth-child(1) { width: 44%; border-color: var(--amber); }
+    .hw-memory-pyramid li:nth-child(2) { width: 54%; }
+    .hw-memory-pyramid li:nth-child(3) { width: 64%; }
+    .hw-memory-pyramid li:nth-child(4) { width: 74%; }
+    .hw-memory-pyramid li:nth-child(5) { width: 86%; }
+    .hw-memory-pyramid li:nth-child(6) { width: 100%; border-color: var(--violet); }
+    .hw-memory-pyramid b { font-size: .84rem; }
+    .hw-memory-pyramid span { color: var(--muted); font-size: .68rem; text-align: right; }
+    .hw-memory-rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+    .hw-memory-rules article { padding: 1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); }
+    .hw-memory-rules span { color: var(--violet); font-size: .7rem; font-weight: 800; text-transform: uppercase; }
+    .hw-memory-rules strong { display: block; margin: .55rem 0 .35rem; }
+    .hw-memory-rules p { margin: 0; color: var(--muted); font-size: .77rem; }
+
+    .hw-roofline { margin-top: 1rem; padding: 1.3rem; display: grid; grid-template-columns: .72fr 1.28fr; gap: 2rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); }
+    .hw-roofline-copy p { color: var(--muted); font-size: .85rem; }
+    .hw-roofline-copy dl { margin: 1rem 0 0; display: grid; grid-template-columns: auto 1fr; gap: .45rem .8rem; }
+    .hw-roofline-copy dt { color: var(--blue); font-weight: 800; }
+    .hw-roofline-copy dd { margin: 0; color: var(--muted); font-size: .78rem; }
+    .hw-roofline-plot { position: relative; min-height: 320px; margin: 1rem 1rem 2.4rem 3.2rem; border-left: 2px solid var(--muted); border-bottom: 2px solid var(--muted); background: linear-gradient(rgba(104,167,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(104,167,255,.045) 1px, transparent 1px); background-size: 20% 20%; }
+    .hw-roofline-plot::before { content: "attainable performance"; position: absolute; left: -3.3rem; top: 50%; color: var(--muted); font-size: .68rem; transform: rotate(-90deg) translateX(-50%); transform-origin: top left; }
+    .hw-roofline-plot::after { content: "arithmetic intensity →"; position: absolute; left: 50%; bottom: -2.1rem; color: var(--muted); font-size: .68rem; transform: translateX(-50%); }
+    .hw-roofline-bandwidth { position: absolute; left: 4%; bottom: 5%; width: 63%; height: 3px; background: var(--cyan); transform: rotate(-32deg); transform-origin: left; }
+    .hw-roofline-ceiling { position: absolute; top: 20%; right: 4%; width: 48%; height: 3px; background: var(--amber); }
+    .hw-roofline-label { position: absolute; padding: .28rem .45rem; border-radius: .35rem; background: var(--bg); font-size: .67rem; }
+    .hw-roofline-label.hw-memory-bound { left: 16%; bottom: 31%; color: var(--cyan); transform: rotate(-32deg); }
+    .hw-roofline-label.hw-compute-bound { top: 12%; right: 17%; color: var(--amber); }
+    .hw-roofline-dot { position: absolute; width: 13px; height: 13px; border: 3px solid var(--surface); border-radius: 50%; background: var(--violet); box-shadow: 0 0 0 2px var(--violet); }
+    .hw-roofline-dot.hw-dot-a { left: 28%; bottom: 26%; }
+    .hw-roofline-dot.hw-dot-b { left: 68%; top: 28%; background: var(--green); box-shadow: 0 0 0 2px var(--green); }
+    .hw-roofline-dot small { position: absolute; top: 14px; left: -12px; width: 95px; color: var(--muted); font-size: .62rem; }
+
+    .hw-choice-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .hw-choice-grid article { min-height: 225px; padding: 1.05rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface); }
+    .hw-choice-grid span { color: var(--amber); font: 800 .68rem ui-monospace, monospace; text-transform: uppercase; }
+    .hw-choice-grid h3 { margin: .75rem 0 .45rem; }
+    .hw-choice-grid p { margin: 0; color: var(--muted); font-size: .78rem; }
+    .hw-choice-grid small { margin-top: auto; padding-top: .9rem; color: var(--green); }
+    .hw-dataflow-grid { margin-top: .8rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+    .hw-dataflow-grid article { padding: 1.1rem; border-top: 3px solid var(--violet); background: var(--surface-2); }
+    .hw-dataflow-grid article:nth-child(2) { border-top-color: var(--cyan); }
+    .hw-dataflow-grid article:nth-child(3) { border-top-color: var(--green); }
+    .hw-dataflow-grid strong { display: block; }
+    .hw-dataflow-grid p { margin: .45rem 0; color: var(--muted); font-size: .78rem; }
+    .hw-dataflow-grid small { color: var(--blue-2); }
+
+    .hw-system-map { padding: 1.4rem; display: grid; grid-template-columns: 1fr auto 1.3fr auto 1fr; gap: .8rem; align-items: center; border: 1px solid var(--line); border-radius: 1rem; background: linear-gradient(145deg, var(--surface-2), var(--surface)); }
+    .hw-system-map > b { color: var(--blue); font-size: 1.35rem; }
+    .hw-map-stack { display: grid; gap: .55rem; }
+    .hw-map-node { padding: .9rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); text-align: center; }
+    .hw-map-node strong { display: block; }
+    .hw-map-node small { color: var(--muted); }
+    .hw-map-center { padding: 1.3rem; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); border-radius: .85rem; background: color-mix(in srgb, var(--cyan) 7%, var(--surface)); text-align: center; }
+    .hw-map-center span { color: var(--cyan); font: 800 .7rem ui-monospace, monospace; text-transform: uppercase; }
+    .hw-map-center strong { display: block; margin: .4rem 0; font-size: 1.15rem; }
+    .hw-map-center p { margin: 0; color: var(--muted); font-size: .75rem; }
+    .hw-io-grid { margin-top: .8rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+    .hw-io-grid article { padding: 1rem; border-left: 3px solid var(--blue); background: var(--surface); }
+    .hw-io-grid article:nth-child(3n+2) { border-left-color: var(--amber); }
+    .hw-io-grid article:nth-child(3n) { border-left-color: var(--green); }
+    .hw-io-grid span { color: var(--violet); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .hw-io-grid strong { display: block; margin: .45rem 0; }
+    .hw-io-grid p { margin: 0; color: var(--muted); font-size: .77rem; }
+
+    .hw-physical-chain { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2rem; list-style: none; }
+    .hw-physical-chain li { position: relative; min-height: 165px; padding: 1rem; display: flex; flex-direction: column; border-top: 3px solid var(--amber); background: var(--surface); }
+    .hw-physical-chain li:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.8rem; color: var(--amber); transform: translate(50%, -50%); }
+    .hw-physical-chain span { color: var(--amber); font: 800 .67rem ui-monospace, monospace; }
+    .hw-physical-chain strong { margin: .7rem 0 .35rem; }
+    .hw-physical-chain small { margin-top: auto; color: var(--muted); }
+    .hw-resilience-grid { margin-top: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .hw-resilience-grid article { padding: 1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface-2); }
+    .hw-resilience-grid span { color: var(--green); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .hw-resilience-grid strong { display: block; margin: .5rem 0; }
+    .hw-resilience-grid p { margin: 0; color: var(--muted); font-size: .77rem; }
+
+    .hw-bottleneck-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); }
+    .hw-bottleneck-table { width: 100%; min-width: 900px; border-collapse: collapse; }
+    .hw-bottleneck-table caption { padding: 1rem; color: var(--muted); text-align: left; }
+    .hw-bottleneck-table th, .hw-bottleneck-table td { padding: .85rem 1rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .hw-bottleneck-table th { color: var(--amber); background: var(--surface-2); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; }
+    .hw-bottleneck-table td { color: var(--muted); font-size: .77rem; }
+    .hw-bottleneck-table td:first-child { color: var(--text); font-weight: 800; }
+    .hw-bottleneck-table tr:last-child td { border-bottom: 0; }
+    .hw-diagnose-flow { margin-top: .8rem; padding: 1rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.1rem; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface-2); }
+    .hw-diagnose-flow div { position: relative; padding: .8rem; background: var(--surface); }
+    .hw-diagnose-flow div:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.75rem; color: var(--blue); transform: translate(50%, -50%); }
+    .hw-diagnose-flow b { color: var(--blue); }
+    .hw-diagnose-flow small { display: block; color: var(--muted); }
+
+    .hw-case-brief { padding: clamp(1.2rem, 3vw, 2rem); display: grid; grid-template-columns: 1.15fr .85fr; gap: 2rem; align-items: center; border: 1px solid color-mix(in srgb, var(--amber) 38%, var(--line)); border-radius: 1rem; background: radial-gradient(circle at 90% 20%, rgba(243,180,81,.12), transparent 18rem), var(--surface); }
+    .hw-case-brief h3 { margin: .45rem 0; font-size: clamp(1.5rem, 3vw, 2.25rem); }
+    .hw-case-brief p { margin: 0; color: var(--muted); }
+    .hw-case-signals { margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; }
+    .hw-case-signals li { padding: .5rem .7rem; border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--line)); border-radius: 999px; background: color-mix(in srgb, var(--amber) 8%, transparent); font-size: .75rem; font-weight: 750; }
+    .hw-case-flow { margin: .8rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; list-style: none; }
+    .hw-case-flow li { position: relative; min-height: 120px; padding: .8rem; display: grid; place-content: center; text-align: center; border: 1px solid var(--line); background: var(--surface); }
+    .hw-case-flow li:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.65rem; z-index: 1; color: var(--blue); transform: translate(50%, -50%); }
+    .hw-case-flow b { color: var(--blue); }
+    .hw-case-flow small { color: var(--muted); }
+    .hw-case-checkpoints { margin: .8rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; list-style: none; }
+    .hw-case-checkpoints > li { padding: 1.1rem; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface); }
+    .hw-case-checkpoints header { display: flex; gap: .8rem; align-items: baseline; }
+    .hw-case-checkpoints header span { color: var(--amber); font: 800 .68rem ui-monospace, monospace; }
+    .hw-case-checkpoints p { color: var(--muted); font-size: .8rem; }
+    .hw-case-checkpoints details { border-top: 1px solid var(--line); }
+    .hw-case-checkpoints summary { padding-top: .75rem; color: var(--blue-2); cursor: pointer; font-weight: 750; }
+    .hw-case-checkpoints details div { padding-top: .65rem; color: var(--muted); font-size: .8rem; }
+    .hw-pressure-grid { margin-top: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .hw-pressure-grid article { padding: 1rem; border-top: 2px solid var(--violet); background: var(--surface-2); }
+    .hw-pressure-grid span { color: var(--violet); font-size: .7rem; font-weight: 800; text-transform: uppercase; }
+    .hw-pressure-grid p { margin: .45rem 0 0; color: var(--muted); font-size: .77rem; }
+
+    .hw-source-grid, .hw-track-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+    .hw-source-grid article, .hw-track-grid a { min-height: 170px; padding: 1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); text-decoration: none; }
+    .hw-source-grid span, .hw-track-grid span { color: var(--amber); font: 800 .68rem ui-monospace, monospace; text-transform: uppercase; }
+    .hw-source-grid strong, .hw-track-grid strong { margin: .65rem 0 .4rem; }
+    .hw-source-grid p, .hw-track-grid small { margin: 0; color: var(--muted); font-size: .77rem; }
+    .hw-source-grid a { margin-top: auto; padding-top: .8rem; color: var(--blue-2); text-decoration: none; font-weight: 750; }
+    .hw-track-grid { margin-top: 1rem; }
+    .hw-track-grid a:hover { border-color: var(--blue); transform: translateY(-2px); }
+    nav a[aria-current="page"] { color: var(--text); }
+
+    @media (max-width: 1000px) {
+      .hw-thinking-flow, .hw-choice-grid, .hw-constraint-compass, .hw-resilience-grid { grid-template-columns: repeat(2, 1fr); }
+      .hw-thinking-flow li::after { display: none; }
+      .hw-triangle-layout, .hw-memory-layout, .hw-roofline, .hw-case-brief { grid-template-columns: 1fr; }
+      .hw-system-map { grid-template-columns: 1fr; }
+      .hw-system-map > b { transform: rotate(90deg); text-align: center; }
+      .hw-case-flow { grid-template-columns: repeat(3, 1fr); }
+      .hw-case-flow li::after { display: none; }
+      .hw-source-grid, .hw-track-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 700px) {
+      .hw-triangle { min-height: auto; padding: 1rem; display: grid; gap: .7rem; }
+      .hw-triangle::before, .hw-triangle::after { display: none; }
+      .hw-metric, .hw-metric.hw-latency, .hw-metric.hw-throughput, .hw-metric.hw-bandwidth, .hw-triangle-center { position: static; width: auto; min-height: auto; transform: none; }
+      .hw-triangle-center { border-radius: .8rem; }
+      .hw-tradeoff-line { grid-template-columns: 1fr; }
+      .hw-tradeoff-line i { transform: rotate(90deg); }
+      .hw-memory-rules, .hw-dataflow-grid, .hw-io-grid, .hw-case-checkpoints, .hw-pressure-grid { grid-template-columns: 1fr; }
+      .hw-physical-chain, .hw-diagnose-flow { grid-template-columns: 1fr; }
+      .hw-physical-chain li::after, .hw-diagnose-flow div::after { display: none; }
+    }
+    @media (max-width: 520px) {
+      .hw-thinking-flow, .hw-choice-grid, .hw-constraint-compass, .hw-resilience-grid, .hw-source-grid, .hw-track-grid, .hw-case-flow { grid-template-columns: 1fr; }
+      .hw-memory-pyramid li { width: 100% !important; }
+      .hw-roofline-plot { min-height: 250px; margin-left: 2.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="System Design Atlas home">
+      <span class="brand-mark" aria-hidden="true">SD</span>
+      <span>System Design <b>Atlas</b></span>
+    </a>
+    <nav aria-label="Track navigation">
+      <a href="index.html">Atlas</a>
+      <a href="backend.html">Backend</a>
+      <a href="systems-engineering.html">Systems engineering</a>
+      <a href="hardware.html" aria-current="page">Hardware</a>
+      <a href="embedded.html">Embedded</a>
+      <a href="npu-acim.html">NPU + ACiM</a>
+    </nav>
+    <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
+  </header>
+
+  <main id="main">
+    <section class="hero hw-hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">Hardware &amp; computer systems</p>
+        <h1>Move the data. <span>Meet the physical budget.</span></h1>
+        <p class="hero-lead">Translate a real workload into compute, memory, interconnect, I/O, power, thermal, and reliability decisions—then prove the whole machine meets its deadline.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#thinking">Start with the workload</a>
+          <a class="button secondary" href="#practice">Practice an interview →</a>
+          <a class="button secondary" href="index.html">Choose another track</a>
+        </div>
+        <ul class="hero-stats" aria-label="Page summary">
+          <li><strong>8</strong><span>design steps</span></li>
+          <li><strong>12</strong><span>bottlenecks</span></li>
+          <li><strong>1</strong><span>worked interview</span></li>
+        </ul>
+      </div>
+      <section class="hero-panel" aria-label="Hardware design preview">
+        <div class="terminal-bar"><i></i><i></i><i></i><span>architecture.spec</span></div>
+        <pre><code><span class="muted"># Workload before components</span>
+ops       = profile(<b>shape, reuse, precision</b>)
+deadline  = define(<b>latency, throughput, jitter</b>)
+movement  = count(<b>bytes across every boundary</b>)
+
+design = choose(<b>compute + memory + fabric</b>)
+verify(design, <b>power, thermal, cost, reliability</b>)
+
+while measured &lt; required:
+    fix(<b>the limiting resource</b>)</code></pre>
+      </section>
+    </section>
+
+    <section class="section" id="thinking">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">01 · Workload-to-architecture flow</p>
+        <h2>Architecture is a chain of justified allocations</h2>
+        <p>Do not begin with a favorite processor. Each step produces evidence for the next one.</p>
+      </div>
+      <ol class="hw-thinking-flow" aria-label="Hardware system design thinking flow">
+        <li><span>01</span><strong>Characterize the workload</strong><p>Operators, tensor or packet shapes, control flow, reuse, sparsity, precision, working set, and concurrency.</p><small>Output: representative kernels + traces</small></li>
+        <li><span>02</span><strong>Set measurable targets</strong><p>Tail latency, sustained throughput, jitter, boot time, availability, lifetime, and accepted error.</p><small>Output: pass/fail requirements</small></li>
+        <li><span>03</span><strong>Count data movement</strong><p>Bytes read and written at registers, caches, SRAM, DRAM, storage, network, and device boundaries.</p><small>Output: bandwidth + capacity budgets</small></li>
+        <li><span>04</span><strong>Expose parallelism</strong><p>Task, data, pipeline, vector, and request-level parallelism; identify serial regions and dependencies.</p><small>Output: useful—not theoretical—parallelism</small></li>
+        <li><span>05</span><strong>Choose compute</strong><p>Allocate work across CPU, GPU/NPU, FPGA, fixed-function engines, and firmware based on regularity and change rate.</p><small>Output: compute partition</small></li>
+        <li><span>06</span><strong>Build the memory + fabric</strong><p>Place data by reuse and lifetime; size buffers; choose coherency, NoC, external links, and flow control.</p><small>Output: data path + topology</small></li>
+        <li><span>07</span><strong>Close physical budgets</strong><p>Estimate PPA, cost, power delivery, cooling, signal integrity, reliability, manufacturing, and serviceability.</p><small>Output: feasible implementation</small></li>
+        <li><span>08</span><strong>Prototype and measure</strong><p>Benchmark representative workloads, find saturation, compare against the model, and iterate one bottleneck at a time.</p><small>Output: evidence-backed architecture</small></li>
+      </ol>
+      <div class="memory-strip"><b>Memory hook</b><span>Workload → deadline → bytes → parallelism → compute → memory/fabric → physics → measurement.</span></div>
+    </section>
+
+    <section class="section" id="metrics">
+      <div class="section-heading">
+        <p class="eyebrow">02 · Performance contract</p>
+        <h2>Latency, throughput, and bandwidth are related—not interchangeable</h2>
+        <p>A design can finish one request quickly and still fail sustained load. It can have enormous compute and still wait for bytes.</p>
+      </div>
+      <div class="hw-triangle-layout">
+        <div class="hw-triangle" aria-label="Latency throughput and bandwidth relationship">
+          <article class="hw-metric hw-latency"><b>Latency</b><span>time for one unit of work</span><small>seconds / request</small></article>
+          <article class="hw-metric hw-throughput"><b>Throughput</b><span>completed work per time</span><small>frames / second</small></article>
+          <article class="hw-metric hw-bandwidth"><b>Bandwidth</b><span>data transferred per time</span><small>bytes / second</small></article>
+          <div class="hw-triangle-center"><b>Concurrency</b><small>connects response time to work in flight</small></div>
+        </div>
+        <div class="hw-metric-rules">
+          <article><strong>Pipeline for throughput</strong><p>Overlap stages so multiple items are in flight. The slowest stage sets steady-state rate; pipeline depth may increase single-item latency.</p></article>
+          <article><strong>Reduce the critical path for latency</strong><p>Shorten serial dependencies, avoid queueing, use nearby storage, and reserve capacity for tail behavior—not only the average.</p></article>
+          <article><strong>Provision effective bandwidth</strong><p>Account for protocol overhead, access efficiency, bank conflicts, contention, and read/write turnaround. Peak pin rate is not delivered payload.</p></article>
+          <article><strong>Apply Little’s Law carefully</strong><p><span class="hw-formula">work in flight ≈ throughput × latency</span>. It is a useful steady-state check, not permission to create unbounded queues.</p></article>
+        </div>
+      </div>
+      <div class="hw-section-note"><b>Interview move:</b> name the unit and percentile every time—“30 fps sustained” and “p99 under 80 ms” are testable; “fast” is not.</div>
+    </section>
+
+    <section class="section" id="constraints">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">03 · Physical trade-off compass</p>
+        <h2>Performance lives inside power, area, and cost</h2>
+        <p>Optimizing one corner usually spends another. State which budget is fixed and which may move.</p>
+      </div>
+      <div class="hw-constraint-compass">
+        <article><span>P · Performance</span><strong>Useful work on the deadline</strong><p>IPC, frequency, parallel units, utilization, memory service time, and tail behavior.</p><small>Measure real workloads</small></article>
+        <article><span>P · Power</span><strong>Energy and delivery</strong><p>Dynamic switching, leakage, voltage rails, transient demand, battery life, and energy per task.</p><small>Average + peak both matter</small></article>
+        <article><span>A · Area</span><strong>Silicon and board footprint</strong><p>Compute lanes, SRAM, PHYs, package pins, PCB layers, routing pressure, and yield.</p><small>Idle silicon is still paid for</small></article>
+        <article><span>$ · Cost</span><strong>Lifecycle economics</strong><p>NRE, masks, package, memory, board, cooling, test time, yield, supply risk, and field service.</p><small>Bill of materials is one slice</small></article>
+      </div>
+      <div class="hw-tradeoff-line" aria-label="Hardware trade-off chain">
+        <b>More parallel units</b><i>↔</i><span>area + leakage + routing</span><i>↔</i><b>higher memory demand</b><i>↔</i><span>power + thermal + cost</span>
+      </div>
+    </section>
+
+    <section class="section" id="memory">
+      <div class="section-heading">
+        <p class="eyebrow">04 · Memory hierarchy</p>
+        <h2>Place data by reuse, lifetime, and sharing</h2>
+        <p>Small and close is fast but expensive. Large and far is cheap per bit but costs latency and energy to reach.</p>
+      </div>
+      <div class="hw-memory-layout">
+        <ol class="hw-memory-pyramid" aria-label="Memory hierarchy from closest to farthest">
+          <li><b>Registers</b><span>tiny · current operands</span></li>
+          <li><b>L1 / local scratchpad</b><span>very fast · explicit or cached tiles</span></li>
+          <li><b>L2 / shared SRAM</b><span>working set · producer/consumer reuse</span></li>
+          <li><b>Last-level cache / HBM</b><span>shared capacity · high bandwidth</span></li>
+          <li><b>DRAM</b><span>large model and application state</span></li>
+          <li><b>NVMe / network storage</b><span>persistent · high access latency</span></li>
+        </ol>
+        <div class="hw-memory-rules">
+          <article><span>Capacity</span><strong>Does the working set fit?</strong><p>Include code, metadata, double buffers, fragmentation, ECC, reserved memory, and worst-case concurrency.</p></article>
+          <article><span>Locality</span><strong>Can one fetched byte be reused?</strong><p>Tile loops and tensors, fuse operators, batch carefully, and keep producer output near the next consumer.</p></article>
+          <article><span>Access shape</span><strong>Is traffic sequential or random?</strong><p>Bursts favor wide transfers; random small requests expose bank, row, translation, and command overhead.</p></article>
+          <article><span>Sharing</span><strong>Who owns the latest copy?</strong><p>Choose coherent caches when shared-memory convenience earns its traffic; use message passing or scratchpads for explicit control.</p></article>
+          <article><span>Concurrency</span><strong>Are enough requests outstanding?</strong><p>Memory-level parallelism hides service time only when dependencies, buffers, and controllers allow it.</p></article>
+          <article><span>Protection</span><strong>Can an agent access only its buffers?</strong><p>Plan IOMMU/MPU domains, address translation, secure memory, ECC/parity, and scrub or reset behavior.</p></article>
+        </div>
+      </div>
+
+      <article class="hw-roofline" aria-label="Simplified Roofline performance model">
+        <div class="hw-roofline-copy">
+          <span class="hw-inline-label">Roofline reasoning</span>
+          <h3>Ask whether the kernel is byte-bound or compute-bound</h3>
+          <p>Arithmetic intensity is useful operations divided by bytes moved at the memory boundary being analyzed. The attainable rate is bounded by the lower of compute peak and bandwidth × intensity.</p>
+          <dl><dt>Left slope</dt><dd>Increase reuse, coalesce traffic, compress, or add bandwidth.</dd><dt>Flat roof</dt><dd>Improve utilization, vectorization, mapping, frequency, or compute resources.</dd><dt>Below both</dt><dd>Look for serialization, imbalance, instruction overhead, synchronization, or tiny problem sizes.</dd></dl>
+        </div>
+        <div class="hw-roofline-plot" aria-hidden="true">
+          <div class="hw-roofline-bandwidth"></div>
+          <div class="hw-roofline-ceiling"></div>
+          <span class="hw-roofline-label hw-memory-bound">memory bound</span>
+          <span class="hw-roofline-label hw-compute-bound">compute ceiling</span>
+          <i class="hw-roofline-dot hw-dot-a"><small>streaming kernel</small></i>
+          <i class="hw-roofline-dot hw-dot-b"><small>reused tile</small></i>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" id="compute">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">05 · Compute and dataflow choices</p>
+        <h2>Match programmability to regularity</h2>
+        <p>The best engine is the least specialized one that still meets the whole-system target.</p>
+      </div>
+      <div class="hw-choice-grid">
+        <article><span>CPU</span><h3>Irregular + latency-sensitive</h3><p>Control-heavy code, branches, operating systems, orchestration, sparse pointer-rich work, and frequently changing algorithms.</p><small>Cost: lower throughput per watt</small></article>
+        <article><span>GPU / programmable NPU</span><h3>Massively parallel kernels</h3><p>Regular tensor, graphics, signal, and vector workloads with enough work to amortize launch and transfer overhead.</p><small>Cost: utilization + memory orchestration</small></article>
+        <article><span>FPGA</span><h3>Custom streaming pipeline</h3><p>Deterministic I/O, evolving protocols, bit-level operations, and modest volume where reconfiguration matters.</p><small>Cost: development complexity</small></article>
+        <article><span>ASIC / fixed function</span><h3>Stable, high-volume hotspot</h3><p>Maximum efficiency when the workload and market justify non-recurring engineering, validation, and long lead time.</p><small>Cost: inflexibility + NRE</small></article>
+      </div>
+      <div class="hw-dataflow-grid">
+        <article><strong>Weight stationary</strong><p>Keep weights local and stream activations. Useful when weights are heavily reused across batches or spatial positions.</p><small>Watch: activation traffic + accumulation</small></article>
+        <article><strong>Output stationary</strong><p>Keep partial sums local until complete. Useful when reductions dominate and accumulator movement is expensive.</p><small>Watch: accumulator capacity + precision</small></article>
+        <article><strong>Row / reuse balanced</strong><p>Exploit multiple reuse directions across weights, inputs, and partial sums. Useful when no single tensor dominates movement.</p><small>Watch: mapping and control complexity</small></article>
+      </div>
+      <div class="memory-strip"><b>Selection test</b><span>For each candidate, estimate useful utilization, bytes moved, synchronization, conversion overhead, fallback work, and software cost.</span></div>
+    </section>
+
+    <section class="section" id="fabric">
+      <div class="section-heading">
+        <p class="eyebrow">06 · Interconnect and I/O</p>
+        <h2>The fabric is part of the computer</h2>
+        <p>Topology, coherency, ordering, flow control, DMA, and external links determine whether compute and memory can work together.</p>
+      </div>
+      <div class="hw-system-map" aria-label="Computer system interconnect map">
+        <div class="hw-map-stack">
+          <div class="hw-map-node"><strong>CPU cluster</strong><small>control · OS · serial work</small></div>
+          <div class="hw-map-node"><strong>GPU / NPU</strong><small>parallel kernels</small></div>
+          <div class="hw-map-node"><strong>Security engine</strong><small>keys · boot · isolation</small></div>
+        </div>
+        <b aria-hidden="true">↔</b>
+        <div class="hw-map-center"><span>On-chip fabric</span><strong>NoC · coherency · QoS</strong><p>routes, arbitration, ordering, backpressure, protection, observability</p></div>
+        <b aria-hidden="true">↔</b>
+        <div class="hw-map-stack">
+          <div class="hw-map-node"><strong>SRAM / DRAM</strong><small>controllers · ECC</small></div>
+          <div class="hw-map-node"><strong>PCIe / CXL / Ethernet</strong><small>external expansion</small></div>
+          <div class="hw-map-node"><strong>Display · camera · storage</strong><small>real-time I/O</small></div>
+        </div>
+      </div>
+      <div class="hw-io-grid">
+        <article><span>Topology</span><strong>Bus, crossbar, ring, mesh, tree</strong><p>Choose from endpoint count, locality, bisection bandwidth, hop latency, layout, and growth.</p></article>
+        <article><span>Coherency</span><strong>Convenience has traffic cost</strong><p>Define which agents share memory, cache ownership, snoop scope, consistency model, and non-coherent boundaries.</p></article>
+        <article><span>Quality of service</span><strong>Protect deadline traffic</strong><p>Priorities, virtual channels, credits, admission limits, and bandwidth reservations prevent bulk traffic from blocking control.</p></article>
+        <article><span>DMA</span><strong>Move without occupying the CPU</strong><p>Use descriptors, scatter/gather, aligned buffers, IOMMU mappings, cache maintenance, and explicit completion.</p></article>
+        <article><span>Ordering</span><strong>Define what “done” means</strong><p>Memory barriers, posted writes, completion queues, atomics, interrupts, and error reporting close the contract.</p></article>
+        <article><span>External I/O</span><strong>Budget protocol overhead</strong><p>Lane rate, encoding, packet headers, retransmission, switch hops, connector limits, reach, and signal margin reduce payload rate.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="physical">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">07 · Power, thermal, and reliability</p>
+        <h2>A fast block can create a slow system</h2>
+        <p>Power delivery and heat removal determine sustainable performance. Reliability defines whether that performance survives its environment and lifetime.</p>
+      </div>
+      <ol class="hw-physical-chain" aria-label="Power to performance causal chain">
+        <li><span>01 · Activity</span><strong>More switching</strong><small>frequency, voltage, toggles, memory traffic</small></li>
+        <li><span>02 · Power</span><strong>Rail demand rises</strong><small>average draw + transient droop</small></li>
+        <li><span>03 · Heat</span><strong>Junction temperature rises</strong><small>package, board, airflow, ambient</small></li>
+        <li><span>04 · Control</span><strong>DVFS or throttling</strong><small>protect limits; reduce delivered rate</small></li>
+        <li><span>05 · Outcome</span><strong>Deadline or lifetime risk</strong><small>tail latency, aging, shutdown, user impact</small></li>
+      </ol>
+      <div class="hw-resilience-grid">
+        <article><span>Power integrity</span><strong>Design the transient path</strong><p>Regulator response, decoupling, package/board impedance, rail sequencing, brownout detection, and safe reset.</p></article>
+        <article><span>Thermal</span><strong>Model sustained—not burst—load</strong><p>Thermal resistance/capacitance, hotspots, sensors, cooling curve, ambient, enclosure, and fan failure.</p></article>
+        <article><span>Data integrity</span><strong>Detect, contain, recover</strong><p>ECC/parity, CRC, replay, memory scrubbing, poison propagation, watchdogs, and checkpoint/restart.</p></article>
+        <article><span>Lifecycle</span><strong>Design for variation and aging</strong><p>Process corners, voltage/temperature margin, wear, endurance, component derating, diagnostics, and field update.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="bottlenecks">
+      <div class="section-heading">
+        <p class="eyebrow">08 · Hardware bottleneck selector</p>
+        <h2>Diagnose from counters and behavior</h2>
+        <p>Change one variable at a time. A symptom can have several causes, so confirm the limiting resource before redesigning.</p>
+      </div>
+      <div class="hw-bottleneck-table-wrap">
+        <table class="hw-bottleneck-table">
+          <caption>Twelve common limits, the evidence to collect, and the first experiment to run.</caption>
+          <thead><tr><th scope="col">Bottleneck</th><th scope="col">Typical symptom</th><th scope="col">Measure</th><th scope="col">First useful action</th></tr></thead>
+          <tbody>
+            <tr><td>Compute issue rate</td><td>Units stay busy; more data bandwidth does not help.</td><td>IPC, ops/cycle, unit occupancy, instruction mix.</td><td>Increase useful parallel units, vectorize, fuse work, or lower operation count.</td></tr>
+            <tr><td>Serial dependency</td><td>Low occupancy despite ready data; one chain controls completion.</td><td>Critical path, dependency stalls, Amdahl fraction.</td><td>Break dependencies, pipeline stages, speculate, or move serial control to a faster core.</td></tr>
+            <tr><td>Memory bandwidth</td><td>Performance scales with memory clock/channels and plateaus.</td><td>Delivered bytes/s, controller utilization, arithmetic intensity.</td><td>Increase locality, tile/fuse/compress, reduce precision, or add channels.</td></tr>
+            <tr><td>Memory latency</td><td>Small random work stalls; bandwidth remains underused.</td><td>Outstanding requests, miss latency, row hit rate, queue depth.</td><td>Prefetch, batch, reorder, cache indices, add memory-level parallelism.</td></tr>
+            <tr><td>Cache / TLB</td><td>Sharp slowdown when working set crosses a size boundary.</td><td>Miss rates by level, page walks, conflict/eviction counters.</td><td>Change layout, tile, use suitable pages, partition cache, or use scratchpad.</td></tr>
+            <tr><td>On-chip fabric</td><td>Remote agents slow each other; hop or arbitration stalls rise.</td><td>Link occupancy, hotspots, credits, latency by source/destination.</td><td>Place communicating blocks closer, widen links, rebalance routes, add QoS.</td></tr>
+            <tr><td>External I/O</td><td>Compute waits for camera, disk, network, or host transfer.</td><td>Payload rate, packet size, retries, DMA gaps, link state.</td><td>Overlap transfers, batch, use zero-copy, compress, or upgrade the link.</td></tr>
+            <tr><td>Synchronization</td><td>More cores reduce scaling; lock or barrier time rises.</td><td>Lock wait, atomic retries, barrier skew, coherence invalidations.</td><td>Partition ownership, reduce shared writes, shard locks, use message passing.</td></tr>
+            <tr><td>Load imbalance</td><td>Some engines idle while one queue or tile is full.</td><td>Per-engine utilization, queue depth, task duration distribution.</td><td>Change partitioning, use work stealing, dynamic tiles, or split long tasks.</td></tr>
+            <tr><td>Conversion / formatting</td><td>Copy, layout, precision, or protocol conversion dominates.</td><td>Time and bytes in adapters; accelerator-to-accelerator gaps.</td><td>Standardize layouts, fuse conversion, support the format in hardware.</td></tr>
+            <tr><td>Power / thermal</td><td>Fast initially, slower after seconds or minutes.</td><td>Rail power, clocks, temperature, throttle residency.</td><td>Reduce movement/switching, improve cooling, schedule bursts, resize peak.</td></tr>
+            <tr><td>Reliability margin</td><td>Errors appear at voltage, temperature, frequency, or age corners.</td><td>ECC events, retries, droop, timing margin, fault logs.</td><td>Add detection/recovery, margin critical paths, derate, isolate faulty resources.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="hw-diagnose-flow" aria-label="Hardware bottleneck diagnosis flow">
+        <div><b>1 · Reproduce</b><small>representative workload + steady state</small></div>
+        <div><b>2 · Observe</b><small>time, counters, traces, power, temperature</small></div>
+        <div><b>3 · Perturb</b><small>change one clock, channel, batch, or mapping</small></div>
+        <div><b>4 · Model</b><small>predict the improvement if the hypothesis is true</small></div>
+        <div><b>5 · Verify</b><small>measure gain and check the next constraint</small></div>
+      </div>
+    </section>
+
+    <section class="section" id="practice">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">09 · Hardware interview practice</p>
+        <h2>Design an edge AI computer</h2>
+        <p>Speak through the checkpoints before revealing the coaching notes. The goal is a defensible allocation—not a single “correct” chip.</p>
+      </div>
+      <div class="hw-case-brief">
+        <div><span class="hw-inline-label">45-minute prompt</span><h3>Design a fanless roadside perception computer</h3><p>Process four 1080p camera streams, detect and track objects locally, publish compact events, and retain evidence clips. The unit must operate continuously without cloud inference.</p></div>
+        <ul class="hw-case-signals" aria-label="Interview case constraints"><li>4 × 1080p30</li><li>p99 &lt; 100 ms</li><li>25 W module</li><li>−20–60 °C ambient</li><li>24 h offline</li><li>5-year field life</li></ul>
+      </div>
+      <ol class="hw-case-flow" aria-label="Edge AI computer main data flow">
+        <li><b>Cameras</b><small>capture + timestamps</small></li>
+        <li><b>ISP</b><small>decode · resize · normalize</small></li>
+        <li><b>NPU</b><small>detection inference</small></li>
+        <li><b>CPU</b><small>tracking + policy</small></li>
+        <li><b>Storage</b><small>ring buffer + evidence</small></li>
+        <li><b>Network</b><small>events + health</small></li>
+      </ol>
+      <ol class="hw-case-checkpoints">
+        <li><header><span>00–07 min</span><strong>Clarify the contract</strong></header><p>Ask about model accuracy, stream format, simultaneous frames, event rate, retention, safety impact, security, environment, size, cost, and field update.</p><details><summary>Reveal coaching notes</summary><div>Separate perception latency from end-to-end event latency. Ask whether dropped frames are allowed, whether all cameras must be synchronized, and what degraded behavior is acceptable when a sensor or accelerator fails.</div></details></li>
+        <li><header><span>07–15 min</span><strong>Build workload + movement budgets</strong></header><p>Estimate decoded pixels, tensor bytes, operations per frame, model/activation footprint, storage/day, network payload, and peak concurrency.</p><details><summary>Reveal coaching notes</summary><div>Four 1080p30 streams are about 249 million pixels/s before format factors. Do not route every full frame through general DRAM repeatedly: use the ISP, tiled buffers, producer-consumer pipelines, and zero-copy surfaces where possible.</div></details></li>
+        <li><header><span>15–25 min</span><strong>Allocate compute and memory</strong></header><p>Choose engines for decode/ISP, inference, tracking, control, encryption, and storage; size DRAM and on-chip buffers.</p><details><summary>Reveal coaching notes</summary><div>Use fixed-function decode/ISP for stable pixel operations, an NPU for supported model layers, and CPU/vector fallback for control and unsupported operators. Preserve headroom for model growth, telemetry, and failover—not only benchmark throughput.</div></details></li>
+        <li><header><span>25–33 min</span><strong>Draw the fabric and I/O</strong></header><p>Place camera inputs, memory controllers, compute, storage, network, DMA, coherency boundaries, QoS, clocks, and reset domains.</p><details><summary>Reveal coaching notes</summary><div>Reserve fabric and DRAM service for camera capture so inference bursts cannot drop frames. Define buffer ownership and completion explicitly. Isolate the management/security plane from bulk video traffic.</div></details></li>
+        <li><header><span>33–40 min</span><strong>Close physical + failure budgets</strong></header><p>Explain sustained 25 W operation, thermal path, brownouts, watchdog/reset, ECC, storage wear, sensor loss, NPU hang, network loss, and safe update.</p><details><summary>Reveal coaching notes</summary><div>Model the worst ambient and dirty or aging cooling path. Use staged recovery: restart a job, reset the engine, restart the pipeline, then reboot. Keep a local health channel and signed A/B firmware/model images.</div></details></li>
+        <li><header><span>40–45 min</span><strong>Verify and summarize</strong></header><p>Name representative benchmarks, instrumentation, corner tests, acceptance thresholds, and the first likely bottleneck.</p><details><summary>Reveal coaching notes</summary><div>Replay timestamped worst-case scenes while measuring p50/p99 latency, frames dropped, DRAM/fabric utilization, power, junction temperature, throttling, and accuracy. Run steady-state thermal soak—not only a short demo.</div></details></li>
+      </ol>
+      <div class="hw-pressure-grid">
+        <article><span>Model becomes 2× larger</span><p>Recheck NPU support, model/activation capacity, bandwidth, latency, accuracy, and update time.</p></article>
+        <article><span>One camera floods errors</span><p>Bound retries, isolate its queue, preserve other streams, report health, and degrade explicitly.</p></article>
+        <article><span>60 °C for eight hours</span><p>Show sustainable clocks and latency under thermal equilibrium and worst enclosure conditions.</p></article>
+        <article><span>NPU unavailable</span><p>Choose reduced-rate CPU inference, simpler model, sensor-only recording, or declared loss of function.</p></article>
+      </div>
+      <div class="memory-strip"><b>Strong close</b><span>“I chose this partition because measured operations and bytes fit with headroom; these are the physical limits; this is how the system degrades and how I will verify it.”</span></div>
+    </section>
+
+    <section class="section" id="resources">
+      <div class="section-heading">
+        <p class="eyebrow">10 · Primary references</p>
+        <h2>Deepen the models behind the diagrams</h2>
+        <p>Use vendor and project documentation for interfaces; use laboratory work for performance models; verify every estimate on the target platform.</p>
+      </div>
+      <div class="hw-source-grid">
+        <article><span>Performance model</span><strong>Berkeley Lab Roofline Model</strong><p>Arithmetic intensity, bandwidth ceilings, compute ceilings, and bottleneck-oriented performance analysis.</p><a href="https://amcr.lbl.gov/departments/computer-science-department/ppan/roofline-performance-model/">Berkeley Lab guide ↗</a></article>
+        <article><span>On-chip fabric</span><strong>Arm AMBA</strong><p>Official architecture family for AXI, CHI, AHB, APB, coherency, and SoC component communication.</p><a href="https://developer.arm.com/Architectures/AMBA">Arm architecture page ↗</a></article>
+        <article><span>Device movement</span><strong>Linux DMA Mapping Guide</strong><p>CPU, physical, bus, and IOMMU addresses; coherent versus streaming mappings; buffer lifecycle.</p><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Kernel documentation ↗</a></article>
+        <article><span>Expansion I/O</span><strong>PCI-SIG specifications</strong><p>Primary specification hub for PCI Express architecture and related interconnect technologies.</p><a href="https://pcisig.com/specifications">PCI-SIG ↗</a></article>
+        <article><span>Processor interface</span><strong>RISC-V specifications</strong><p>Open ISA specifications and profiles useful for reasoning about the hardware/software contract.</p><a href="https://riscv.org/technical/specifications/">RISC-V International ↗</a></article>
+        <article><span>Next track</span><strong>NPU + Analog Compute-in-Memory</strong><p>Continue from workload and memory reasoning into analog-aware compilation, mapping, calibration, and runtime design.</p><a href="npu-acim.html">Open the ACiM track →</a></article>
+      </div>
+      <div class="hw-track-grid" aria-label="All System Design Atlas tracks">
+        <a href="backend.html"><span>Backend</span><strong>Distributed software</strong><small>APIs, data, caching, queues, reliability.</small></a>
+        <a href="systems-engineering.html"><span>Systems engineering</span><strong>Whole lifecycle</strong><small>Needs, requirements, interfaces, risk, V&amp;V.</small></a>
+        <a href="embedded.html"><span>Embedded</span><strong>Cyber-physical systems</strong><small>Real time, control, power, safety, verification.</small></a>
+        <a href="npu-acim.html"><span>NPU + ACiM</span><strong>Hardware/software co-design</strong><small>Compiler, mapper, runtime, calibration.</small></a>
+        <a href="index.html"><span>Atlas</span><strong>Choose by system boundary</strong><small>Return to the visual track selector.</small></a>
+        <a href="https://buicongnguyen.github.io/Leetcode/"><span>DSA Atlas</span><strong>Algorithms and data structures</strong><small>Return to the original visual learning map.</small></a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><span class="brand-mark" aria-hidden="true">SD</span><b>System Design Atlas</b></div>
+    <p>Good hardware design makes workload, data movement, physical limits, and evidence visible.</p>
+    <a href="#top">Back to top ↑</a>
+  </footer>
+</body>
+</html>

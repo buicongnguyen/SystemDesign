@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A visual atlas for backend, systems engineering, hardware, embedded, and ACiM NPU system design.">
+  <meta name="theme-color" content="#07111f">
+  <title>System Design Atlas — Choose Your Track</title>
+  <link rel="stylesheet" href="styles.css?v=20260717a">
+  <script src="app.js?v=20260717a" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html#top" aria-label="System Design Atlas home"><span class="brand-mark" aria-hidden="true">SD</span><span>System Design <b>Atlas</b></span></a>
+    <nav aria-label="Primary navigation">
+      <a href="#tracks">Choose track</a><a href="#shared-core">Shared core</a><a href="#selector">Decision map</a><a href="#practice">Practice</a><a href="https://buicongnguyen.github.io/Leetcode/">DSA Atlas ↗</a>
+    </nav>
+    <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
+  </header>
+
+  <main id="main">
+    <section class="hero atlas-hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">One discipline · five design lenses</p>
+        <h1>Choose the system boundary. <span>Then choose the method.</span></h1>
+        <p class="hero-lead">System design can mean a global backend, a processor and memory hierarchy, a real-time device, an entire multidisciplinary mission, or an analog AI accelerator. Start with what you are responsible for designing.</p>
+        <div class="hero-actions"><a class="button primary" href="#tracks">Choose a track</a><a class="button secondary" href="#selector">Open the decision map →</a></div>
+        <ul class="hero-stats" aria-label="Atlas summary"><li><strong>5</strong><span>design tracks</span></li><li><strong>50+</strong><span>visual models</span></li><li><strong>5</strong><span>interview cases</span></li></ul>
+      </div>
+      <section class="hero-panel" aria-label="System boundary preview">
+        <div class="terminal-bar"><i></i><i></i><i></i><span>choose-boundary.md</span></div>
+        <pre><code><span class="muted"># The word “system” is contextual</span>
+boundary = identify_responsibility()
+
+if boundary == <b>"services + data"</b>:
+    track = backend_distributed
+elif boundary == <b>"whole engineered product"</b>:
+    track = systems_engineering
+elif boundary == <b>"compute platform"</b>:
+    track = hardware
+elif boundary == <b>"physical feedback loop"</b>:
+    track = embedded
+elif boundary == <b>"analog AI accelerator"</b>:
+    track = npu_acim
+
+state_requirements_and_tradeoffs()</code></pre>
+      </section>
+    </section>
+
+    <section class="section atlas-tracks" id="tracks">
+      <div class="section-heading centered-heading"><p class="eyebrow">01 · Track selector</p><h2>What are you designing?</h2><p>Each track shares systems thinking, but its constraints, artifacts, bottlenecks, and interview language are different.</p></div>
+      <div class="track-map" aria-label="System design track map">
+        <div class="track-root"><span>System boundary</span><strong>Which elements are inside your responsibility?</strong></div>
+        <div class="track-connector" aria-hidden="true"></div>
+        <div class="track-grid">
+          <a class="track-card backend" href="backend.html"><span>01 · Software services</span><h3>Backend &amp; Distributed</h3><p>APIs, data stores, caches, queues, consistency, availability, traffic and operations.</p><small>Example: design a global news feed →</small></a>
+          <a class="track-card systems" href="systems-engineering.html"><span>02 · Whole product</span><h3>Systems Engineering</h3><p>Stakeholders, ConOps, requirements, allocation, interfaces, risk, integration and V&amp;V.</p><small>Example: design an autonomous drone →</small></a>
+          <a class="track-card hardware" href="hardware.html"><span>03 · Compute platform</span><h3>Hardware &amp; Computer</h3><p>Workloads, microarchitecture, memory, interconnect, PPA, thermal and reliability.</p><small>Example: design an edge AI computer →</small></a>
+          <a class="track-card embedded" href="embedded.html"><span>04 · Physical control</span><h3>Embedded &amp; Cyber-Physical</h3><p>Sensors, firmware, real-time deadlines, control, power, safety and actuators.</p><small>Example: design a smart camera →</small></a>
+          <a class="track-card acim" href="npu-acim.html"><span>05 · Analog AI compute</span><h3>NPU Software Stack · ACiM</h3><p>Graph compiler, analog-aware mapping, runtime, calibration, drift and digital fallback.</p><small>Example: design a hybrid ACiM NPU →</small></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="shared-core">
+      <div class="section-heading"><p class="eyebrow">02 · Shared reasoning engine</p><h2>Every track follows the same evidence loop</h2><p>The artifacts change, but good designs always connect stakeholder need to a verified and operable solution.</p></div>
+      <ol class="atlas-loop">
+        <li><span>01</span><strong>Need</strong><p>Who succeeds, under what operating scenario?</p></li>
+        <li><span>02</span><strong>Requirements</strong><p>Make functions and quality constraints measurable.</p></li>
+        <li><span>03</span><strong>Estimate</strong><p>Size load, data, timing, energy and environment.</p></li>
+        <li><span>04</span><strong>Decompose</strong><p>Break behavior into functions and interfaces.</p></li>
+        <li><span>05</span><strong>Allocate</strong><p>Assign functions to services, hardware, software or people.</p></li>
+        <li><span>06</span><strong>Trade</strong><p>Compare alternatives with explicit criteria.</p></li>
+        <li><span>07</span><strong>Realize</strong><p>Implement and integrate from components upward.</p></li>
+        <li><span>08</span><strong>Verify</strong><p>Prove the design meets its requirements.</p></li>
+        <li><span>09</span><strong>Validate</strong><p>Prove the system solves the intended need.</p></li>
+        <li><span>10</span><strong>Operate</strong><p>Observe, recover, evolve and eventually retire.</p></li>
+      </ol>
+      <div class="atlas-formula"><b>Reasoning sentence</b><span>Because requirement <i>R</i> and estimate <i>E</i> expose constraint <i>C</i>, choose architecture <i>A</i>, accepting trade-off <i>T</i>, verified by measure <i>M</i>.</span></div>
+    </section>
+
+    <section class="section decision-section" id="selector">
+      <div class="section-heading centered-heading"><p class="eyebrow">03 · Discipline decision graph</p><h2>Follow the dominant design object</h2><p>The same product may use multiple tracks. Choose the page matching the interviewer’s or team’s system boundary.</p></div>
+      <div class="atlas-selector">
+        <div class="selector-question"><span>Start</span><strong>What must your architecture primarily coordinate?</strong></div>
+        <div class="selector-grid">
+          <article><span>Services + durable data</span><h3>Backend</h3><p>Optimize throughput, latency, consistency and availability.</p><a href="backend.html">Open track →</a></article>
+          <article><span>Multiple engineering disciplines</span><h3>Systems Engineering</h3><p>Manage requirements, interfaces, lifecycle risk and integration.</p><a href="systems-engineering.html">Open track →</a></article>
+          <article><span>Compute + memory + I/O</span><h3>Hardware</h3><p>Balance performance, power, area, cost and programmability.</p><a href="hardware.html">Open track →</a></article>
+          <article><span>Software + physical environment</span><h3>Embedded</h3><p>Meet deadlines, safety, power and control stability.</p><a href="embedded.html">Open track →</a></article>
+          <article><span>Model graph + analog arrays</span><h3>ACiM NPU</h3><p>Preserve accuracy while exploiting efficient in-memory matrix operations.</p><a href="npu-acim.html">Open track →</a></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="practice">
+      <div class="section-heading"><p class="eyebrow">04 · Interview practice matrix</p><h2>Practice the right conversation for each role</h2><p>Each track ends with a 45-minute case, revealable coaching notes, pressure tests and a self-score.</p></div>
+      <div class="practice-matrix">
+        <a href="backend.html#practice"><span>Backend</span><strong>URL shortener · feed · chat</strong><small>Scale, storage, consistency, bottlenecks</small></a>
+        <a href="systems-engineering.html#practice"><span>Systems</span><strong>Autonomous delivery drone</strong><small>ConOps, allocation, interfaces, V&amp;V</small></a>
+        <a href="hardware.html#practice"><span>Hardware</span><strong>Edge AI computer</strong><small>Workload, memory, PPA, thermal</small></a>
+        <a href="embedded.html#practice"><span>Embedded</span><strong>Battery smart camera</strong><small>Real time, control, power, safety</small></a>
+        <a href="npu-acim.html#practice"><span>ACiM NPU</span><strong>Hybrid analog AI stack</strong><small>Compiler, mapping, runtime, calibration</small></a>
+      </div>
+    </section>
+  </main>
+
+  <footer><div><span class="brand-mark" aria-hidden="true">SD</span><b>System Design Atlas</b></div><p>Choose the boundary, follow the evidence, and make every trade-off visible.</p><a href="#top">Back to top ↑</a></footer>
+</body>
+</html>

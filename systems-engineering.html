@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A visual Systems Engineering field guide covering stakeholder needs, ConOps, requirements, architecture, interfaces, trade studies, risk, integration, verification, validation, and interview practice.">
+  <meta name="theme-color" content="#07111f">
+  <title>Systems Engineering · System Design Atlas</title>
+  <link rel="stylesheet" href="styles.css?v=20260717a">
+  <script src="app.js?v=20260717a" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="System Design Atlas home">
+      <span class="brand-mark" aria-hidden="true">SD</span>
+      <span>System Design <b>Atlas</b></span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Atlas</a>
+      <a href="backend.html">Backend</a>
+      <a href="systems-engineering.html" aria-current="page">Systems Engineering</a>
+      <a href="hardware.html">Hardware</a>
+      <a href="embedded.html">Embedded</a>
+      <a href="npu-acim.html">NPU + ACiM</a>
+    </nav>
+    <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
+  </header>
+
+  <main id="main">
+    <section class="hero system-hero se-hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">Whole-system architecture field guide</p>
+        <h1>Begin with the mission. <span>Prove the whole system works.</span></h1>
+        <p class="hero-lead">Systems Engineering connects stakeholder value to hardware, software, people, procedures, facilities, and evidence across the complete lifecycle.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#context">Draw the boundary</a>
+          <a class="button secondary" href="#process">Follow the design flow →</a>
+          <a class="button secondary" href="#practice">Practice the drone case</a>
+        </div>
+        <ul class="hero-stats" aria-label="Page summary">
+          <li><strong>11</strong><span>connected views</span></li>
+          <li><strong>7</strong><span>decision artifacts</span></li>
+          <li><strong>1</strong><span>full interview case</span></li>
+        </ul>
+      </div>
+      <section class="hero-panel" aria-label="Systems Engineering preview">
+        <div class="terminal-bar"><i></i><i></i><i></i><span>mission.se</span></div>
+        <pre><code><span class="muted"># Trace every decision to a real need</span>
+need = understand(<b>stakeholders, context, lifecycle</b>)
+requirements = make_measurable(need)
+functions = decompose(<b>what the system must do</b>)
+architecture = allocate(functions,
+  to=<b>hardware + software + people</b>)
+
+balance(<b>performance, risk, cost, schedule</b>)
+verify(<b>built to requirements</b>)
+validate(<b>solves the mission</b>)</code></pre>
+      </section>
+    </section>
+
+    <nav class="se-page-nav" aria-label="Systems Engineering topics">
+      <a href="#context">Context</a>
+      <a href="#conops">ConOps</a>
+      <a href="#process">Requirements</a>
+      <a href="#allocation">Allocation</a>
+      <a href="#interfaces">Interfaces</a>
+      <a href="#budgets">Budgets</a>
+      <a href="#trades">Trade studies</a>
+      <a href="#risk">Risk</a>
+      <a href="#integration">Integration</a>
+      <a href="#verification">V&amp;V</a>
+      <a href="#practice">Practice</a>
+    </nav>
+
+    <section class="section se-context-section" id="context">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">01 · System context</p>
+        <h2>Draw the boundary before drawing the solution</h2>
+        <p>A context diagram names the system of interest, everything it exchanges, and the environments in which it must survive.</p>
+      </div>
+
+      <figure class="se-context-map" aria-labelledby="context-caption">
+        <div class="se-context-ring se-context-actors">
+          <article><span>Stakeholders</span><strong>Customer · owner · regulator</strong><small>Needs, policy, acceptance</small></article>
+          <article><span>People</span><strong>User · operator · maintainer</strong><small>Commands, feedback, procedures</small></article>
+        </div>
+        <div class="se-context-ring se-context-exchanges">
+          <article><span>External systems</span><strong>Services · vehicles · infrastructure</strong><small>Data, control, material, energy</small></article>
+          <div class="se-system-of-interest"><span>System of interest</span><strong>Purpose + behavior + boundary</strong><small>Hardware · software · data · people · procedures · facilities</small></div>
+          <article><span>Environment</span><strong>Physical · cyber · operational</strong><small>Weather, terrain, interference, threats</small></article>
+        </div>
+        <div class="se-context-ring se-context-lifecycle">
+          <article><span>Supply side</span><strong>Suppliers · production · logistics</strong><small>Parts, tooling, skills, lead time</small></article>
+          <article><span>End of life</span><strong>Recovery · disposal · replacement</strong><small>Data, materials, safety, continuity</small></article>
+        </div>
+        <figcaption id="context-caption">Arrows are implied in both directions: every external exchange needs an owner, interface, unit, timing rule, failure behavior, and verification method.</figcaption>
+      </figure>
+
+      <div class="data-grid se-boundary-cards">
+        <article><span>Purpose</span><h3>Why does it exist?</h3><p>State the outcome in the stakeholder’s language, not a preferred technology.</p><b>Mission · value · acceptance</b></article>
+        <article><span>Boundary</span><h3>What do we own?</h3><p>Separate the system from users, external services, support equipment, and environment.</p><b>Inside · outside · assumptions</b></article>
+        <article><span>Exchange</span><h3>What crosses it?</h3><p>Capture matter, energy, information, commands, observations, and responsibility.</p><b>Source · destination · contract</b></article>
+      </div>
+      <div class="memory-strip"><b>Memory hook</b><span><i>Purpose → boundary → actors → exchanges → environment → lifecycle.</i> If the boundary changes, revisit requirements and risk.</span></div>
+    </section>
+
+    <section class="section se-conops-section" id="conops">
+      <div class="section-heading">
+        <p class="eyebrow">02 · Concept of Operations</p>
+        <h2>Tell the system’s life as an operational story</h2>
+        <p>A ConOps describes who uses the system, in what situation, across normal, degraded, emergency, support, and retirement scenarios.</p>
+      </div>
+
+      <ol class="request-flow se-conops-flow" aria-label="Concept of Operations lifecycle">
+        <li><span>01</span><strong>Acquire</strong><small>Build, procure, install, register, and accept.</small></li>
+        <li><span>02</span><strong>Configure</strong><small>Provision, calibrate, train operators, and check readiness.</small></li>
+        <li><span>03</span><strong>Start</strong><small>Power on, self-test, authenticate, and enter a safe state.</small></li>
+        <li><span>04</span><strong>Operate</strong><small>Perform the mission under expected loads and environments.</small></li>
+        <li><span>05</span><strong>Degrade</strong><small>Detect faults, preserve critical functions, and communicate limits.</small></li>
+        <li><span>06</span><strong>Recover</strong><small>Fail over, repair, restore data, and confirm readiness.</small></li>
+        <li><span>07</span><strong>Maintain</strong><small>Inspect, update, replace, recalibrate, and audit.</small></li>
+        <li><span>08</span><strong>Retire</strong><small>Decommission safely, migrate service, and dispose responsibly.</small></li>
+      </ol>
+
+      <div class="dual-flow se-scenario-pair">
+        <article>
+          <header><span>Nominal scenario</span><h3>Describe success end to end</h3></header>
+          <ol class="mini-flow se-five-step-flow">
+            <li><b>1</b>Trigger</li><li><b>2</b>Preconditions</li><li><b>3</b>Actions</li><li><b>4</b>Outputs</li><li><b>5</b>Success measure</li>
+          </ol>
+          <p><b>Ask:</b> who acts, what state changes, what feedback appears, and how the user knows the mission succeeded?</p>
+        </article>
+        <article>
+          <header><span>Off-nominal scenario</span><h3>Describe safe failure and recovery</h3></header>
+          <ol class="mini-flow se-five-step-flow">
+            <li><b>1</b>Fault</li><li><b>2</b>Detection</li><li><b>3</b>Containment</li><li><b>4</b>Fallback</li><li><b>5</b>Recovery</li>
+          </ol>
+          <p><b>Ask:</b> what remains available, who takes control, what is logged, and what evidence permits return to service?</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section design-thinking se-process-section" id="process">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">03 · Requirements and decomposition</p>
+        <h2>Move from need to testable architecture</h2>
+        <p>Systems Engineering is iterative. A discovery at any step can change earlier assumptions, requirements, interfaces, or plans.</p>
+      </div>
+
+      <div class="master-design-flow se-design-flow" aria-label="Systems Engineering reasoning flow">
+        <div class="design-flow-root"><span>Start</span><strong>What mission outcome matters?</strong><small>Capture stakeholders, context, constraints, and measures of effectiveness.</small></div>
+        <div class="vertical-connector" aria-hidden="true"></div>
+        <ol class="design-flow-steps">
+          <li><span>01</span><div><strong>Stakeholder needs</strong><p>Translate viewpoints, pains, policies, and mission goals into agreed expectations.</p></div><small>Artifact: need statement</small></li>
+          <li><span>02</span><div><strong>ConOps</strong><p>Walk through lifecycle scenarios, users, operating modes, and environments.</p></div><small>Artifact: scenario set</small></li>
+          <li><span>03</span><div><strong>Measures</strong><p>Define mission success, effectiveness, performance, suitability, and constraints.</p></div><small>Artifact: quantified targets</small></li>
+          <li><span>04</span><div><strong>Requirements</strong><p>Write necessary, singular, feasible, unambiguous, and verifiable statements.</p></div><small>Artifact: baselined specification</small></li>
+          <li><span>05</span><div><strong>Functions</strong><p>Decompose what must happen without prematurely choosing components.</p></div><small>Artifact: logical architecture</small></li>
+          <li><span>06</span><div><strong>Alternatives</strong><p>Create genuinely different solution concepts and define evaluation criteria.</p></div><small>Artifact: candidate architectures</small></li>
+          <li><span>07</span><div><strong>Allocate</strong><p>Assign functions and requirements to hardware, software, people, and externals.</p></div><small>Artifact: physical architecture</small></li>
+          <li><span>08</span><div><strong>Balance</strong><p>Resolve interfaces, budgets, risks, cost, schedule, and technical margins.</p></div><small>Artifact: selected baseline</small></li>
+          <li><span>09</span><div><strong>Integrate</strong><p>Build in planned increments, verify interfaces, and retire integration risk early.</p></div><small>Artifact: qualified system</small></li>
+          <li><span>10</span><div><strong>Validate</strong><p>Demonstrate the complete system solves the stakeholder’s real operational need.</p></div><small>Artifact: acceptance evidence</small></li>
+        </ol>
+      </div>
+
+      <div class="se-requirement-anatomy">
+        <div class="diagram-title"><span>Requirement anatomy</span><strong>Make every “shall” statement traceable and provable.</strong></div>
+        <blockquote>When operating in <b>[condition]</b>, the <b>[system]</b> shall <b>[action]</b> on <b>[object]</b> to <b>[measurable performance]</b> within <b>[constraint]</b>.</blockquote>
+        <div class="algorithm-actions" aria-label="Requirement quality checks">
+          <span class="algorithm-chip">necessary</span><span class="algorithm-chip">singular</span><span class="algorithm-chip">unambiguous</span><span class="algorithm-chip">feasible</span><span class="algorithm-chip">bounded</span><span class="algorithm-chip">verifiable</span><span class="algorithm-chip">traceable</span>
+        </div>
+      </div>
+      <div class="memory-strip"><b>Traceability chain</b><span>Stakeholder need <i>→</i> system requirement <i>→</i> subsystem requirement <i>→</i> design element <i>→</i> verification evidence <i>→</i> validation outcome.</span></div>
+    </section>
+
+    <section class="section se-allocation-section" id="allocation">
+      <div class="section-heading">
+        <p class="eyebrow">04 · Logical to physical architecture</p>
+        <h2>Decide what must happen, then decide who performs it</h2>
+        <p>Logical architecture organizes behavior. Physical architecture realizes that behavior with concrete elements and interfaces.</p>
+      </div>
+
+      <figure class="se-allocation-map" aria-labelledby="allocation-caption">
+        <div class="se-architecture-column">
+          <span>Logical · technology independent</span>
+          <article><strong>Sense environment</strong><small>Acquire relevant state</small></article>
+          <article><strong>Estimate situation</strong><small>Fuse observations and uncertainty</small></article>
+          <article><strong>Plan action</strong><small>Select a safe mission path</small></article>
+          <article><strong>Control motion</strong><small>Execute within limits</small></article>
+          <article><strong>Report status</strong><small>Inform users and operators</small></article>
+        </div>
+        <div class="se-allocation-connectors" aria-hidden="true"><span>allocate</span><b>⇢</b><b>⇢</b><b>⇢</b><b>⇢</b><b>⇢</b></div>
+        <div class="se-architecture-column">
+          <span>Physical · implementation specific</span>
+          <article><strong>Sensors + front end</strong><small>Camera, GNSS, IMU, diagnostics</small></article>
+          <article><strong>Compute platform</strong><small>Processor, memory, OS, algorithms</small></article>
+          <article><strong>Operator station</strong><small>Human authority and procedures</small></article>
+          <article><strong>Actuation system</strong><small>Motors, power electronics, mechanisms</small></article>
+          <article><strong>Communications</strong><small>Radio, protocol, cloud services</small></article>
+        </div>
+        <figcaption id="allocation-caption">Allocation is many-to-many: one function may span several elements, and one physical element may implement several functions.</figcaption>
+      </figure>
+
+      <div class="se-table-wrap" tabindex="0" role="region" aria-label="Example function allocation matrix">
+        <table class="se-matrix se-allocation-matrix">
+          <caption>Example allocation matrix — keep responsibility explicit</caption>
+          <thead><tr><th scope="col">Function</th><th scope="col">Hardware</th><th scope="col">Software</th><th scope="col">Human / procedure</th><th scope="col">External</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Detect obstacle</th><td>Camera + range sensor</td><td>Perception model</td><td>Preflight lens inspection</td><td>Map data</td></tr>
+            <tr><th scope="row">Maintain safe energy</th><td>Battery monitor</td><td>Energy estimator</td><td>Battery handling procedure</td><td>Charging station</td></tr>
+            <tr><th scope="row">Authorize route</th><td>Secure element</td><td>Policy + geofence engine</td><td>Operator approval</td><td>Airspace service</td></tr>
+            <tr><th scope="row">Recover from fault</th><td>Redundant control path</td><td>Fault manager</td><td>Remote intervention</td><td>Emergency services</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section se-interface-section" id="interfaces">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">05 · Interfaces</p>
+        <h2>Most system failures happen between components</h2>
+        <p>For every interface, define both sides, the exchange, limits, timing, state, faults, ownership, and how compatibility will be verified.</p>
+      </div>
+
+      <div class="data-grid se-interface-grid">
+        <article><span>Mechanical</span><h3>Fit and force</h3><p>Envelope, mounting, alignment, loads, vibration, connectors, access, and tolerances.</p><b>mm · N · N·m · Hz</b></article>
+        <article><span>Electrical</span><h3>Power and signal</h3><p>Voltage, current, grounding, impedance, transients, isolation, EMC, and protection.</p><b>V · A · W · Ω</b></article>
+        <article><span>Thermal</span><h3>Heat path</h3><p>Heat generation, conduction, airflow, coolant, allowable temperature, and shutdown.</p><b>°C · W · °C/W</b></article>
+        <article><span>Data</span><h3>Meaning and timing</h3><p>Protocol, schema, units, rate, latency, ordering, integrity, versioning, and errors.</p><b>bit/s · ms · format</b></article>
+        <article><span>Human</span><h3>Authority and feedback</h3><p>Controls, displays, alarms, workload, training, accessibility, and handover.</p><b>role · mode · response</b></article>
+        <article><span>Operational</span><h3>Responsibility and process</h3><p>Ownership, sequencing, service levels, logistics, maintenance, security, and policy.</p><b>RACI · SLA · procedure</b></article>
+      </div>
+
+      <div class="se-interface-contract">
+        <span>Interface Control Document checklist</span>
+        <ol>
+          <li><b>Identity</b><small>Endpoints and owner</small></li>
+          <li><b>Exchange</b><small>What crosses</small></li>
+          <li><b>Contract</b><small>Units and limits</small></li>
+          <li><b>Behavior</b><small>Modes and timing</small></li>
+          <li><b>Failure</b><small>Detection and fallback</small></li>
+          <li><b>Change</b><small>Version and approval</small></li>
+          <li><b>Evidence</b><small>Compatibility test</small></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section se-budget-section" id="budgets">
+      <div class="section-heading">
+        <p class="eyebrow">06 · Technical budgets</p>
+        <h2>Turn system limits into owned allocations</h2>
+        <p>A budget decomposes a system-level constraint, tracks current estimates, preserves margin, and exposes local changes that threaten the mission.</p>
+      </div>
+
+      <div class="factor-compass se-budget-compass">
+        <div class="factor-center"><span>Control the total</span><strong>Allocation + growth + margin ≤ limit</strong></div>
+        <article><span>Mass</span><strong>What must move?</strong><p>Structure, payload, energy, wiring, fasteners, growth allowance, and center of gravity.</p></article>
+        <article><span>Power</span><strong>What consumes energy?</strong><p>Peak, average, startup, conversion loss, duty cycle, reserve, and degradation.</p></article>
+        <article><span>Thermal</span><strong>Where does heat go?</strong><p>Dissipation by mode, junction limits, path resistance, ambient, and hot spots.</p></article>
+        <article><span>Latency</span><strong>Where is time spent?</strong><p>Sense, transfer, compute, decision, actuation, jitter, and deadline margin.</p></article>
+        <article><span>Bandwidth</span><strong>What shares the link?</strong><p>Payload, overhead, burst, retransmission, contention, and degraded modes.</p></article>
+        <article><span>Reliability</span><strong>What may fail?</strong><p>Element failure rates, common causes, coverage, redundancy, repair, and mission time.</p></article>
+        <article><span>Cost</span><strong>What is affordable?</strong><p>Development, unit, integration, infrastructure, training, operation, and disposal.</p></article>
+        <article><span>Schedule</span><strong>What controls delivery?</strong><p>Critical path, supplier lead time, test assets, certification, and rework reserve.</p></article>
+        <article><span>Capacity</span><strong>What is the ceiling?</strong><p>Payload, users, storage, missions, ports, spares, maintainers, and future growth.</p></article>
+        <article><span>Margin</span><strong>How much uncertainty remains?</strong><p>Track contingency separately; do not hide optimistic estimates inside allocations.</p></article>
+      </div>
+
+      <div class="se-budget-equation slo-equation">
+        <span>Budget control loop</span><strong>Requirement</strong><i>sets limit</i><b>→</b><strong>Allocation</strong><i>assigns ownership</i><b>→</b><strong>Estimate</strong><i>shows status</i><b>→</b><strong>Margin</strong><i>absorbs uncertainty</i><b>→</b><strong>Test</strong><i>retires uncertainty</i>
+      </div>
+    </section>
+
+    <section class="section se-trade-section" id="trades">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">07 · Trade studies</p>
+        <h2>Compare alternatives without hiding judgment</h2>
+        <p>First remove concepts that violate mandatory constraints. Then score viable concepts, test sensitivity, document uncertainty, and record why the choice wins.</p>
+      </div>
+
+      <ol class="interview-system-loop se-trade-flow">
+        <li><span>01 · Frame</span><strong>Name the decision</strong><p>Set scope, decision owner, deadline, assumptions, and alternatives that are meaningfully different.</p><small>Output: decision statement</small></li>
+        <li><span>02 · Screen</span><strong>Apply hard constraints</strong><p>Reject concepts that cannot meet safety, policy, physical, schedule, or mission minimums.</p><small>Output: viable set</small></li>
+        <li><span>03 · Evaluate</span><strong>Score with evidence</strong><p>Weight criteria from stakeholder priorities; record data source, uncertainty, and risk.</p><small>Output: transparent matrix</small></li>
+        <li><span>04 · Stress</span><strong>Test sensitivity</strong><p>Vary weights and uncertain scores. If the winner changes easily, gather better evidence.</p><small>Output: robust decision</small></li>
+      </ol>
+
+      <div class="se-table-wrap" tabindex="0" role="region" aria-label="Example trade study matrix">
+        <table class="se-matrix se-trade-matrix">
+          <caption>Illustrative navigation architecture trade study — scores are 1 (weak) to 5 (strong)</caption>
+          <thead><tr><th scope="col">Criterion</th><th scope="col">Weight</th><th scope="col">Onboard only</th><th scope="col">Cloud assisted</th><th scope="col">Hybrid</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Safe without link</th><td>30%</td><td>5</td><td>1</td><td>5</td></tr>
+            <tr><th scope="row">Perception capability</th><td>20%</td><td>3</td><td>5</td><td>5</td></tr>
+            <tr><th scope="row">Energy efficiency</th><td>15%</td><td>3</td><td>4</td><td>3</td></tr>
+            <tr><th scope="row">Lifecycle cost</th><td>15%</td><td>4</td><td>3</td><td>2</td></tr>
+            <tr><th scope="row">Update flexibility</th><td>10%</td><td>2</td><td>5</td><td>4</td></tr>
+            <tr><th scope="row">Certification clarity</th><td>10%</td><td>4</td><td>2</td><td>3</td></tr>
+          </tbody>
+          <tfoot><tr><th scope="row">Weighted total</th><td>100%</td><td>3.80</td><td>3.05</td><td><strong>4.00</strong></td></tr></tfoot>
+        </table>
+      </div>
+
+      <div class="decision-gates se-trade-gates">
+        <article><span>Gate 1</span><strong>Mandatory constraints met?</strong><p>A high weighted score cannot compensate for violating a true must-have.</p></article>
+        <article><span>Gate 2</span><strong>Evidence comparable?</strong><p>Normalize assumptions, mission scenario, maturity, and lifecycle boundary.</p></article>
+        <article><span>Gate 3</span><strong>Winner stable?</strong><p>Vary weights, uncertain data, future growth, and failure conditions.</p></article>
+        <article><span>Gate 4</span><strong>Decision reversible?</strong><p>Record triggers, options, prototypes, and what new evidence would reopen it.</p></article>
+      </div>
+    </section>
+
+    <section class="section se-risk-section" id="risk">
+      <div class="section-heading">
+        <p class="eyebrow">08 · Risk, FMEA, and fault trees</p>
+        <h2>Find failure paths before the system finds them for you</h2>
+        <p>Hazards describe potential harm. Failure modes describe how elements fail. Risk combines likelihood, consequence, uncertainty, and exposure.</p>
+      </div>
+
+      <div class="dual-flow se-risk-tools">
+        <article>
+          <header><span>Bottom-up</span><h3>FMEA: element → effect</h3></header>
+          <ol class="mini-flow se-five-step-flow">
+            <li><b>1</b>Item / function</li><li><b>2</b>Failure mode</li><li><b>3</b>Local + end effect</li><li><b>4</b>Detection</li><li><b>5</b>Control</li>
+          </ol>
+          <p>Use FMEA to review credible component and process failures systematically. Track severity, occurrence or likelihood, detection, owner, action, and residual risk.</p>
+        </article>
+        <article>
+          <header><span>Top-down</span><h3>Fault tree: top event → causes</h3></header>
+          <div class="se-fault-tree" role="img" aria-label="Fault tree for uncontrolled descent">
+            <div class="se-fault-top"><strong>Uncontrolled descent</strong><small>Top event</small></div>
+            <div class="se-fault-gate"><b>OR</b></div>
+            <div class="se-fault-branches">
+              <article><strong>Insufficient thrust</strong><small>motor loss OR propeller loss OR energy loss</small></article>
+              <article><strong>Bad control command</strong><small>estimation fault OR software fault OR corrupt data</small></article>
+              <article><strong>Structural failure</strong><small>overload OR fatigue OR attachment failure</small></article>
+            </div>
+          </div>
+          <p>Use a fault tree to expose combinations that can produce one unacceptable event, including common-cause and independence assumptions.</p>
+        </article>
+      </div>
+
+      <div class="se-table-wrap" tabindex="0" role="region" aria-label="Example FMEA entries">
+        <table class="se-matrix se-fmea-table">
+          <caption>Example FMEA excerpt — qualitative ratings are placeholders until supported by evidence</caption>
+          <thead><tr><th scope="col">Function</th><th scope="col">Failure mode</th><th scope="col">End effect</th><th scope="col">Detection</th><th scope="col">Design control</th><th scope="col">Residual action</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Estimate position</th><td>GNSS gives plausible wrong location</td><td>Route deviation</td><td>Cross-check IMU, vision, map</td><td>Independent plausibility monitor</td><td>Test spoofing and urban canyon cases</td></tr>
+            <tr><th scope="row">Provide thrust</th><td>One propulsion unit stops</td><td>Reduced control authority</td><td>Current, RPM, attitude residual</td><td>Fault-tolerant layout + safe landing</td><td>Demonstrate worst-case controllability</td></tr>
+            <tr><th scope="row">Store energy</th><td>Cell voltage collapses</td><td>Mission power loss</td><td>Cell telemetry + model residual</td><td>Reserve, isolation, return threshold</td><td>Ageing and cold-temperature campaign</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="memory-strip"><b>Risk response</b><span>Avoid <i>→</i> reduce likelihood <i>→</i> reduce consequence <i>→</i> detect and contain <i>→</i> transfer <i>→</i> accept with an accountable owner.</span></div>
+    </section>
+
+    <section class="section se-integration-section" id="integration">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">09 · Integration and the V-model</p>
+        <h2>Plan the evidence while decomposing the design</h2>
+        <p>The left side refines the problem and architecture. Implementation connects the sides. The right side integrates upward and provides evidence at matching levels.</p>
+      </div>
+
+      <figure class="se-v-model" aria-labelledby="vmodel-caption">
+        <ol class="se-v-left" aria-label="Definition and decomposition">
+          <li><span>Need + ConOps</span><strong>Validation planning</strong><small>How will users judge mission value?</small></li>
+          <li><span>System requirements</span><strong>System verification planning</strong><small>How will each system requirement be proved?</small></li>
+          <li><span>Logical architecture</span><strong>Functional verification planning</strong><small>How will end-to-end behavior be exercised?</small></li>
+          <li><span>Subsystem design</span><strong>Interface qualification planning</strong><small>How will elements fit and communicate?</small></li>
+          <li><span>Component design</span><strong>Unit test planning</strong><small>What demonstrates implementation correctness?</small></li>
+        </ol>
+        <div class="se-v-build"><span>Realize</span><strong>Build · code · procure · train · document</strong><small>Configuration control preserves the tested baseline.</small></div>
+        <ol class="se-v-right" aria-label="Integration and evidence">
+          <li><span>Unit evidence</span><strong>Component verification</strong><small>Inspect and test implementation.</small></li>
+          <li><span>Interface evidence</span><strong>Subsystem integration</strong><small>Qualify boundaries and behavior.</small></li>
+          <li><span>Functional evidence</span><strong>System integration</strong><small>Exercise end-to-end functions.</small></li>
+          <li><span>Requirement evidence</span><strong>System verification</strong><small>Prove the specification.</small></li>
+          <li><span>Mission evidence</span><strong>Operational validation</strong><small>Prove fitness for intended use.</small></li>
+        </ol>
+        <figcaption id="vmodel-caption">Horizontal trace pairs a definition level with its intended evidence. Verification planning begins before implementation.</figcaption>
+      </figure>
+
+      <div class="reliability-stack se-integration-ladder">
+        <article><span>Virtual</span><strong>Models and simulation</strong><small>Explore architecture and edge cases cheaply.</small></article>
+        <article><span>Unit</span><strong>Component rigs</strong><small>Characterize performance and limits.</small></article>
+        <article><span>Interface</span><strong>Contract tests</strong><small>Retire fit, protocol, timing, and tolerance risk.</small></article>
+        <article><span>Subsystem</span><strong>Integration benches</strong><small>Exercise realistic interactions and faults.</small></article>
+        <article><span>System</span><strong>Qualification article</strong><small>Verify requirements in controlled conditions.</small></article>
+        <article><span>Operational</span><strong>Mission trial</strong><small>Validate use with representative people and environment.</small></article>
+      </div>
+    </section>
+
+    <section class="section se-verification-section" id="verification">
+      <div class="section-heading">
+        <p class="eyebrow">10 · Verification and validation</p>
+        <h2>Build the system right—and build the right system</h2>
+        <p>Verification compares the realized system with requirements. Validation evaluates whether it fulfills stakeholder needs in the intended operational context.</p>
+      </div>
+
+      <div class="dual-flow se-vv-compare">
+        <article>
+          <header><span>Specification question</span><h3>Verification</h3></header>
+          <p><b>Question:</b> Did the system meet each allocated requirement?</p>
+          <p><b>Input:</b> baselined requirements, interfaces, acceptance criteria, configuration.</p>
+          <p><b>Output:</b> objective evidence, anomalies, compliance status, trace closure.</p>
+        </article>
+        <article>
+          <header><span>Mission question</span><h3>Validation</h3></header>
+          <p><b>Question:</b> Does the system solve the real need for intended users and environments?</p>
+          <p><b>Input:</b> needs, ConOps, mission scenarios, measures of effectiveness.</p>
+          <p><b>Output:</b> operational suitability, acceptance, limitations, improvement needs.</p>
+        </article>
+      </div>
+
+      <div class="data-grid se-method-grid">
+        <article><span>Inspection</span><h3>Observe attributes</h3><p>Review construction, markings, documentation, workmanship, configuration, or records without operation.</p><b>Good for visible conformance</b></article>
+        <article><span>Analysis</span><h3>Calculate from evidence</h3><p>Use models, similarity, simulation, test data, and engineering calculations with justified assumptions.</p><b>Good when test is impractical</b></article>
+        <article><span>Demonstration</span><h3>Show operation</h3><p>Exercise observable function without precise measurement or detailed instrumentation.</p><b>Good for functional behavior</b></article>
+        <article><span>Test</span><h3>Measure under control</h3><p>Operate with specified stimulus, equipment, environment, procedure, and quantitative acceptance criteria.</p><b>Good for performance evidence</b></article>
+      </div>
+
+      <div class="se-table-wrap" tabindex="0" role="region" aria-label="Verification cross-reference matrix example">
+        <table class="se-matrix se-vcrm-table">
+          <caption>Verification Cross-Reference Matrix — every requirement needs planned, attributable evidence</caption>
+          <thead><tr><th scope="col">Requirement</th><th scope="col">Method</th><th scope="col">Level</th><th scope="col">Acceptance criterion</th><th scope="col">Evidence</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">SYS-PERF-014</th><td>Test</td><td>System</td><td>Stop within 4 m at 8 m/s</td><td>Braking test report</td><td>Planned</td></tr>
+            <tr><th scope="row">SYS-ENV-022</th><td>Analysis + test</td><td>Subsystem</td><td>Operate from −10 to 45 °C</td><td>Thermal model + chamber data</td><td>In work</td></tr>
+            <tr><th scope="row">SYS-OPS-031</th><td>Demonstration</td><td>Operational</td><td>Operator assumes control in 2 s</td><td>Representative mission trial</td><td>Planned</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="memory-strip"><b>Evidence rule</b><span>Requirement <i>→</i> acceptance criterion <i>→</i> method <i>→</i> level <i>→</i> procedure <i>→</i> result <i>→</i> anomaly closure.</span></div>
+    </section>
+
+    <section class="section practice-arena se-practice" id="practice">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">11 · Interview practice arena</p>
+        <h2>Design an autonomous delivery drone system</h2>
+        <p>Use the prompts first. Open the coaching only after you have spoken and drawn your answer.</p>
+      </div>
+
+      <article class="scenario-brief se-case-brief">
+        <div>
+          <p class="eyebrow">Multidisciplinary case · 55 minutes</p>
+          <h3>Door-to-door medical delivery</h3>
+          <p>A healthcare network needs an autonomous electric drone to move small medical packages between a clinic and approved delivery sites. Design the whole system, including vehicle, software, operator, communications, support, and evidence—not only the flight controller.</p>
+          <ul class="scenario-signals" aria-label="Case signals">
+            <li>Safety critical</li><li>Energy limited</li><li>Intermittent link</li><li>Weather exposed</li><li>Human oversight</li>
+          </ul>
+        </div>
+        <div class="scenario-timer"><span>Target</span><strong>55:00</strong><small>Requirements 10 · Architecture 20 · Risk 10 · Evidence 10 · Close 5</small></div>
+      </article>
+
+      <div class="se-case-assumptions">
+        <p><b>Illustrative baseline:</b> 2 kg protected payload, 10 km round trip, 25-minute mission, 1,000 missions/day across 10 sites, controlled delivery pads, supervised autonomy, and no dependence on the command link for immediate flight safety.</p>
+        <p>In an interview, confirm or replace these assumptions before designing. Regulation, acceptable risk, operating airspace, population exposure, weather, and medical handling rules can change the architecture.</p>
+      </div>
+
+      <ol class="se-practice-timeline" aria-label="Interview time plan">
+        <li><span>0–10</span><strong>Frame</strong><small>Need · ConOps · requirements</small></li>
+        <li><span>10–25</span><strong>Architect</strong><small>Functions · allocation · interfaces</small></li>
+        <li><span>25–35</span><strong>Balance</strong><small>Budgets · alternatives</small></li>
+        <li><span>35–45</span><strong>Make safe</strong><small>Hazards · faults · recovery</small></li>
+        <li><span>45–52</span><strong>Prove</strong><small>Integration · V&amp;V</small></li>
+        <li><span>52–55</span><strong>Close</strong><small>Trade-offs · risks · next work</small></li>
+      </ol>
+
+      <div class="pattern-handbook se-case-coaching">
+        <details>
+          <summary><span>01</span><strong>Frame stakeholders, boundary, and ConOps</strong><small>Who needs what, and across which lifecycle scenarios?</small></summary>
+          <div>
+            <p><b>Your turn:</b> name stakeholders, the system boundary, three nominal scenarios, and three off-nominal scenarios.</p>
+            <p><b>Coaching:</b> stakeholders include patient/recipient, clinic staff, fleet operator, maintainer, owner, aviation and medical regulators, site owner, public, emergency services, cybersecurity, suppliers, and disposal partners. Put the vehicle, payload container, pad, operator station, fleet service, procedures, training, maintenance tools, and support data inside the product-system boundary; map weather, GNSS, communications carrier, airspace service, hospital systems, and people as externals.</p>
+            <p><b>ConOps:</b> order → verify package → load and seal → preflight → authorize route → launch → navigate → detect and avoid → land on approved pad → authenticate recipient → release package → return/recharge → log and inspect. Off-nominal cases include link loss, GNSS degradation, unsafe landing pad, low energy, weather excursion, obstacle, recipient absent, and medical-package temperature alarm.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span>02</span><strong>Write measurable system requirements</strong><small>Turn mission language into thresholds and conditions</small></summary>
+          <div>
+            <p><b>Your turn:</b> propose functional and quality requirements, each with an acceptance criterion.</p>
+            <p><b>Coaching examples:</b></p>
+            <ul>
+              <li>The system shall transport a 2 kg payload over a 10 km reference mission within 25 minutes under the defined wind and temperature envelope.</li>
+              <li>The containment subsystem shall keep the payload between its specified temperature limits for the complete mission plus a 30-minute recovery interval.</li>
+              <li>After command-link loss, the vehicle shall continue an independently safe contingency plan without requiring remote commands.</li>
+              <li>The system shall prevent release unless vehicle position, pad identity, and recipient authorization all satisfy policy.</li>
+              <li>The operator shall be able to command hold, reroute to an approved site, or safe termination within the defined authority and latency constraints.</li>
+              <li>No single identified failure in the flight-control path shall lead directly to uncontrolled descent within the approved operating envelope.</li>
+            </ul>
+            <p>Define measurable availability, dispatch success, delivery success, containment, geofence, detect-and-avoid range, navigation accuracy, noise, turnaround, maintainability, cybersecurity, audit, RTO, and data retention targets. Mark every number as confirmed, assumed, derived, or allocated.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span>03</span><strong>Decompose functions and operating modes</strong><small>Describe what happens before selecting boxes</small></summary>
+          <div>
+            <p><b>Your turn:</b> draw the mission thread and state machine.</p>
+            <p><b>Coaching:</b> decompose into manage mission, authenticate actors and payload, assess readiness, contain payload, generate route, sense environment, estimate state, avoid hazards, control motion, manage energy, communicate status, supervise fleet, recover from faults, maintain configuration, and preserve evidence. Define modes such as unpowered, maintenance, charging, standby, armed, takeoff, cruise, approach, landed, degraded, contingency return, alternate landing, and emergency termination.</p>
+            <p>For every transition, state guard condition, authority, timeout, entry action, feedback, and safe fallback. This prevents nominal flight logic from being mistaken for a whole-system architecture.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span>04</span><strong>Allocate the physical architecture</strong><small>Hardware, software, humans, support, and externals</small></summary>
+          <div>
+            <p><b>Your turn:</b> allocate the critical functions and explain independence boundaries.</p>
+            <p><b>Coaching architecture:</b> the air vehicle includes structure, propulsion, battery and power distribution, flight-control computer, independent safety monitor, GNSS/IMU/barometer, detect-and-avoid sensors, communications, payload lock and environment sensors, and flight recorder. Software includes estimation, guidance, control, perception, route/geofence policy, health management, secure update, and mission logging. Ground elements include charging/landing pad, package station, operator console, fleet scheduler, maintenance terminal, key management, maps, and evidence store.</p>
+            <p>Keep immediate stabilization and contingency behavior onboard. The cloud may optimize routes and fleet utilization but must not be required for millisecond control or safe response to link loss. Separate the independent monitor’s failure path from the primary controller where the safety argument depends on independence.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span>05</span><strong>Close interfaces and technical budgets</strong><small>Expose the constraints that couple disciplines</small></summary>
+          <div>
+            <p><b>Your turn:</b> identify five critical interfaces and sketch mass, energy, latency, and communication budgets.</p>
+            <p><b>Coaching:</b> critical interfaces include battery–power distribution, flight computer–motor controllers, sensors–estimator, primary controller–safety monitor, vehicle–operator, vehicle–pad, container–vehicle, fleet service–airspace service, and maintainer–configuration system. Specify units, update rates, freshness, authority, timeout, degraded behavior, integrity, and versioning.</p>
+            <p><b>Illustrative energy budget:</b> 800 Wh usable mission allocation = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload + 70 Wh contingency maneuver + 80 Wh landing reserve + 80 Wh ageing/temperature margin. Validate with power profiles rather than averages alone. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span>06</span><strong>Run a trade study and make the system safe</strong><small>Compare architectures; analyze hazards and fault paths</small></summary>
+          <div>
+            <p><b>Your turn:</b> compare onboard-only, cloud-assisted, and hybrid autonomy; then choose three top hazards.</p>
+            <p><b>Coaching:</b> use safe operation without link, mission performance, energy, lifecycle cost, updateability, cybersecurity exposure, verification burden, and regulatory clarity as criteria. A hybrid can keep safety-critical control onboard while using ground services for fleet optimization, but it adds interfaces and configuration states. Confirm that the result remains stable as weights change.</p>
+            <p>Top hazards may include collision with people or aircraft, uncontrolled descent, delivery to an unauthorized person, battery thermal event, and loss of medical-package integrity. Apply elimination and architectural prevention before warning labels or operator procedures. Analyze propulsion loss, misleading navigation, corrupt commands, stale maps, common power loss, sensor obstruction, link loss, software timing failure, and maintenance error. Each mitigation needs an owner and verification evidence.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span>07</span><strong>Plan integration, verification, and validation</strong><small>Prove requirements and mission fitness at the right levels</small></summary>
+          <div>
+            <p><b>Your turn:</b> build an integration sequence and choose evidence for the hardest requirements.</p>
+            <p><b>Coaching integration path:</b> models and simulation → software-in-the-loop → processor-in-the-loop → sensor and actuator benches → propulsion and power rigs → hardware-in-the-loop flight-control bench → restrained vehicle tests → controlled field envelope expansion → operational pilot. Use interface simulators early and maintain representative faults, timing, environmental loads, and configuration.</p>
+            <p><b>Verification:</b> inspect construction and configuration; analyze structures, reliability, energy, coverage, and thermal limits; test EMC, environment, endurance, braking/landing, navigation, containment, cybersecurity, fault injection, and recovery; demonstrate operator workflows. <b>Validation:</b> conduct representative clinic-to-site missions with actual users, workload, procedures, weather boundaries, package handling, maintenance, and off-nominal decisions. Measure mission effectiveness—not only component compliance.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span>08</span><strong>Close the interview like a chief engineer</strong><small>Summarize the baseline, evidence, and remaining uncertainty</small></summary>
+          <div>
+            <p><b>Strong close:</b> “I chose supervised hybrid autonomy: immediate safety, stabilization, navigation fallback, geofence, and contingency landing remain onboard; ground services schedule the fleet and optimize routes. The design isolates the safety monitor and preserves safe behavior after link loss. Energy reserve, misleading navigation, common power loss, public exposure, package integrity, and operator workload drive the architecture. I would next prototype the energy profile and degraded navigation, complete the safety analysis, close external interfaces with regulators and sites, and validate assumptions with clinic operators.”</p>
+            <p><b>State residual uncertainty:</b> certified operating envelope, population and airspace exposure, detect-and-avoid performance, regulatory basis, communication coverage, battery ageing, environmental qualification, support staffing, and acceptable mission failure rate. Name what evidence resolves each one.</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="interviewer-pressure se-pressure-test">
+        <div><p class="eyebrow">Follow-up pressure test</p><h3>Change one assumption and trace the consequences</h3></div>
+        <div class="pressure-grid">
+          <article><span>Link unavailable</span><p>Reallocate safety, navigation, maps, logging, authority, and recovery onboard.</p></article>
+          <article><span>Payload doubles</span><p>Reopen mass, propulsion, energy, structure, thermal, noise, range, and pad limits.</p></article>
+          <article><span>Urban route</span><p>Revisit public risk, airspace, localization, obstacle sensing, noise, and landing containment.</p></article>
+          <article><span>Cold weather</span><p>Recalculate battery power, capacity, heating, sensor limits, material behavior, and reserve.</p></article>
+          <article><span>One motor fails</span><p>Show detection latency, controllability, common dependencies, landing strategy, and evidence.</p></article>
+          <article><span>Fleet grows 100×</span><p>Scale pads, spectrum, operators, maintenance, spares, monitoring, keys, and incident response.</p></article>
+        </div>
+      </div>
+
+      <div class="scorecard se-case-scorecard">
+        <div><span>Self-score after speaking</span><h3>A whole-system answer makes traceability visible</h3></div>
+        <ul>
+          <li><b>Mission</b><span>Did I frame users, context, modes, and lifecycle?</span></li>
+          <li><b>Requirements</b><span>Did I quantify success and constraints?</span></li>
+          <li><b>Architecture</b><span>Did I separate functions from implementation?</span></li>
+          <li><b>Allocation</b><span>Did I include hardware, software, humans, and support?</span></li>
+          <li><b>Interfaces</b><span>Did I define critical exchanges and failure behavior?</span></li>
+          <li><b>Budgets</b><span>Did limits and margins influence decisions?</span></li>
+          <li><b>Risk</b><span>Did hazards and common causes shape the architecture?</span></li>
+          <li><b>Evidence</b><span>Did I distinguish verification from validation?</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section se-resources" id="resources">
+      <div class="section-heading">
+        <p class="eyebrow">12 · Authoritative foundations</p>
+        <h2>Use primary guidance, then practice the artifacts</h2>
+        <p>These references establish the lifecycle, process, architecture, and vocabulary behind this visual field guide.</p>
+      </div>
+      <div class="resource-path">
+        <article><span>NASA</span><h3>NASA Systems Engineering Handbook</h3><p>A practical lifecycle reference for technical processes, system design, product realization, technical management, and crosscutting engineering methods.</p><a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">Read the official handbook ↗</a></article>
+        <article><span>INCOSE</span><h3>Systems and Systems Engineering</h3><p>Authoritative definitions and orientation for the transdisciplinary, integrative approach used to realize and operate successful systems.</p><a href="https://www.incose.org/about-systems-engineering/system-and-se-definition">Read INCOSE’s definition ↗</a></article>
+        <article><span>SEBoK</span><h3>Guide to the Systems Engineering Body of Knowledge</h3><p>A community reference connecting foundations, lifecycle processes, methods, applications, enabling systems, and related disciplines.</p><a href="https://sebokwiki.org/wiki/Guide_to_the_Systems_Engineering_Body_of_Knowledge_(SEBoK)">Explore the SEBoK ↗</a></article>
+        <article><span>NASA · Design</span><h3>System Design Processes</h3><p>Stakeholder expectations, technical requirements, logical decomposition, and design-solution definition as interdependent, iterative work.</p><a href="https://www.nasa.gov/reference/4-0-system-design-processes/">Review the process guide ↗</a></article>
+        <article><span>SEBoK · Architecture</span><h3>Logical and Physical Architecture</h3><p>Explore how functions, behavior, system elements, allocation, viewpoints, and interfaces form a defensible architecture description.</p><a href="https://sebokwiki.org/wiki/System_Architecture">Study system architecture ↗</a></article>
+        <article><span>Practice loop</span><h3>Create evidence, not flashcards alone</h3><p>For one case, redraw the context, ConOps, requirements tree, allocation, budget, risk path, V-model, and V&amp;V matrix from memory.</p><a href="#practice">Repeat the drone case ↑</a></article>
+      </div>
+      <div class="practice-loop"><b>Weekly loop</b><span>Choose a mission</span><i>→</i><span>Draw the boundary</span><i>→</i><span>Write five requirements</span><i>→</i><span>Allocate three functions</span><i>→</i><span>Analyze one failure</span><i>→</i><span>Plan the evidence</span></div>
+    </section>
+  </main>
+
+  <footer>
+    <div><span class="brand-mark" aria-hidden="true">SD</span><b>System Design Atlas</b></div>
+    <p>Trace the mission to the architecture—and the architecture to evidence.</p>
+    <a href="#top">Back to top ↑</a>
+  </footer>
+</body>
+</html>

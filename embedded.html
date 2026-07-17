@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A visual embedded and cyber-physical system design guide covering control loops, hardware/software partitioning, real-time scheduling, DMA, power modes, protocols, safety, verification, and interview practice.">
+  <meta name="theme-color" content="#07111f">
+  <title>Embedded &amp; Cyber-Physical Systems · System Design Atlas</title>
+  <link rel="stylesheet" href="styles.css?v=20260717a">
+  <script src="app.js?v=20260717a" defer></script>
+  <style>
+    .em-hero h1 span { background-image: linear-gradient(110deg, var(--green), var(--cyan), var(--violet)); }
+    .em-label { color: var(--amber); font: 800 .68rem ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .em-note { margin-top: .8rem; padding: 1rem 1.2rem; border-left: 3px solid var(--green); background: var(--surface-2); color: var(--muted); }
+    .em-note b { color: var(--green); }
+
+    .em-thinking-flow { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 1.2rem; list-style: none; }
+    .em-thinking-flow li { position: relative; min-height: 190px; padding: 1rem; display: flex; flex-direction: column; border-top: 3px solid var(--cyan); background: var(--surface); }
+    .em-thinking-flow li:nth-child(n+5) { border-top-color: var(--violet); }
+    .em-thinking-flow li:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.8rem; z-index: 1; color: var(--blue); transform: translate(50%, -50%); }
+    .em-thinking-flow span { color: var(--amber); font: 800 .67rem ui-monospace, monospace; }
+    .em-thinking-flow strong { margin: .8rem 0 .4rem; }
+    .em-thinking-flow p { margin: 0; color: var(--muted); font-size: .75rem; }
+    .em-thinking-flow small { margin-top: auto; padding-top: .7rem; color: var(--green); }
+
+    .em-control-board { padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: 1rem; background: linear-gradient(145deg, var(--surface-2), var(--surface)); }
+    .em-control-loop { display: grid; grid-template-columns: 1fr auto 1.15fr auto 1.15fr auto 1fr; gap: .65rem; align-items: center; }
+    .em-control-node { min-height: 125px; padding: 1rem; display: grid; align-content: center; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); text-align: center; }
+    .em-control-node b { color: var(--cyan); }
+    .em-control-node span { color: var(--muted); font-size: .74rem; }
+    .em-control-arrow { color: var(--blue); font-size: 1.35rem; font-weight: 800; }
+    .em-feedback-line { margin: 1rem 8% 0; padding: .8rem 1rem; display: flex; gap: .8rem; align-items: center; justify-content: center; border: 1px dashed color-mix(in srgb, var(--green) 52%, var(--line)); border-radius: .7rem; color: var(--muted); text-align: center; }
+    .em-feedback-line b { color: var(--green); }
+    .em-loop-factors { margin-top: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .em-loop-factors article { padding: 1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface); }
+    .em-loop-factors span { color: var(--violet); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .em-loop-factors strong { display: block; margin: .45rem 0; }
+    .em-loop-factors p { margin: 0; color: var(--muted); font-size: .76rem; }
+
+    .em-partition-board { padding: 1.4rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-2); }
+    .em-partition-root { width: min(100%, 460px); margin: 0 auto; padding: 1rem; display: grid; text-align: center; border: 1px solid color-mix(in srgb, var(--blue) 50%, var(--line)); border-radius: .8rem; background: var(--surface); }
+    .em-partition-root span { color: var(--amber); font: 800 .68rem ui-monospace, monospace; text-transform: uppercase; }
+    .em-partition-root small { color: var(--muted); }
+    .em-partition-connector { width: 1px; height: 35px; margin: 0 auto; background: var(--line); }
+    .em-partition-gates { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; }
+    .em-partition-gates article { position: relative; min-height: 210px; padding: 1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-top: 3px solid var(--blue); border-radius: .75rem; background: var(--surface); }
+    .em-partition-gates article::before { content: ""; position: absolute; top: -18px; left: 50%; width: 1px; height: 18px; background: var(--line); }
+    .em-partition-gates span { color: var(--amber); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .em-partition-gates strong { margin: .65rem 0 .4rem; }
+    .em-partition-gates p { margin: 0; color: var(--muted); font-size: .76rem; }
+    .em-partition-gates small { margin-top: auto; padding-top: .8rem; color: var(--green); }
+    .em-allocation-grid { margin-top: .8rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+    .em-allocation-grid article { padding: 1rem; border-left: 3px solid var(--cyan); background: var(--surface); }
+    .em-allocation-grid article:nth-child(2) { border-left-color: var(--violet); }
+    .em-allocation-grid article:nth-child(3) { border-left-color: var(--green); }
+    .em-allocation-grid span { color: var(--amber); font: 800 .68rem ui-monospace, monospace; text-transform: uppercase; }
+    .em-allocation-grid strong { display: block; margin: .5rem 0; }
+    .em-allocation-grid p { margin: 0; color: var(--muted); font-size: .77rem; }
+
+    .em-schedule-layout { display: grid; grid-template-columns: .65fr 1.35fr; gap: 1rem; }
+    .em-schedule-questions { padding: 1.2rem; border: 1px solid var(--line); border-radius: .9rem; background: var(--surface-2); }
+    .em-schedule-questions h3 { margin-bottom: 1rem; }
+    .em-schedule-questions ol { margin: 0; padding-left: 1.2rem; color: var(--muted); }
+    .em-schedule-questions li { padding: .45rem 0; }
+    .em-schedule-questions li::marker { color: var(--blue); font-weight: 800; }
+    .em-schedule-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+    .em-schedule-selector article { padding: 1.05rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); }
+    .em-schedule-selector span { color: var(--amber); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .em-schedule-selector strong { display: block; margin: .5rem 0 .35rem; }
+    .em-schedule-selector p { margin: 0; color: var(--muted); font-size: .76rem; }
+    .em-schedule-selector small { display: block; margin-top: .7rem; color: var(--green); }
+    .em-timing-equation { margin-top: .8rem; padding: 1rem; display: flex; flex-wrap: wrap; gap: .7rem 1rem; justify-content: center; border: 1px solid var(--line); background: var(--surface-2); }
+    .em-timing-equation b { color: var(--blue); }
+    .em-timing-equation span { color: var(--muted); }
+    .em-timing-equation i { color: var(--violet); font-style: normal; }
+
+    .em-irq-board { padding: 1.3rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); }
+    .em-irq-flow { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.05rem; list-style: none; }
+    .em-irq-flow li { position: relative; min-height: 135px; padding: .8rem; display: grid; align-content: center; text-align: center; border: 1px solid var(--line); border-top: 3px solid var(--cyan); background: var(--surface-2); }
+    .em-irq-flow li:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.7rem; z-index: 1; color: var(--blue); transform: translate(50%, -50%); }
+    .em-irq-flow b { color: var(--cyan); }
+    .em-irq-flow span { color: var(--muted); font-size: .72rem; }
+    .em-irq-lanes { margin-top: .8rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+    .em-irq-lanes article { padding: 1rem; border-left: 3px solid var(--amber); background: var(--surface-2); }
+    .em-irq-lanes article:nth-child(2) { border-left-color: var(--green); }
+    .em-irq-lanes strong { display: block; }
+    .em-irq-lanes p { margin: .45rem 0 0; color: var(--muted); font-size: .78rem; }
+    .em-isr-rules { margin-top: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .em-isr-rules article { padding: 1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface); }
+    .em-isr-rules span { color: var(--green); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .em-isr-rules p { margin: .45rem 0 0; color: var(--muted); font-size: .75rem; }
+
+    .em-state-board { padding: 1.4rem; border: 1px solid var(--line); border-radius: 1rem; background: linear-gradient(145deg, var(--surface-2), var(--surface)); }
+    .em-power-states { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2rem; list-style: none; }
+    .em-power-states li { position: relative; min-height: 160px; padding: 1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); }
+    .em-power-states li:not(:last-child)::after { content: "⇄"; position: absolute; top: 50%; right: -.82rem; z-index: 1; color: var(--violet); transform: translate(50%, -50%); }
+    .em-power-states span { color: var(--amber); font: 800 .67rem ui-monospace, monospace; }
+    .em-power-states strong { margin: .65rem 0 .35rem; }
+    .em-power-states small { margin-top: auto; color: var(--muted); }
+    .em-state-transitions { margin-top: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .em-state-transitions article { padding: 1rem; border-top: 2px solid var(--green); background: var(--surface); }
+    .em-state-transitions span { color: var(--green); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .em-state-transitions p { margin: .45rem 0 0; color: var(--muted); font-size: .76rem; }
+    .em-energy-budget { margin-top: .8rem; padding: 1rem; display: grid; grid-template-columns: auto 1fr auto 1fr auto; gap: .8rem; align-items: center; border: 1px solid var(--line); background: var(--surface-2); }
+    .em-energy-budget b { color: var(--blue); }
+    .em-energy-budget i { color: var(--amber); font-style: normal; text-align: center; }
+    .em-energy-budget span { color: var(--muted); font-size: .78rem; }
+
+    .em-protocol-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); }
+    .em-protocol-table { width: 100%; min-width: 920px; border-collapse: collapse; }
+    .em-protocol-table caption { padding: 1rem; color: var(--muted); text-align: left; }
+    .em-protocol-table th, .em-protocol-table td { padding: .85rem 1rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .em-protocol-table th { color: var(--amber); background: var(--surface-2); font-size: .69rem; letter-spacing: .08em; text-transform: uppercase; }
+    .em-protocol-table td { color: var(--muted); font-size: .76rem; }
+    .em-protocol-table td:first-child { color: var(--text); font-weight: 800; }
+    .em-protocol-table tr:last-child td { border-bottom: 0; }
+    .em-protocol-factors { margin-top: .8rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: .6rem; }
+    .em-protocol-factors div { padding: .8rem; display: grid; background: var(--surface-2); text-align: center; }
+    .em-protocol-factors b { color: var(--blue); font-size: .78rem; }
+    .em-protocol-factors small { color: var(--muted); }
+
+    .em-safety-map { padding: 1.3rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-2); }
+    .em-safety-node { position: relative; min-height: 150px; padding: 1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-top: 3px solid var(--cyan); border-radius: .75rem; background: var(--surface); }
+    .em-safety-node:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.82rem; color: var(--blue); transform: translate(50%, -50%); }
+    .em-safety-node span { color: var(--amber); font-size: .67rem; font-weight: 800; text-transform: uppercase; }
+    .em-safety-node strong { margin: .65rem 0 .35rem; }
+    .em-safety-node small { margin-top: auto; color: var(--muted); }
+    .em-supervisor { grid-column: 1 / -1; padding: 1rem; display: grid; grid-template-columns: .5fr 1fr; gap: 1rem; border: 1px dashed color-mix(in srgb, var(--amber) 55%, var(--line)); border-radius: .75rem; background: color-mix(in srgb, var(--amber) 6%, var(--surface)); }
+    .em-supervisor b { color: var(--amber); }
+    .em-supervisor span { color: var(--muted); font-size: .78rem; }
+    .em-fmea-grid { margin-top: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .em-fmea-grid article { padding: 1rem; border-left: 3px solid var(--violet); background: var(--surface); }
+    .em-fmea-grid span { color: var(--violet); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .em-fmea-grid strong { display: block; margin: .45rem 0; }
+    .em-fmea-grid p { margin: 0; color: var(--muted); font-size: .75rem; }
+
+    .em-verification-ladder { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); align-items: end; gap: .65rem; list-style: none; }
+    .em-verification-ladder li { padding: 1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: .7rem .7rem 0 0; background: var(--surface); }
+    .em-verification-ladder li:nth-child(1) { min-height: 170px; }
+    .em-verification-ladder li:nth-child(2) { min-height: 195px; }
+    .em-verification-ladder li:nth-child(3) { min-height: 220px; }
+    .em-verification-ladder li:nth-child(4) { min-height: 245px; }
+    .em-verification-ladder li:nth-child(5) { min-height: 270px; }
+    .em-verification-ladder li:nth-child(6) { min-height: 295px; border-color: var(--green); }
+    .em-verification-ladder span { color: var(--amber); font: 800 .68rem ui-monospace, monospace; }
+    .em-verification-ladder strong { margin: .7rem 0 .35rem; }
+    .em-verification-ladder p { margin: 0; color: var(--muted); font-size: .74rem; }
+    .em-verification-ladder small { margin-top: auto; padding-top: .7rem; color: var(--green); }
+    .em-vmatrix { margin-top: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .em-vmatrix article { padding: 1rem; border-top: 2px solid var(--blue); background: var(--surface-2); }
+    .em-vmatrix span { color: var(--blue); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .em-vmatrix p { margin: .45rem 0 0; color: var(--muted); font-size: .75rem; }
+
+    .em-case-brief { padding: clamp(1.2rem, 3vw, 2rem); display: grid; grid-template-columns: 1.15fr .85fr; gap: 2rem; align-items: center; border: 1px solid color-mix(in srgb, var(--green) 40%, var(--line)); border-radius: 1rem; background: radial-gradient(circle at 90% 20%, rgba(105,214,177,.12), transparent 18rem), var(--surface); }
+    .em-case-brief h3 { margin: .45rem 0; font-size: clamp(1.5rem, 3vw, 2.25rem); }
+    .em-case-brief p { margin: 0; color: var(--muted); }
+    .em-case-signals { margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; }
+    .em-case-signals li { padding: .5rem .7rem; border: 1px solid color-mix(in srgb, var(--green) 36%, var(--line)); border-radius: 999px; background: color-mix(in srgb, var(--green) 8%, transparent); font-size: .75rem; font-weight: 750; }
+    .em-camera-flow { margin: .8rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem; list-style: none; }
+    .em-camera-flow li { position: relative; min-height: 120px; padding: .75rem; display: grid; place-content: center; text-align: center; border: 1px solid var(--line); background: var(--surface); }
+    .em-camera-flow li:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.65rem; z-index: 1; color: var(--blue); transform: translate(50%, -50%); }
+    .em-camera-flow b { color: var(--cyan); }
+    .em-camera-flow small { color: var(--muted); }
+    .em-case-checkpoints { margin: .8rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; list-style: none; }
+    .em-case-checkpoints > li { padding: 1.1rem; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface); }
+    .em-case-checkpoints header { display: flex; gap: .8rem; align-items: baseline; }
+    .em-case-checkpoints header span { color: var(--amber); font: 800 .68rem ui-monospace, monospace; }
+    .em-case-checkpoints p { color: var(--muted); font-size: .8rem; }
+    .em-case-checkpoints details { border-top: 1px solid var(--line); }
+    .em-case-checkpoints summary { padding-top: .75rem; color: var(--blue-2); cursor: pointer; font-weight: 750; }
+    .em-case-checkpoints details div { padding-top: .65rem; color: var(--muted); font-size: .8rem; }
+    .em-pressure-grid { margin-top: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+    .em-pressure-grid article { padding: 1rem; border-top: 2px solid var(--violet); background: var(--surface-2); }
+    .em-pressure-grid span { color: var(--violet); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+    .em-pressure-grid p { margin: .45rem 0 0; color: var(--muted); font-size: .75rem; }
+
+    .em-source-grid, .em-track-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+    .em-source-grid article, .em-track-grid a { min-height: 170px; padding: 1rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); text-decoration: none; }
+    .em-source-grid span, .em-track-grid span { color: var(--amber); font: 800 .68rem ui-monospace, monospace; text-transform: uppercase; }
+    .em-source-grid strong, .em-track-grid strong { margin: .65rem 0 .4rem; }
+    .em-source-grid p, .em-track-grid small { margin: 0; color: var(--muted); font-size: .77rem; }
+    .em-source-grid a { margin-top: auto; padding-top: .8rem; color: var(--blue-2); text-decoration: none; font-weight: 750; }
+    .em-track-grid { margin-top: 1rem; }
+    .em-track-grid a:hover { border-color: var(--blue); transform: translateY(-2px); }
+    nav a[aria-current="page"] { color: var(--text); }
+
+    @media (max-width: 1050px) {
+      .em-thinking-flow { grid-template-columns: repeat(4, 1fr); }
+      .em-thinking-flow li::after { display: none; }
+      .em-loop-factors, .em-partition-gates, .em-isr-rules, .em-state-transitions, .em-fmea-grid, .em-vmatrix { grid-template-columns: repeat(2, 1fr); }
+      .em-schedule-layout, .em-case-brief { grid-template-columns: 1fr; }
+      .em-power-states, .em-verification-ladder { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+      .em-power-states li, .em-verification-ladder li { min-height: 175px !important; }
+      .em-power-states li::after { display: none; }
+      .em-camera-flow { grid-template-columns: repeat(4, 1fr); }
+      .em-camera-flow li::after { display: none; }
+      .em-source-grid, .em-track-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .em-control-loop, .em-safety-map { grid-template-columns: 1fr; }
+      .em-control-arrow { transform: rotate(90deg); text-align: center; }
+      .em-feedback-line { margin-inline: 0; }
+      .em-safety-node::after { display: none; }
+      .em-supervisor { grid-column: 1; grid-template-columns: 1fr; }
+      .em-allocation-grid, .em-irq-lanes, .em-case-checkpoints, .em-pressure-grid { grid-template-columns: 1fr; }
+      .em-irq-flow { grid-template-columns: repeat(2, 1fr); }
+      .em-irq-flow li::after { display: none; }
+      .em-protocol-factors { grid-template-columns: repeat(3, 1fr); }
+      .em-energy-budget { grid-template-columns: 1fr; }
+      .em-energy-budget i { transform: rotate(90deg); }
+    }
+    @media (max-width: 520px) {
+      .em-thinking-flow, .em-loop-factors, .em-partition-gates, .em-schedule-selector, .em-isr-rules, .em-power-states, .em-state-transitions, .em-protocol-factors, .em-fmea-grid, .em-verification-ladder, .em-vmatrix, .em-camera-flow, .em-source-grid, .em-track-grid { grid-template-columns: 1fr; }
+      .em-partition-gates article::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="System Design Atlas home">
+      <span class="brand-mark" aria-hidden="true">SD</span>
+      <span>System Design <b>Atlas</b></span>
+    </a>
+    <nav aria-label="Track navigation">
+      <a href="index.html">Atlas</a>
+      <a href="backend.html">Backend</a>
+      <a href="systems-engineering.html">Systems engineering</a>
+      <a href="hardware.html">Hardware</a>
+      <a href="embedded.html" aria-current="page">Embedded</a>
+      <a href="npu-acim.html">NPU + ACiM</a>
+    </nav>
+    <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
+  </header>
+
+  <main id="main">
+    <section class="hero em-hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">Embedded &amp; cyber-physical systems</p>
+        <h1>Observe the world. <span>Act before the deadline.</span></h1>
+        <p class="hero-lead">Co-design electronics, firmware, real-time behavior, sensing, control, power, communications, safety, and verification around the physics of a product.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#loop">Trace the control loop</a>
+          <a class="button secondary" href="#practice">Practice an interview →</a>
+          <a class="button secondary" href="index.html">Choose another track</a>
+        </div>
+        <ul class="hero-stats" aria-label="Page summary">
+          <li><strong>7</strong><span>thinking steps</span></li>
+          <li><strong>6</strong><span>verification levels</span></li>
+          <li><strong>1</strong><span>worked interview</span></li>
+        </ul>
+      </div>
+      <section class="hero-panel" aria-label="Embedded system design preview">
+        <div class="terminal-bar"><i></i><i></i><i></i><span>control.loop</span></div>
+        <pre><code><span class="muted"># Correct value, correct time, safe outcome</span>
+sample   = sensor.read(<b>timestamped</b>)
+state    = estimate(sample, <b>uncertainty</b>)
+command  = controller(state, <b>deadline</b>)
+actuator.write(command)
+
+if health.invalid() or deadline.missed():
+    enter(<b>defined safe state</b>)
+
+verify(<b>model → software → processor → plant</b>)</code></pre>
+      </section>
+    </section>
+
+    <section class="section" id="loop">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">01 · Cyber-physical thinking flow</p>
+        <h2>Trace information and energy around the loop</h2>
+        <p>Correct computation delivered too late can be incorrect system behavior. Design timing, uncertainty, and failure into the main path.</p>
+      </div>
+      <ol class="em-thinking-flow" aria-label="Embedded design thinking flow">
+        <li><span>01</span><strong>Define mission + environment</strong><p>Users, operating modes, physical range, hazards, lifetime, maintenance, and misuse.</p><small>Output: scenarios + boundaries</small></li>
+        <li><span>02</span><strong>Set timing + quality</strong><p>Sample rate, deadline, jitter, accuracy, response, availability, and safe state.</p><small>Output: measurable requirements</small></li>
+        <li><span>03</span><strong>Model the plant</strong><p>Dynamics, disturbances, sensor/actuator limits, latency, uncertainty, and observability.</p><small>Output: control assumptions</small></li>
+        <li><span>04</span><strong>Partition functions</strong><p>Allocate sensing, control, acceleration, communications, safety, and UI to hardware or software.</p><small>Output: HW/SW boundary</small></li>
+        <li><span>05</span><strong>Schedule + communicate</strong><p>Tasks, interrupts, DMA, buffers, buses, priorities, clocks, and synchronization.</p><small>Output: timing architecture</small></li>
+        <li><span>06</span><strong>Design modes + faults</strong><p>Startup, active, sleep, update, degraded, emergency, recovery, and shutdown.</p><small>Output: state machines</small></li>
+        <li><span>07</span><strong>Verify across levels</strong><p>Models, code, processor timing, electrical interfaces, plant behavior, corners, and field evidence.</p><small>Output: traced proof</small></li>
+      </ol>
+      <div class="memory-strip"><b>Memory hook</b><span>Mission → deadline → plant → partition → schedule → modes/faults → evidence.</span></div>
+
+      <div class="em-control-board" aria-label="Sensor estimator controller actuator feedback loop">
+        <div class="em-control-loop">
+          <div class="em-control-node"><b>Setpoint</b><span>desired state + limits</span></div><div class="em-control-arrow" aria-hidden="true">→</div>
+          <div class="em-control-node"><b>Estimator + controller</b><span>filter, fuse, decide, bound output</span></div><div class="em-control-arrow" aria-hidden="true">→</div>
+          <div class="em-control-node"><b>Actuator + plant</b><span>physical response + disturbances</span></div><div class="em-control-arrow" aria-hidden="true">→</div>
+          <div class="em-control-node"><b>Sensor</b><span>sample, condition, convert, timestamp</span></div>
+        </div>
+        <div class="em-feedback-line"><b>↖ Feedback closes the loop</b><span>sensor value + timestamp + health + uncertainty return to the estimator</span></div>
+      </div>
+      <div class="em-loop-factors">
+        <article><span>Sampling</span><strong>Fast enough, not merely frequent</strong><p>Choose rate and anti-alias filtering from plant dynamics; define clock accuracy and timestamp location.</p></article>
+        <article><span>Delay + jitter</span><strong>Bound end-to-end age</strong><p>Sensor integration, bus transfer, scheduling, compute, output update, and actuator response all consume the deadline.</p></article>
+        <article><span>Range + uncertainty</span><strong>Represent what is not known</strong><p>Resolution, noise, bias, drift, calibration, saturation, missing data, and cross-sensor disagreement.</p></article>
+        <article><span>Stability + safety</span><strong>Control the corners</strong><p>Analyze worst delays, gain changes, actuator limits, recovery transitions, and what happens when confidence is low.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="partition">
+      <div class="section-heading">
+        <p class="eyebrow">02 · Hardware / software partition</p>
+        <h2>Allocate by deadline, data rate, change, and assurance</h2>
+        <p>Hardware is not automatically faster and software is not automatically flexible once interfaces, copies, validation, and updates are counted.</p>
+      </div>
+      <div class="em-partition-board">
+        <div class="em-partition-root"><span>Start with one function</span><strong>What makes this function difficult?</strong><small>Profile the complete path, including conversion and movement.</small></div>
+        <div class="em-partition-connector" aria-hidden="true"></div>
+        <div class="em-partition-gates">
+          <article><span>Hard deadline?</span><strong>Bounded response dominates</strong><p>Use timers, capture/compare, DMA, FPGA/fixed logic, dedicated cores, or a verified high-priority software path.</p><small>Prove worst-case timing</small></article>
+          <article><span>High regular data rate?</span><strong>Work is repeated and parallel</strong><p>Use DSP, SIMD, GPU/NPU, FPGA pipelines, or fixed function when transfer and launch overhead still fit.</p><small>Count bytes between engines</small></article>
+          <article><span>Likely to change?</span><strong>Policy or algorithm evolves</strong><p>Prefer software, tables, microcode, or programmable acceleration with a stable hardware abstraction.</p><small>Preserve update and rollback</small></article>
+          <article><span>Independent safety boundary?</span><strong>Failure must be contained</strong><p>Separate power, clock, reset, memory protection, supervisor, or simple monitor when common-cause failure matters.</p><small>Independence must be real</small></article>
+        </div>
+      </div>
+      <div class="em-allocation-grid">
+        <article><span>Hardware usually owns</span><strong>Precise edges + bulk movement</strong><p>Clocking, ADC/PWM, safety cutoff, packet framing, DMA, encryption primitives, and stable high-rate transforms.</p></article>
+        <article><span>Software usually owns</span><strong>Policy + evolution</strong><p>State machines, orchestration, calibration logic, diagnostics, product behavior, networking policy, UI, and update.</p></article>
+        <article><span>Contract between them</span><strong>Make timing and failure explicit</strong><p>Registers, queues, ownership, units, ranges, timestamps, interrupts, errors, reset, versioning, and observability.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="scheduling">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">03 · Real-time scheduling selector</p>
+        <h2>Choose a policy you can analyze</h2>
+        <p>Real time means meeting deadlines predictably. High average CPU performance does not guarantee that.</p>
+      </div>
+      <div class="em-schedule-layout">
+        <aside class="em-schedule-questions">
+          <span class="em-label">Ask in order</span>
+          <h3>Describe every runnable activity</h3>
+          <ol><li>Periodic, sporadic, or event-driven?</li><li>Hard, firm, or soft deadline?</li><li>Worst-case execution time?</li><li>May it block or be preempted?</li><li>Shared locks, buses, or buffers?</li><li>What happens on overload?</li></ol>
+        </aside>
+        <div class="em-schedule-selector">
+          <article><span>Simple + static periods</span><strong>Cyclic executive</strong><p>A repeating table is easy to inspect and deterministic when activities are few, known, and fit cleanly.</p><small>Watch: poor flexibility + long task blocking</small></article>
+          <article><span>Periodic / sporadic critical tasks</span><strong>Fixed-priority preemptive</strong><p>Assign critical short-period work higher priority; analyze response time, blocking, ISR interference, and overload.</p><small>Watch: priority inversion + starvation</small></article>
+          <article><span>Dynamic deadlines</span><strong>Earliest Deadline First</strong><p>Schedule the ready job with the nearest deadline when the platform and certification approach support dynamic priority.</p><small>Watch: overload behavior + implementation cost</small></article>
+          <article><span>Soft background work</span><strong>Best effort below the critical lane</strong><p>Run logging, uploads, UI, and maintenance at bounded lower priority or under a server/budget.</p><small>Watch: background backpressure + memory growth</small></article>
+        </div>
+      </div>
+      <div class="em-timing-equation"><b>For each critical task</b><span>response time</span><i>=</i><span>execution + blocking + higher-priority interference + release jitter</span><i>≤</i><span>deadline</span></div>
+      <div class="em-note"><b>Practical anchor:</b> FreeRTOS documents fixed-priority preemptive scheduling as its default policy, with time slicing among equal priorities. A policy name is only the start; the application still needs measured execution times and schedulability analysis.</div>
+    </section>
+
+    <section class="section" id="interrupts">
+      <div class="section-heading">
+        <p class="eyebrow">04 · Interrupts, DMA, and ownership</p>
+        <h2>Capture quickly. Move efficiently. Process outside the ISR.</h2>
+        <p>The interrupt path protects timing; the task path owns complex work. DMA removes copies only when buffer lifetime and cache coherency are designed correctly.</p>
+      </div>
+      <div class="em-irq-board">
+        <ol class="em-irq-flow" aria-label="Interrupt and DMA processing flow">
+          <li><b>Peripheral event</b><span>sample ready · packet · timer</span></li>
+          <li><b>ISR</b><span>acknowledge · capture status · timestamp</span></li>
+          <li><b>DMA</b><span>transfer into owned buffer</span></li>
+          <li><b>Completion</b><span>publish descriptor · wake task</span></li>
+          <li><b>Task</b><span>validate · process · respond</span></li>
+          <li><b>Recycle</b><span>return buffer · rearm · account</span></li>
+        </ol>
+        <div class="em-irq-lanes">
+          <article><strong>CPU-driven path</strong><p>Good for tiny, infrequent register transfers. Cost grows with interrupt rate, copies, and per-item overhead.</p></article>
+          <article><strong>DMA-driven path</strong><p>Good for blocks and streams. Needs descriptors, alignment, direction, ownership, cache maintenance, error handling, and completion.</p></article>
+        </div>
+      </div>
+      <div class="em-isr-rules">
+        <article><span>Bound</span><p>Keep ISR work short and non-blocking. Define a maximum arrival rate and nesting policy.</p></article>
+        <article><span>Defer</span><p>Signal a task with a queue, notification, or event; do parsing, allocation, and logging later.</p></article>
+        <article><span>Own</span><p>Use explicit buffer states such as free, DMA-owned, ready, processing, and returning.</p></article>
+        <article><span>Recover</span><p>Handle overrun, missed completion, bus error, corrupt descriptor, timeout, and peripheral reset.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="modes">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">05 · State and power modes</p>
+        <h2>Transitions are first-class behavior</h2>
+        <p>Most bugs and energy surprises live between steady states: boot, wake, update, brownout, reset, degraded operation, and recovery.</p>
+      </div>
+      <div class="em-state-board">
+        <ol class="em-power-states" aria-label="Embedded power-state flow">
+          <li><span>OFF / SHIPPING</span><strong>Energy isolated</strong><small>wake: charger, button, install event</small></li>
+          <li><span>BOOT</span><strong>Trust + initialize</strong><small>verify image, rails, clocks, memory, self-test</small></li>
+          <li><span>ACTIVE</span><strong>Mission work</strong><small>full sensing, compute, communication, actuation</small></li>
+          <li><span>IDLE / SLEEP</span><strong>Retain useful context</strong><small>gate clocks, park buses, arm wake sources</small></li>
+          <li><span>DEEP SLEEP</span><strong>Minimum leakage</strong><small>lose most context; longer wake and restore</small></li>
+        </ol>
+        <div class="em-state-transitions">
+          <article><span>Entry guard</span><p>No transfer in flight; output safe; queues persisted or discarded intentionally.</p></article>
+          <article><span>Wake source</span><p>Timer, GPIO, comparator, radio, sensor, watchdog, charger—qualified against false wakes.</p></article>
+          <article><span>Restore order</span><p>Rails → clocks → memory → buses → devices → tasks → external outputs.</p></article>
+          <article><span>Fault escape</span><p>Every state has timeout, reset, rollback, or safe-state behavior if entry/exit fails.</p></article>
+        </div>
+      </div>
+      <div class="em-energy-budget"><b>Daily energy</b><span>Σ(state power × time in state)</span><i>+</i><span>Σ(transition energy × transition count)</span><i>+</i><span>conversion and battery margin</span></div>
+    </section>
+
+    <section class="section" id="protocols">
+      <div class="section-heading">
+        <p class="eyebrow">06 · Protocol selector</p>
+        <h2>Choose the link from the physical context</h2>
+        <p>Nominal bitrate alone ignores distance, wiring, topology, determinism, noise, power, software ecosystem, and failure handling.</p>
+      </div>
+      <div class="em-protocol-table-wrap">
+        <table class="em-protocol-table">
+          <caption>Common starting points. Final electrical limits and timing come from the selected controller, transceiver, board, cable, and current specification.</caption>
+          <thead><tr><th scope="col">Protocol</th><th scope="col">Best fit</th><th scope="col">Strength</th><th scope="col">Watch closely</th></tr></thead>
+          <tbody>
+            <tr><td>I²C / I3C</td><td>Short board-level control and low-rate sensors.</td><td>Few wires, addressing, broad device ecosystem.</td><td>Pull-ups, capacitance, clock stretching, stuck bus, address conflicts.</td></tr>
+            <tr><td>SPI</td><td>Short board-level sensors, converters, displays, and flash.</td><td>Simple, full-duplex, low protocol overhead, higher rates.</td><td>Chip-select count, no universal framing/error recovery, signal integrity.</td></tr>
+            <tr><td>UART</td><td>Point-to-point debug, modules, bootloaders, simple links.</td><td>Minimal hardware and easy observability.</td><td>Clock mismatch, framing, flow control, no native multi-drop contract.</td></tr>
+            <tr><td>CAN / CAN FD</td><td>Robust multi-node control networks in noisy environments.</td><td>Arbitration, error detection, fault confinement, message priority.</td><td>Bus load, identifier design, termination, latency under contention.</td></tr>
+            <tr><td>Ethernet</td><td>High-rate, longer-reach, routable or switched systems.</td><td>Large ecosystem, diagnostics, scale, power/data options.</td><td>Stack complexity, queues, switch delay, synchronization, security.</td></tr>
+            <tr><td>USB</td><td>Host-controlled peripherals, cameras, storage, service ports.</td><td>Standard classes, power, high bandwidth, broad hosts.</td><td>Host/device roles, enumeration, cabling, suspend, certification.</td></tr>
+            <tr><td>Bluetooth LE</td><td>Low-power personal-area links and phone-connected products.</td><td>Phone ecosystem, profiles, discovery, low-duty-cycle operation.</td><td>Connection interval, radio coexistence, pairing, privacy, variable latency.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="em-protocol-factors" aria-label="Protocol selection factors"><div><b>Payload</b><small>bytes + rate</small></div><div><b>Deadline</b><small>latency + jitter</small></div><div><b>Topology</b><small>point · bus · switched</small></div><div><b>Physical</b><small>reach · noise · wires</small></div><div><b>Energy</b><small>active + idle + wake</small></div><div><b>Failure</b><small>detect · retry · isolate</small></div></div>
+    </section>
+
+    <section class="section" id="safety">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">07 · Safety, watchdogs, and recovery</p>
+        <h2>Detect, contain, and reach a defined outcome</h2>
+        <p>A watchdog is not a safety argument by itself. State what it observes, which failures it can detect, what remains independent, and what reset or safe action accomplishes.</p>
+      </div>
+      <div class="em-safety-map" aria-label="Safety monitoring path">
+        <div class="em-safety-node"><span>Input</span><strong>Sense + validate</strong><small>range · plausibility · redundancy · freshness</small></div>
+        <div class="em-safety-node"><span>Decision</span><strong>Control + bounds</strong><small>state validity · command limits · deadline</small></div>
+        <div class="em-safety-node"><span>Output</span><strong>Drive + observe</strong><small>command versus feedback · open/short · saturation</small></div>
+        <div class="em-safety-node"><span>Outcome</span><strong>Normal or safe state</strong><small>stop · hold · isolate · degrade · alert</small></div>
+        <div class="em-supervisor"><b>Independent supervisor lane</b><span>Windowed watchdog, clock/power monitors, memory protection, heartbeat, external cutoff, and fault latch observe enough of the main path to force the defined safe outcome.</span></div>
+      </div>
+      <div class="em-fmea-grid">
+        <article><span>Sensor stuck</span><strong>Detect</strong><p>Freshness, rate-of-change, cross-sensor comparison, stimulus/self-test.</p></article>
+        <article><span>Task hangs</span><strong>Contain</strong><p>Deadline monitor, watchdog window, task/partition restart, bounded queue.</p></article>
+        <article><span>Output wrong</span><strong>Observe</strong><p>Independent feedback, command envelope, actuator current/position sensing.</p></article>
+        <article><span>Recovery fails</span><strong>Escalate</strong><p>Retry budget, subsystem reset, full reset, hardware cutoff, latched service state.</p></article>
+      </div>
+      <div class="em-note"><b>FMEA memory hook:</b> failure mode → local effect → system effect → detection → control → residual risk → verification evidence.</div>
+    </section>
+
+    <section class="section" id="verification">
+      <div class="section-heading">
+        <p class="eyebrow">08 · Verification-in-the-loop ladder</p>
+        <h2>Add realism without losing observability</h2>
+        <p>Move from fast models to the real plant in stages. Keep requirement IDs, acceptance limits, seeds, inputs, traces, and versions so failures are reproducible.</p>
+      </div>
+      <ol class="em-verification-ladder">
+        <li><span>MIL</span><strong>Model-in-the-loop</strong><p>Controller and plant are models.</p><small>Catches: algorithm, stability, scenario logic</small></li>
+        <li><span>SIL</span><strong>Software-in-the-loop</strong><p>Production-like code against a simulated plant.</p><small>Catches: numeric, generated code, state logic</small></li>
+        <li><span>PIL</span><strong>Processor-in-the-loop</strong><p>Code executes on target processor or representative core.</p><small>Catches: precision, timing, compiler, memory</small></li>
+        <li><span>HIL</span><strong>Hardware-in-the-loop</strong><p>Target electronics interact with real-time plant and I/O simulation.</p><small>Catches: buses, clocks, electrical/timing faults</small></li>
+        <li><span>System</span><strong>Physical integration</strong><p>Real sensors, actuators, mechanics, environment, and users.</p><small>Catches: interfaces + emergent behavior</small></li>
+        <li><span>Field</span><strong>Operational evidence</strong><p>Controlled rollout, telemetry, service diagnostics, and feedback.</p><small>Catches: diversity, aging, misuse, rare combinations</small></li>
+      </ol>
+      <div class="em-vmatrix">
+        <article><span>Nominal</span><p>Typical mission sequence at expected loads and environments.</p></article>
+        <article><span>Boundary</span><p>Min/max voltage, temperature, rate, timing, range, storage, and network.</p></article>
+        <article><span>Fault</span><p>Open/short, corrupt data, stale sample, bus timeout, clock drift, brownout, reset.</p></article>
+        <article><span>Transition</span><p>Boot, wake, sleep, update, rollback, degraded entry/exit, and repeated recovery.</p></article>
+      </div>
+      <div class="memory-strip"><b>Verification asks</b><span>Did we build it to the requirements?</span><i>→</i><b>Validation asks</b><span>Does it solve the real operational need?</span></div>
+    </section>
+
+    <section class="section" id="practice">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">09 · Embedded interview practice</p>
+        <h2>Design a battery smart camera</h2>
+        <p>Commit to requirements, an energy budget, task timing, states, and failure behavior before revealing the coaching notes.</p>
+      </div>
+      <div class="em-case-brief">
+        <div><span class="em-label">45-minute prompt</span><h3>Design a six-month battery smart camera</h3><p>A weather-resistant camera wakes on motion, classifies locally, stores an encrypted clip, and uploads confirmed events. It must remain useful when Wi-Fi is unavailable.</p></div>
+        <ul class="em-case-signals" aria-label="Smart camera constraints"><li>8 Wh battery</li><li>180 days</li><li>20 wakes/day</li><li>2 confirmed/day</li><li>wake &lt; 500 ms</li><li>−10–50 °C</li><li>secure update</li></ul>
+      </div>
+      <ol class="em-camera-flow" aria-label="Battery smart camera event flow">
+        <li><b>PIR / wake sensor</b><small>always-on µW lane</small></li>
+        <li><b>Power manager</b><small>sequence rails + clocks</small></li>
+        <li><b>Image sensor</b><small>capture + timestamp</small></li>
+        <li><b>ISP + NPU</b><small>screen motion locally</small></li>
+        <li><b>MCU policy</b><small>classify event + mode</small></li>
+        <li><b>Flash</b><small>encrypted ring buffer</small></li>
+        <li><b>Wi-Fi / BLE</b><small>upload + setup + health</small></li>
+      </ol>
+      <ol class="em-case-checkpoints">
+        <li><header><span>00–07 min</span><strong>Clarify mission and privacy</strong></header><p>Ask about detection classes, missed/false event cost, clip length, image quality, night operation, connectivity, local retention, response, tamper, and user controls.</p><details><summary>Reveal coaching notes</summary><div>Define “six months” with event and temperature assumptions. Separate wake detection from confirmed event recording. Ask what images may leave the device and what the product does when storage, battery, or connectivity is constrained.</div></details></li>
+        <li><header><span>07–15 min</span><strong>Create the energy budget</strong></header><p>Convert 8 Wh over 180 days into a daily and average-power envelope. Allocate sleep, wakes, confirmed captures, uploads, conversion loss, temperature, and aging.</p><details><summary>Reveal coaching notes</summary><div>The envelope is about 44 Wh-millihours/day or 1.85 mW average before margin. Keep the always-on lane far below that. Budget energy per wake and per upload, not just active watts; reduce false wakes because their count multiplies every active cost.</div></details></li>
+        <li><header><span>15–25 min</span><strong>Partition hardware and tasks</strong></header><p>Choose wake sensing, MCU/RTOS, image/ISP path, accelerator, memory, storage, radios, security element, and power domains.</p><details><summary>Reveal coaching notes</summary><div>Keep a tiny always-on controller or wake sensor. Power the main image/AI/radio islands only when needed. Use DMA for frames, fixed function for ISP, an accelerator for supported inference, and software for policy and recovery. Avoid waking Wi-Fi for rejected events.</div></details></li>
+        <li><header><span>25–33 min</span><strong>Schedule the event path</strong></header><p>Trace wake interrupt, rail/clock sequencing, sensor readiness, capture DMA, inference deadline, storage, radio association, upload, and return to sleep.</p><details><summary>Reveal coaching notes</summary><div>Assign deadlines to stages and reserve buffers before enabling capture. Keep ISR work to acknowledge/timestamp/defer. Bound every wait with a timeout and make cancellation safe if battery, thermal, or privacy policy changes mid-event.</div></details></li>
+        <li><header><span>33–40 min</span><strong>Design modes and failures</strong></header><p>Cover shipping, setup, armed, capture, upload, offline, low battery, update, degraded, over-temperature, tamper, and recovery.</p><details><summary>Reveal coaching notes</summary><div>Store clips locally with a retention and wear policy when offline; upload later under an energy/data budget. Use signed A/B images, rollback, monotonic version policy, unique device identity, encrypted storage, protected keys, and explicit factory reset.</div></details></li>
+        <li><header><span>40–45 min</span><strong>Verify and close</strong></header><p>Name tests for energy, timing, accuracy, transitions, radio loss, corrupt storage, brownout, temperature, update interruption, and privacy behavior.</p><details><summary>Reveal coaching notes</summary><div>Automate event-cycle energy integration across temperature and battery state. Replay labeled scenes for detection quality, inject failures during every transition, HIL-test the power and sensor interfaces, then run accelerated long-duration and controlled field trials.</div></details></li>
+      </ol>
+      <div class="em-pressure-grid">
+        <article><span>200 wakes/day</span><p>Protect the battery with sensor tuning, cooldown, local low-cost screening, rate budgets, and abuse detection.</p></article>
+        <article><span>Wi-Fi offline for 7 days</span><p>Size encrypted storage, choose eviction priority, batch retry with backoff, and preserve battery.</p></article>
+        <article><span>Update loses power</span><p>Boot verified previous image, leave recoverable metadata, and never brick the secure update path.</p></article>
+        <article><span>Sensor gives stale frames</span><p>Use frame counters/timestamps, freshness deadline, pipeline reset, user-visible health, and degraded state.</p></article>
+      </div>
+      <div class="memory-strip"><b>Strong close</b><span>Show the event timeline, daily energy equation, state machine, safe/degraded behavior, and the staged test evidence that makes the design credible.</span></div>
+    </section>
+
+    <section class="section" id="resources">
+      <div class="section-heading">
+        <p class="eyebrow">10 · Primary references</p>
+        <h2>Ground the design in implementation contracts</h2>
+        <p>Read the exact silicon, RTOS, protocol, and safety requirements for the product. These references provide durable starting points.</p>
+      </div>
+      <div class="em-source-grid">
+        <article><span>Scheduling</span><strong>FreeRTOS task scheduling</strong><p>Official description of fixed-priority preemption, equal-priority time slicing, AMP, and SMP policies.</p><a href="https://freertos.org/Documentation/02-Kernel/02-Kernel-features/01-Tasks-and-co-routines/04-Task-scheduling">FreeRTOS documentation ↗</a></article>
+        <article><span>Interrupts</span><strong>Linux generic IRQ handling</strong><p>Reference implementation documentation for interrupt descriptors, flow handlers, affinity, and threaded interrupts.</p><a href="https://docs.kernel.org/core-api/genericirq.html">Kernel documentation ↗</a></article>
+        <article><span>DMA</span><strong>Linux DMA Mapping Guide</strong><p>Addresses, IOMMU mapping, coherent and streaming buffers, directions, lifecycle, and failure checks.</p><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Kernel documentation ↗</a></article>
+        <article><span>MCU interfaces</span><strong>Arm CMSIS 6</strong><p>Common processor, driver, RTOS, DSP, and neural-network software interfaces for Cortex-based systems.</p><a href="https://arm-software.github.io/CMSIS_6/latest/General/index.html">CMSIS documentation ↗</a></article>
+        <article><span>Product realization</span><strong>NASA Systems Engineering Handbook</strong><p>Verification methods, validation, integration, transition, evidence, and requirement closure in complete systems.</p><a href="https://www.nasa.gov/reference/5-0-product-realization/">NASA product realization ↗</a></article>
+        <article><span>Power management</span><strong>Zephyr power management</strong><p>System and device power states, policies, residency, wake latency, and runtime device power concepts.</p><a href="https://docs.zephyrproject.org/latest/services/pm/index.html">Zephyr documentation ↗</a></article>
+      </div>
+      <div class="em-track-grid" aria-label="All System Design Atlas tracks">
+        <a href="backend.html"><span>Backend</span><strong>Distributed software</strong><small>APIs, data, caching, queues, reliability.</small></a>
+        <a href="systems-engineering.html"><span>Systems engineering</span><strong>Whole lifecycle</strong><small>Needs, requirements, interfaces, risk, V&amp;V.</small></a>
+        <a href="hardware.html"><span>Hardware</span><strong>Computer systems</strong><small>Compute, memory, fabric, PPA, thermal, reliability.</small></a>
+        <a href="npu-acim.html"><span>NPU + ACiM</span><strong>Hardware/software co-design</strong><small>Compiler, mapper, runtime, calibration.</small></a>
+        <a href="index.html"><span>Atlas</span><strong>Choose by system boundary</strong><small>Return to the visual track selector.</small></a>
+        <a href="https://buicongnguyen.github.io/Leetcode/"><span>DSA Atlas</span><strong>Algorithms and data structures</strong><small>Return to the original visual learning map.</small></a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><span class="brand-mark" aria-hidden="true">SD</span><b>System Design Atlas</b></div>
+    <p>Good embedded design is correct in value, time, physical outcome, and failure behavior.</p>
+    <a href="#top">Back to top ↑</a>
+  </footer>
+</body>
+</html>
