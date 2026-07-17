@@ -26,3 +26,10 @@ npm run check
 ```
 
 The repository includes a GitHub Pages workflow that validates the site before deployment.
+
+## Deployment
+
+- Repository: <https://github.com/buicongnguyen/SystemDesign>
+- GitHub Pages: <https://buicongnguyen.github.io/SystemDesign/>
+
+Like the companion DSA Atlas, pull requests run validation and pushes to `main` publish the static site through GitHub Actions.

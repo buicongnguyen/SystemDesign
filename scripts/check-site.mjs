@@ -76,7 +76,8 @@ for (const selector of [":root", ".site-header", ".hero", ".section", ":focus-vi
 }
 if (!js.includes("theme-toggle") || !js.includes("dsa-theme")) throw new Error("app.js: theme persistence is missing");
 if (!js.includes("if (answer && tradeoffs)") || !js.includes("if (signalList)")) throw new Error("app.js: page-specific widgets must be safely guarded");
-if (!workflow.includes("npm run check") || !workflow.includes("actions/deploy-pages@v4") || !workflow.includes('branches: ["main"]')) {
+const deploysMain = /branches:\s*(?:\["main"\]|\r?\n\s*-\s*main)/.test(workflow);
+if (!workflow.includes("npm run check") || !workflow.includes("actions/deploy-pages@v4") || !deploysMain) {
   throw new Error("GitHub Pages workflow is incomplete");
 }
 
