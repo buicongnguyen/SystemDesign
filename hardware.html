@@ -6,8 +6,8 @@
   <meta name="description" content="A visual hardware and computer-system design guide covering workload analysis, memory, compute, interconnect, power, thermal limits, reliability, bottlenecks, and interview practice.">
   <meta name="theme-color" content="#07111f">
   <title>Hardware &amp; Computer Systems · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717a">
-  <script src="app.js?v=20260717a" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717b">
+  <script src="app.js?v=20260717b" defer></script>
   <style>
     .hw-hero h1 span { background-image: linear-gradient(110deg, var(--amber), var(--cyan), var(--blue)); }
     .hw-hero .hero-panel { transform: rotate(-1deg); }
@@ -256,7 +256,7 @@
       </div>
       <section class="hero-panel" aria-label="Hardware design preview">
         <div class="terminal-bar"><i></i><i></i><i></i><span>architecture.spec</span></div>
-        <pre><code><span class="muted"># Workload before components</span>
+        <pre tabindex="0"><code><span class="muted"># Workload before components</span>
 ops       = profile(<b>shape, reuse, precision</b>)
 deadline  = define(<b>latency, throughput, jitter</b>)
 movement  = count(<b>bytes across every boundary</b>)
@@ -295,14 +295,14 @@ while measured &lt; required:
         <p>A design can finish one request quickly and still fail sustained load. It can have enormous compute and still wait for bytes.</p>
       </div>
       <div class="hw-triangle-layout">
-        <div class="hw-triangle" aria-label="Latency throughput and bandwidth relationship">
+        <div class="hw-triangle" role="group" aria-label="Latency throughput and bandwidth relationship">
           <article class="hw-metric hw-latency"><b>Latency</b><span>time for one unit of work</span><small>seconds / request</small></article>
           <article class="hw-metric hw-throughput"><b>Throughput</b><span>completed work per time</span><small>frames / second</small></article>
           <article class="hw-metric hw-bandwidth"><b>Bandwidth</b><span>data transferred per time</span><small>bytes / second</small></article>
           <div class="hw-triangle-center"><b>Concurrency</b><small>connects response time to work in flight</small></div>
         </div>
         <div class="hw-metric-rules">
-          <article><strong>Pipeline for throughput</strong><p>Overlap stages so multiple items are in flight. The slowest stage sets steady-state rate; pipeline depth may increase single-item latency.</p></article>
+          <article><strong>Pipeline for throughput</strong><p>Overlap stages so multiple items are in flight. In a dedicated, balanced pipeline, the slowest stage bounds steady-state rate; shared resources, bubbles, variability, and initiation interval can lower it further. Pipeline depth may increase single-item latency.</p></article>
           <article><strong>Reduce the critical path for latency</strong><p>Shorten serial dependencies, avoid queueing, use nearby storage, and reserve capacity for tail behavior—not only the average.</p></article>
           <article><strong>Provision effective bandwidth</strong><p>Account for protocol overhead, access efficiency, bank conflicts, contention, and read/write turnaround. Peak pin rate is not delivered payload.</p></article>
           <article><strong>Apply Little’s Law carefully</strong><p><span class="hw-formula">work in flight ≈ throughput × latency</span>. It is a useful steady-state check, not permission to create unbounded queues.</p></article>
@@ -323,7 +323,7 @@ while measured &lt; required:
         <article><span>A · Area</span><strong>Silicon and board footprint</strong><p>Compute lanes, SRAM, PHYs, package pins, PCB layers, routing pressure, and yield.</p><small>Idle silicon is still paid for</small></article>
         <article><span>$ · Cost</span><strong>Lifecycle economics</strong><p>NRE, masks, package, memory, board, cooling, test time, yield, supply risk, and field service.</p><small>Bill of materials is one slice</small></article>
       </div>
-      <div class="hw-tradeoff-line" aria-label="Hardware trade-off chain">
+      <div class="hw-tradeoff-line" role="group" aria-label="Hardware trade-off chain">
         <b>More parallel units</b><i>↔</i><span>area + leakage + routing</span><i>↔</i><b>higher memory demand</b><i>↔</i><span>power + thermal + cost</span>
       </div>
     </section>
@@ -339,8 +339,8 @@ while measured &lt; required:
           <li><b>Registers</b><span>tiny · current operands</span></li>
           <li><b>L1 / local scratchpad</b><span>very fast · explicit or cached tiles</span></li>
           <li><b>L2 / shared SRAM</b><span>working set · producer/consumer reuse</span></li>
-          <li><b>Last-level cache / HBM</b><span>shared capacity · high bandwidth</span></li>
-          <li><b>DRAM</b><span>large model and application state</span></li>
+          <li><b>Last-level cache</b><span>shared cached working set</span></li>
+          <li><b>HBM / DRAM</b><span>high-capacity main memory · HBM emphasizes bandwidth</span></li>
           <li><b>NVMe / network storage</b><span>persistent · high access latency</span></li>
         </ol>
         <div class="hw-memory-rules">
@@ -397,7 +397,7 @@ while measured &lt; required:
         <h2>The fabric is part of the computer</h2>
         <p>Topology, coherency, ordering, flow control, DMA, and external links determine whether compute and memory can work together.</p>
       </div>
-      <div class="hw-system-map" aria-label="Computer system interconnect map">
+      <div class="hw-system-map" role="group" aria-label="Computer system interconnect map">
         <div class="hw-map-stack">
           <div class="hw-map-node"><strong>CPU cluster</strong><small>control · OS · serial work</small></div>
           <div class="hw-map-node"><strong>GPU / NPU</strong><small>parallel kernels</small></div>
@@ -416,7 +416,7 @@ while measured &lt; required:
         <article><span>Topology</span><strong>Bus, crossbar, ring, mesh, tree</strong><p>Choose from endpoint count, locality, bisection bandwidth, hop latency, layout, and growth.</p></article>
         <article><span>Coherency</span><strong>Convenience has traffic cost</strong><p>Define which agents share memory, cache ownership, snoop scope, consistency model, and non-coherent boundaries.</p></article>
         <article><span>Quality of service</span><strong>Protect deadline traffic</strong><p>Priorities, virtual channels, credits, admission limits, and bandwidth reservations prevent bulk traffic from blocking control.</p></article>
-        <article><span>DMA</span><strong>Move without occupying the CPU</strong><p>Use descriptors, scatter/gather, aligned buffers, IOMMU mappings, cache maintenance, and explicit completion.</p></article>
+        <article><span>DMA</span><strong>Offload bulk transfer from the CPU</strong><p>The CPU or driver still prepares mappings or descriptors, handles completion and errors, and may perform cache maintenance. It is zero-copy only when producer and consumer safely share the same owned and mapped buffer.</p></article>
         <article><span>Ordering</span><strong>Define what “done” means</strong><p>Memory barriers, posted writes, completion queues, atomics, interrupts, and error reporting close the contract.</p></article>
         <article><span>External I/O</span><strong>Budget protocol overhead</strong><p>Lane rate, encoding, packet headers, retransmission, switch hops, connector limits, reach, and signal margin reduce payload rate.</p></article>
       </div>
@@ -449,7 +449,7 @@ while measured &lt; required:
         <h2>Diagnose from counters and behavior</h2>
         <p>Change one variable at a time. A symptom can have several causes, so confirm the limiting resource before redesigning.</p>
       </div>
-      <div class="hw-bottleneck-table-wrap">
+      <div class="hw-bottleneck-table-wrap" role="region" aria-label="Hardware bottleneck matrix" tabindex="0">
         <table class="hw-bottleneck-table">
           <caption>Twelve common limits, the evidence to collect, and the first experiment to run.</caption>
           <thead><tr><th scope="col">Bottleneck</th><th scope="col">Typical symptom</th><th scope="col">Measure</th><th scope="col">First useful action</th></tr></thead>
@@ -469,7 +469,7 @@ while measured &lt; required:
           </tbody>
         </table>
       </div>
-      <div class="hw-diagnose-flow" aria-label="Hardware bottleneck diagnosis flow">
+      <div class="hw-diagnose-flow" role="group" aria-label="Hardware bottleneck diagnosis flow">
         <div><b>1 · Reproduce</b><small>representative workload + steady state</small></div>
         <div><b>2 · Observe</b><small>time, counters, traces, power, temperature</small></div>
         <div><b>3 · Perturb</b><small>change one clock, channel, batch, or mapping</small></div>
@@ -527,7 +527,7 @@ while measured &lt; required:
         <article><span>Processor interface</span><strong>RISC-V specifications</strong><p>Open ISA specifications and profiles useful for reasoning about the hardware/software contract.</p><a href="https://riscv.org/technical/specifications/">RISC-V International ↗</a></article>
         <article><span>Next track</span><strong>NPU + Analog Compute-in-Memory</strong><p>Continue from workload and memory reasoning into analog-aware compilation, mapping, calibration, and runtime design.</p><a href="npu-acim.html">Open the ACiM track →</a></article>
       </div>
-      <div class="hw-track-grid" aria-label="All System Design Atlas tracks">
+      <div class="hw-track-grid" role="group" aria-label="All System Design Atlas tracks">
         <a href="backend.html"><span>Backend</span><strong>Distributed software</strong><small>APIs, data, caching, queues, reliability.</small></a>
         <a href="systems-engineering.html"><span>Systems engineering</span><strong>Whole lifecycle</strong><small>Needs, requirements, interfaces, risk, V&amp;V.</small></a>
         <a href="embedded.html"><span>Embedded</span><strong>Cyber-physical systems</strong><small>Real time, control, power, safety, verification.</small></a>

@@ -6,8 +6,8 @@
   <meta name="description" content="A visual embedded and cyber-physical system design guide covering control loops, hardware/software partitioning, real-time scheduling, DMA, power modes, protocols, safety, verification, and interview practice.">
   <meta name="theme-color" content="#07111f">
   <title>Embedded &amp; Cyber-Physical Systems · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717a">
-  <script src="app.js?v=20260717a" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717b">
+  <script src="app.js?v=20260717b" defer></script>
   <style>
     .em-hero h1 span { background-image: linear-gradient(110deg, var(--green), var(--cyan), var(--violet)); }
     .em-label { color: var(--amber); font: 800 .68rem ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
@@ -252,7 +252,7 @@
       </div>
       <section class="hero-panel" aria-label="Embedded system design preview">
         <div class="terminal-bar"><i></i><i></i><i></i><span>control.loop</span></div>
-        <pre><code><span class="muted"># Correct value, correct time, safe outcome</span>
+        <pre tabindex="0"><code><span class="muted"># Correct value, correct time, safe outcome</span>
 sample   = sensor.read(<b>timestamped</b>)
 state    = estimate(sample, <b>uncertainty</b>)
 command  = controller(state, <b>deadline</b>)
@@ -282,7 +282,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
       </ol>
       <div class="memory-strip"><b>Memory hook</b><span>Mission → deadline → plant → partition → schedule → modes/faults → evidence.</span></div>
 
-      <div class="em-control-board" aria-label="Sensor estimator controller actuator feedback loop">
+      <div class="em-control-board" role="group" aria-label="Sensor estimator controller actuator feedback loop">
         <div class="em-control-loop">
           <div class="em-control-node"><b>Setpoint</b><span>desired state + limits</span></div><div class="em-control-arrow" aria-hidden="true">→</div>
           <div class="em-control-node"><b>Estimator + controller</b><span>filter, fuse, decide, bound output</span></div><div class="em-control-arrow" aria-hidden="true">→</div>
@@ -336,7 +336,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         </aside>
         <div class="em-schedule-selector">
           <article><span>Simple + static periods</span><strong>Cyclic executive</strong><p>A repeating table is easy to inspect and deterministic when activities are few, known, and fit cleanly.</p><small>Watch: poor flexibility + long task blocking</small></article>
-          <article><span>Periodic / sporadic critical tasks</span><strong>Fixed-priority preemptive</strong><p>Assign critical short-period work higher priority; analyze response time, blocking, ISR interference, and overload.</p><small>Watch: priority inversion + starvation</small></article>
+          <article><span>Periodic / sporadic critical tasks</span><strong>Fixed-priority preemptive</strong><p>Assign priorities from criticality and analyzed relative deadlines. Shorter-period-higher (rate monotonic) is justified only under its classic independent, periodic, preemptive, deadline-equals-period assumptions; include blocking, ISR interference, release jitter, and overload in response-time analysis.</p><small>Watch: priority inversion + starvation</small></article>
           <article><span>Dynamic deadlines</span><strong>Earliest Deadline First</strong><p>Schedule the ready job with the nearest deadline when the platform and certification approach support dynamic priority.</p><small>Watch: overload behavior + implementation cost</small></article>
           <article><span>Soft background work</span><strong>Best effort below the critical lane</strong><p>Run logging, uploads, UI, and maintenance at bounded lower priority or under a server/budget.</p><small>Watch: background backpressure + memory growth</small></article>
         </div>
@@ -349,7 +349,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
       <div class="section-heading">
         <p class="eyebrow">04 · Interrupts, DMA, and ownership</p>
         <h2>Capture quickly. Move efficiently. Process outside the ISR.</h2>
-        <p>The interrupt path protects timing; the task path owns complex work. DMA removes copies only when buffer lifetime and cache coherency are designed correctly.</p>
+        <p>The interrupt path protects timing; the task path owns complex work. DMA offloads bulk transfer from the CPU; it is zero-copy only when producer and consumer share the same correctly owned and mapped buffer. Drivers still prepare mappings or descriptors, handle completion and errors, and may perform cache maintenance.</p>
       </div>
       <div class="em-irq-board">
         <ol class="em-irq-flow" aria-label="Interrupt and DMA processing flow">
@@ -403,12 +403,13 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <h2>Choose the link from the physical context</h2>
         <p>Nominal bitrate alone ignores distance, wiring, topology, determinism, noise, power, software ecosystem, and failure handling.</p>
       </div>
-      <div class="em-protocol-table-wrap">
+      <div class="em-protocol-table-wrap" role="region" aria-label="Protocol comparison table" tabindex="0">
         <table class="em-protocol-table">
           <caption>Common starting points. Final electrical limits and timing come from the selected controller, transceiver, board, cable, and current specification.</caption>
           <thead><tr><th scope="col">Protocol</th><th scope="col">Best fit</th><th scope="col">Strength</th><th scope="col">Watch closely</th></tr></thead>
           <tbody>
-            <tr><td>I²C / I3C</td><td>Short board-level control and low-rate sensors.</td><td>Few wires, addressing, broad device ecosystem.</td><td>Pull-ups, capacitance, clock stretching, stuck bus, address conflicts.</td></tr>
+            <tr><td>I²C</td><td>Short board-level control and low-rate sensors.</td><td>Few wires, static addressing, broad device ecosystem.</td><td>Passive pull-ups, capacitance, clock stretching, stuck bus, and static-address conflicts.</td></tr>
+            <tr><td>I3C</td><td>Board-level sensors needing higher rates, a low-pin-count bus, and richer bus management.</td><td>Dynamic address assignment, in-band interrupts, push-pull phases, and legacy-I²C coexistence.</td><td>Controller/target capabilities, mixed open-drain and push-pull timing, error recovery, and coexistence rules.</td></tr>
             <tr><td>SPI</td><td>Short board-level sensors, converters, displays, and flash.</td><td>Simple, full-duplex, low protocol overhead, higher rates.</td><td>Chip-select count, no universal framing/error recovery, signal integrity.</td></tr>
             <tr><td>UART</td><td>Point-to-point debug, modules, bootloaders, simple links.</td><td>Minimal hardware and easy observability.</td><td>Clock mismatch, framing, flow control, no native multi-drop contract.</td></tr>
             <tr><td>CAN / CAN FD</td><td>Robust multi-node control networks in noisy environments.</td><td>Arbitration, error detection, fault confinement, message priority.</td><td>Bus load, identifier design, termination, latency under contention.</td></tr>
@@ -418,7 +419,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
           </tbody>
         </table>
       </div>
-      <div class="em-protocol-factors" aria-label="Protocol selection factors"><div><b>Payload</b><small>bytes + rate</small></div><div><b>Deadline</b><small>latency + jitter</small></div><div><b>Topology</b><small>point · bus · switched</small></div><div><b>Physical</b><small>reach · noise · wires</small></div><div><b>Energy</b><small>active + idle + wake</small></div><div><b>Failure</b><small>detect · retry · isolate</small></div></div>
+      <div class="em-protocol-factors" role="group" aria-label="Protocol selection factors"><div><b>Payload</b><small>bytes + rate</small></div><div><b>Deadline</b><small>latency + jitter</small></div><div><b>Topology</b><small>point · bus · switched</small></div><div><b>Physical</b><small>reach · noise · wires</small></div><div><b>Energy</b><small>active + idle + wake</small></div><div><b>Failure</b><small>detect · retry · isolate</small></div></div>
     </section>
 
     <section class="section" id="safety">
@@ -427,7 +428,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <h2>Detect, contain, and reach a defined outcome</h2>
         <p>A watchdog is not a safety argument by itself. State what it observes, which failures it can detect, what remains independent, and what reset or safe action accomplishes.</p>
       </div>
-      <div class="em-safety-map" aria-label="Safety monitoring path">
+      <div class="em-safety-map" role="group" aria-label="Safety monitoring path">
         <div class="em-safety-node"><span>Input</span><strong>Sense + validate</strong><small>range · plausibility · redundancy · freshness</small></div>
         <div class="em-safety-node"><span>Decision</span><strong>Control + bounds</strong><small>state validity · command limits · deadline</small></div>
         <div class="em-safety-node"><span>Output</span><strong>Drive + observe</strong><small>command versus feedback · open/short · saturation</small></div>
@@ -487,7 +488,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
       </ol>
       <ol class="em-case-checkpoints">
         <li><header><span>00–07 min</span><strong>Clarify mission and privacy</strong></header><p>Ask about detection classes, missed/false event cost, clip length, image quality, night operation, connectivity, local retention, response, tamper, and user controls.</p><details><summary>Reveal coaching notes</summary><div>Define “six months” with event and temperature assumptions. Separate wake detection from confirmed event recording. Ask what images may leave the device and what the product does when storage, battery, or connectivity is constrained.</div></details></li>
-        <li><header><span>07–15 min</span><strong>Create the energy budget</strong></header><p>Convert 8 Wh over 180 days into a daily and average-power envelope. Allocate sleep, wakes, confirmed captures, uploads, conversion loss, temperature, and aging.</p><details><summary>Reveal coaching notes</summary><div>The envelope is about 44 Wh-millihours/day or 1.85 mW average before margin. Keep the always-on lane far below that. Budget energy per wake and per upload, not just active watts; reduce false wakes because their count multiplies every active cost.</div></details></li>
+        <li><header><span>07–15 min</span><strong>Create the energy budget</strong></header><p>Convert 8 Wh over 180 days into a daily and average-power envelope. Allocate sleep, wakes, confirmed captures, uploads, conversion loss, temperature, and aging.</p><details><summary>Reveal coaching notes</summary><div>The envelope is about 44.4 mWh/day, or 1.85 mW average before margin. Keep the always-on lane far below that. Budget energy per wake and per upload, not just active watts; reduce false wakes because their count multiplies every active cost.</div></details></li>
         <li><header><span>15–25 min</span><strong>Partition hardware and tasks</strong></header><p>Choose wake sensing, MCU/RTOS, image/ISP path, accelerator, memory, storage, radios, security element, and power domains.</p><details><summary>Reveal coaching notes</summary><div>Keep a tiny always-on controller or wake sensor. Power the main image/AI/radio islands only when needed. Use DMA for frames, fixed function for ISP, an accelerator for supported inference, and software for policy and recovery. Avoid waking Wi-Fi for rejected events.</div></details></li>
         <li><header><span>25–33 min</span><strong>Schedule the event path</strong></header><p>Trace wake interrupt, rail/clock sequencing, sensor readiness, capture DMA, inference deadline, storage, radio association, upload, and return to sleep.</p><details><summary>Reveal coaching notes</summary><div>Assign deadlines to stages and reserve buffers before enabling capture. Keep ISR work to acknowledge/timestamp/defer. Bound every wait with a timeout and make cancellation safe if battery, thermal, or privacy policy changes mid-event.</div></details></li>
         <li><header><span>33–40 min</span><strong>Design modes and failures</strong></header><p>Cover shipping, setup, armed, capture, upload, offline, low battery, update, degraded, over-temperature, tamper, and recovery.</p><details><summary>Reveal coaching notes</summary><div>Store clips locally with a retention and wear policy when offline; upload later under an energy/data budget. Use signed A/B images, rollback, monotonic version policy, unique device identity, encrypted storage, protected keys, and explicit factory reset.</div></details></li>
@@ -516,7 +517,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <article><span>Product realization</span><strong>NASA Systems Engineering Handbook</strong><p>Verification methods, validation, integration, transition, evidence, and requirement closure in complete systems.</p><a href="https://www.nasa.gov/reference/5-0-product-realization/">NASA product realization ↗</a></article>
         <article><span>Power management</span><strong>Zephyr power management</strong><p>System and device power states, policies, residency, wake latency, and runtime device power concepts.</p><a href="https://docs.zephyrproject.org/latest/services/pm/index.html">Zephyr documentation ↗</a></article>
       </div>
-      <div class="em-track-grid" aria-label="All System Design Atlas tracks">
+      <div class="em-track-grid" role="group" aria-label="All System Design Atlas tracks">
         <a href="backend.html"><span>Backend</span><strong>Distributed software</strong><small>APIs, data, caching, queues, reliability.</small></a>
         <a href="systems-engineering.html"><span>Systems engineering</span><strong>Whole lifecycle</strong><small>Needs, requirements, interfaces, risk, V&amp;V.</small></a>
         <a href="hardware.html"><span>Hardware</span><strong>Computer systems</strong><small>Compute, memory, fabric, PPA, thermal, reliability.</small></a>

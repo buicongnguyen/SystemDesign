@@ -1,13 +1,35 @@
 const root = document.documentElement;
 const themeToggle = document.querySelector("#theme-toggle");
-const savedTheme = localStorage.getItem("dsa-theme");
+const themeColor = document.querySelector('meta[name="theme-color"]');
 
-if (savedTheme === "light") root.dataset.theme = "light";
+function readTheme() {
+  try {
+    return localStorage.getItem("dsa-theme");
+  } catch {
+    return null;
+  }
+}
+
+function applyTheme(theme) {
+  const nextTheme = theme === "light" ? "light" : "dark";
+  const targetTheme = nextTheme === "light" ? "dark" : "light";
+  root.dataset.theme = nextTheme;
+  themeToggle?.setAttribute("aria-pressed", String(nextTheme === "light"));
+  themeToggle?.setAttribute("aria-label", `Switch to ${targetTheme} theme`);
+  themeToggle?.setAttribute("title", `Switch to ${targetTheme} theme`);
+  themeColor?.setAttribute("content", nextTheme === "light" ? "#f5f8fc" : "#07111f");
+}
+
+applyTheme(readTheme());
 
 themeToggle?.addEventListener("click", () => {
   const next = root.dataset.theme === "light" ? "dark" : "light";
-  root.dataset.theme = next;
-  localStorage.setItem("dsa-theme", next);
+  applyTheme(next);
+  try {
+    localStorage.setItem("dsa-theme", next);
+  } catch {
+    // The preference is optional; controls must still work when storage is blocked.
+  }
 });
 
 const decisions = {
@@ -60,7 +82,7 @@ const scenarios = {
     clarifyQuestion: "What traffic, retention, custom-alias, expiration, and analytics requirements matter?",
     clarifyAnswer: "<p>Confirm create + redirect as the core. Ask about 301 vs 302 redirects, link expiration, custom aliases, deletion, analytics freshness, availability target, and geographic scope.</p>",
     estimateQuestion: "Estimate average/peak reads, writes, storage per year, and cacheable hot traffic.",
-    estimateAnswer: "<p>Example: 100M new links/month ≈ 40 writes/s average. At 100 reads per write, redirects average ≈ 4K/s; use 5–10× for peak. At roughly 500 bytes per record, one year is about 60 GB before indexes and replicas. The read-heavy ratio strongly favors caching.</p>",
+    estimateAnswer: "<p>Example: 100M new links/month ≈ 40 writes/s average. At 100 reads per write, redirects average ≈ 4K/s; use 5–10× for peak. At roughly 500 bytes per record, one year is about 600 GB of raw records before indexes, replication, allocator overhead, and backups. The read-heavy ratio strongly favors caching.</p>",
     modelQuestion: "Define create and redirect APIs, then choose the minimum durable record.",
     modelAnswer: "<p><code>POST /links {longUrl, customAlias?, expiresAt?}</code> → short code. <code>GET /{code}</code> → redirect. Record: <code>code, long_url, created_at, expires_at, owner_id</code>. Keep click events outside the redirect transaction.</p>",
     flowQuestion: "Which components handle creation, lookup, caching, persistence, and background work?",
@@ -124,7 +146,7 @@ function showScenario(key) {
   scenarioTabs.forEach(tab => {
     const active = tab.dataset.scenario === key;
     tab.classList.toggle("active", active);
-    tab.setAttribute("aria-selected", String(active));
+    tab.setAttribute("aria-pressed", String(active));
   });
 }
 

@@ -6,8 +6,8 @@
   <meta name="description" content="A visual system design atlas covering scalable architecture, data, caching, queues, reliability, and interview strategy.">
   <meta name="theme-color" content="#07111f">
   <title>Backend &amp; Distributed Systems — System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717a">
-  <script src="app.js?v=20260717a" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717b">
+  <script src="app.js?v=20260717b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -48,7 +48,7 @@
       </div>
       <section class="hero-panel" aria-label="System design preview">
         <div class="terminal-bar"><i></i><i></i><i></i><span>design.md</span></div>
-        <pre><code><span class="muted"># Requirements choose the architecture</span>
+        <pre tabindex="0"><code><span class="muted"># Requirements choose the architecture</span>
 load = estimate(<b>qps, storage, bandwidth</b>)
 path = <b>client → edge → service → data</b>
 
@@ -136,8 +136,8 @@ measure_and_iterate()</code></pre>
         <article><span>Ordered event history</span><h3>Wide-column</h3><p>Telemetry, feeds, time-bucketed events.</p><b>Write scale · partition-key queries</b></article>
         <article><span>Text relevance</span><h3>Search index</h3><p>Full-text search, autocomplete, filtering.</p><b>Inverted index · ranking</b></article>
       </div>
-      <div class="replication-diagram" aria-label="Replication and sharding comparison">
-        <div class="diagram-title"><span>Copy vs split</span><strong>Replication increases availability and reads. Sharding increases total capacity.</strong></div>
+      <div class="replication-diagram" role="group" aria-label="Replication and sharding comparison">
+        <div class="diagram-title"><span>Copy vs split</span><strong>Replication can increase read capacity and fault tolerance. Sharding increases total capacity.</strong></div>
         <div class="replica-map"><i>Primary</i><b>→</b><i>Replica A</i><b>→</b><i>Replica B</i></div>
         <div class="shard-map"><i>Users A–H</i><i>Users I–P</i><i>Users Q–Z</i></div>
       </div>
@@ -146,22 +146,23 @@ measure_and_iterate()</code></pre>
     <section class="section cap-section">
       <div class="section-heading">
         <p class="eyebrow">05 · Distributed trade-offs</p>
-        <h2>During a partition, choose C or A</h2>
-        <p>Partition tolerance is not optional for a distributed system. The real choice appears when nodes cannot communicate.</p>
+        <h2>During a partition, choose the operation’s contract</h2>
+        <p>When communication is lost or indefinitely delayed, an operation cannot guarantee both atomic consistency and an eventual non-error response to every request. Make that failure behavior explicit instead of labeling the whole product “CP” or “AP.”</p>
       </div>
       <div class="cap-layout">
-        <div class="cap-triangle" aria-label="CAP theorem triangle">
-          <div class="cap-node c"><b>C</b><span>Consistency</span><small>latest write or error</small></div>
-          <div class="cap-node a"><b>A</b><span>Availability</span><small>every request responds</small></div>
+        <div class="cap-triangle" role="group" aria-label="CAP theorem triangle">
+          <div class="cap-node c"><b>C</b><span>Atomic consistency</span><small>one real-time-respecting order</small></div>
+          <div class="cap-node a"><b>A</b><span>CAP availability</span><small>every request eventually gets a non-error response</small></div>
           <div class="cap-node p"><b>P</b><span>Partition tolerance</span><small>network can split</small></div>
           <div class="cap-center">When<br>partitioned</div>
         </div>
         <div class="tradeoff-list">
           <article><span>Prefer consistency</span><strong>Payments · inventory · locks</strong><p>Reject or delay operations rather than expose conflicting truth.</p></article>
           <article><span>Prefer availability</span><strong>Feeds · likes · presence</strong><p>Serve possibly stale data and reconcile later.</p></article>
-          <article><span>Practical note</span><strong>Consistency is a spectrum</strong><p>Strong, causal, read-your-writes, bounded staleness, and eventual are different tools.</p></article>
+          <article><span>Practical note</span><strong>Choose behavior per operation</strong><p>When communication is lost or indefinitely delayed, an operation cannot guarantee both atomic consistency and a response. Reject or wait to preserve atomic semantics, or respond from reachable state and reconcile under a weaker model; practical systems may sacrifice some of both.</p></article>
         </div>
       </div>
+      <p class="section-source">Formal basis: <a href="https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf">Gilbert and Lynch’s CAP review ↗</a>. Consistency models and session guarantees are a toolbox—not one total ordering of “strength.”</p>
     </section>
 
     <section class="section">
@@ -182,7 +183,7 @@ measure_and_iterate()</code></pre>
           <ol class="mini-flow queue-flow">
             <li><b>1</b>API validates</li><li><b>2</b>Publish event</li><li><b>3</b>Queue buffers</li><li><b>4</b>Worker consumes</li><li><b>5</b>Retry → DLQ</li>
           </ol>
-          <p><b>Remember:</b> at-least-once delivery means consumers must be idempotent.</p>
+          <p><b>Remember:</b> at-least-once delivery means consumers must tolerate duplicates—typically with idempotent effects, deduplication state, or an atomic inbox/write transaction.</p>
         </article>
       </div>
     </section>
@@ -218,7 +219,8 @@ measure_and_iterate()</code></pre>
       </ol>
       <div class="estimation-card">
         <div><span>Back-of-envelope</span><h3>Use powers of ten, not false precision</h3></div>
-        <dl><dt>Average QPS</dt><dd>daily requests ÷ 86,400</dd><dt>Peak QPS</dt><dd>average × peak factor</dd><dt>Storage/year</dt><dd>writes/sec × bytes × 31.5M</dd><dt>Bandwidth</dt><dd>QPS × response size</dd></dl>
+        <dl><dt>Average QPS</dt><dd>daily requests ÷ 86,400</dd><dt>Peak QPS</dt><dd>average × peak factor</dd><dt>Raw logical storage/year</dt><dd>writes/sec × logical bytes/write × 31.5M</dd><dt>Response egress</dt><dd>response QPS × response bytes</dd></dl>
+        <p>Then add indexes, replication, metadata, allocator overhead, compression, backups, protocol overhead, and request ingress as separate assumptions.</p>
       </div>
     </section>
 
@@ -229,7 +231,7 @@ measure_and_iterate()</code></pre>
         <p>Do not begin with components. Each step produces evidence for the next decision.</p>
       </div>
 
-      <div class="master-design-flow" aria-label="End-to-end system design reasoning flowchart">
+      <div class="master-design-flow" role="group" aria-label="End-to-end system design reasoning flowchart">
         <div class="design-flow-root"><span>Start</span><strong>What user problem must the system solve?</strong><small>Name the core use cases and what “good” means.</small></div>
         <div class="vertical-connector" aria-hidden="true"></div>
         <ol class="design-flow-steps">
@@ -366,8 +368,8 @@ measure_and_iterate()</code></pre>
           <div><p><b>Use when:</b> static assets, media, downloads, or cacheable responses serve geographically distributed users.</p><p><b>How:</b> define cache keys and headers, choose TTLs, protect the origin, and provide an invalidation strategy.</p><p><b>Watch:</b> personalized content leakage, slow purge, origin stampede, and data-residency constraints.</p></div>
         </details>
         <details>
-          <summary><span>04</span><strong>Read replication</strong><small>Copy data to increase read capacity and availability</small></summary>
-          <div><p><b>Use when:</b> reads dominate and one primary can still accept the write load.</p><p><b>How:</b> route writes to the primary and eligible reads to replicas; send read-after-write traffic to the primary or track a consistency token.</p><p><b>Watch:</b> replica lag, stale reads, failover correctness, and multiplying expensive queries across replicas.</p></div>
+          <summary><span>04</span><strong>Read replication</strong><small>Copy data to increase read capacity and tolerate node failure</small></summary>
+          <div><p><b>Use when:</b> reads dominate and one primary can still accept the write load.</p><p><b>How:</b> route writes to the primary and eligible reads to replicas; send read-after-write traffic to the primary or track a consistency token. Availability improves only when routing, health detection, quorum or promotion rules, and tested failover can use the copies correctly.</p><p><b>Watch:</b> replica lag, stale reads, failover correctness, synchronous-replication write availability, and multiplying expensive queries across replicas.</p></div>
         </details>
         <details>
           <summary><span>05</span><strong>Sharding / partitioning</strong><small>Split ownership so data and writes scale beyond one node</small></summary>
@@ -431,13 +433,13 @@ measure_and_iterate()</code></pre>
         <p>Choose a prompt, work through each checkpoint aloud, and reveal the coaching notes only after committing to an answer.</p>
       </div>
 
-      <div class="scenario-tabs" role="tablist" aria-label="Choose a system design practice problem">
-        <button class="scenario-tab active" type="button" role="tab" aria-selected="true" data-scenario="shortener">URL shortener</button>
-        <button class="scenario-tab" type="button" role="tab" aria-selected="false" data-scenario="feed">News feed</button>
-        <button class="scenario-tab" type="button" role="tab" aria-selected="false" data-scenario="chat">Chat system</button>
+      <div class="scenario-tabs" role="group" aria-label="Choose a system design practice problem">
+        <button class="scenario-tab active" type="button" aria-pressed="true" data-scenario="shortener">URL shortener</button>
+        <button class="scenario-tab" type="button" aria-pressed="false" data-scenario="feed">News feed</button>
+        <button class="scenario-tab" type="button" aria-pressed="false" data-scenario="chat">Chat system</button>
       </div>
 
-      <div class="scenario-brief">
+      <div class="scenario-brief" aria-live="polite" aria-atomic="true">
         <div>
           <span class="decision-result-label">Interview prompt</span>
           <h3 id="scenario-title">Design a URL shortening service</h3>
@@ -450,38 +452,38 @@ measure_and_iterate()</code></pre>
         <li>
           <header><span>00–05 min</span><strong>Clarify the contract</strong></header>
           <p>Ask questions before drawing. Separate core requirements from optional features.</p>
-          <div class="practice-question"><b>Your turn</b><span id="clarify-question">What traffic, retention, custom-alias, expiration, and analytics requirements matter?</span></div>
-          <details><summary>Reveal coaching notes</summary><div id="clarify-answer"></div></details>
+          <div class="practice-question"><b>Your turn</b><span id="scenario-clarify-question">What traffic, retention, custom-alias, expiration, and analytics requirements matter?</span></div>
+          <details><summary>Reveal coaching notes</summary><div id="scenario-clarify-answer"></div></details>
         </li>
         <li>
           <header><span>05–10 min</span><strong>Estimate the load</strong></header>
           <p>Use round numbers to expose the likely bottleneck and storage shape.</p>
-          <div class="practice-question"><b>Your turn</b><span id="estimate-question">Estimate average/peak reads, writes, storage per year, and cacheable hot traffic.</span></div>
-          <details><summary>Reveal a worked estimate</summary><div id="estimate-answer"></div></details>
+          <div class="practice-question"><b>Your turn</b><span id="scenario-estimate-question">Estimate average/peak reads, writes, storage per year, and cacheable hot traffic.</span></div>
+          <details><summary>Reveal a worked estimate</summary><div id="scenario-estimate-answer"></div></details>
         </li>
         <li>
           <header><span>10–20 min</span><strong>Define API + data</strong></header>
           <p>Name the contract and source of truth before adding infrastructure.</p>
-          <div class="practice-question"><b>Your turn</b><span id="model-question">Define create and redirect APIs, then choose the minimum durable record.</span></div>
-          <details><summary>Reveal one reasonable model</summary><div id="model-answer"></div></details>
+          <div class="practice-question"><b>Your turn</b><span id="scenario-model-question">Define create and redirect APIs, then choose the minimum durable record.</span></div>
+          <details><summary>Reveal one reasonable model</summary><div id="scenario-model-answer"></div></details>
         </li>
         <li>
           <header><span>20–32 min</span><strong>Draw the main path</strong></header>
           <p>Explain one write and one read end-to-end. Keep the first design simple.</p>
-          <div class="practice-question"><b>Your turn</b><span id="flow-question">Which components handle creation, lookup, caching, persistence, and background work?</span></div>
-          <details><summary>Reveal a high-level flow</summary><div id="flow-answer"></div></details>
+          <div class="practice-question"><b>Your turn</b><span id="scenario-flow-question">Which components handle creation, lookup, caching, persistence, and background work?</span></div>
+          <details><summary>Reveal a high-level flow</summary><div id="scenario-flow-answer"></div></details>
         </li>
         <li>
           <header><span>32–42 min</span><strong>Deep-dive the risk</strong></header>
           <p>Let the workload choose the deep dive: hot keys, ordering, fan-out, delivery, or consistency.</p>
-          <div class="practice-question"><b>Your turn</b><span id="deep-question">How are unique short codes generated without collisions or a central bottleneck?</span></div>
-          <details><summary>Reveal trade-offs</summary><div id="deep-answer"></div></details>
+          <div class="practice-question"><b>Your turn</b><span id="scenario-deep-question">How are unique short codes generated without collisions or a central bottleneck?</span></div>
+          <details><summary>Reveal trade-offs</summary><div id="scenario-deep-answer"></div></details>
         </li>
         <li>
           <header><span>42–45 min</span><strong>Close like an owner</strong></header>
           <p>Summarize decisions, failure behavior, observability, security, and the next scaling step.</p>
-          <div class="practice-question"><b>Your turn</b><span id="close-question">What fails first, how do users experience it, and what do you monitor?</span></div>
-          <details><summary>Reveal closing checklist</summary><div id="close-answer"></div></details>
+          <div class="practice-question"><b>Your turn</b><span id="scenario-close-question">What fails first, how do users experience it, and what do you monitor?</span></div>
+          <details><summary>Reveal closing checklist</summary><div id="scenario-close-answer"></div></details>
         </li>
       </ol>
 

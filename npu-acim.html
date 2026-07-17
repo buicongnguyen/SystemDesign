@@ -6,8 +6,8 @@
   <meta name="description" content="A visual field guide to designing the compiler, runtime, firmware, and calibration loop for a hybrid digital and analog compute-in-memory NPU.">
   <meta name="theme-color" content="#07111f">
   <title>NPU + ACiM Software Stack · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717">
-  <script src="app.js?v=20260717" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717b">
+  <script src="app.js?v=20260717b" defer></script>
   <style>
     .acim-hero h1 span {
       background-image: linear-gradient(110deg, var(--green), var(--cyan), var(--violet));
@@ -353,11 +353,11 @@
       </div>
 
       <section class="acim-hero-panel" aria-label="Hybrid NPU architecture preview">
-        <div class="acim-chip-title"><span>Hybrid edge NPU</span><small>control + exact digital + efficient analog</small></div>
+        <div class="acim-chip-title"><span>Hybrid edge NPU</span><small>control + deterministic digital + efficient analog</small></div>
         <div class="acim-chip-grid">
           <article><span>Host</span><strong>CPU</strong><small>Model lifecycle, control flow, unsupported operators</small></article>
           <article><span>Fabric</span><strong>DMA + NoC + SRAM</strong><small>Move and reuse activations without starving engines</small></article>
-          <article><span>Exact path</span><strong>Digital vector cores</strong><small>Nonlinear, reduction, control, fallback</small></article>
+          <article><span>Deterministic path</span><strong>Digital vector cores</strong><small>Nonlinear, reduction, control, fallback</small></article>
           <article><span>Analog path</span><strong>ACiM tiles</strong><small>Weight-stationary matrix-vector multiply</small></article>
           <article class="acim-chip-wide"><span>Periphery</span><strong>DAC → crossbar → ADC → digital accumulation</strong><small>Conversion range, precision, noise, and data movement decide the real benefit</small></article>
         </div>
@@ -369,10 +369,12 @@
       <div class="section-heading">
         <p class="eyebrow">01 · System boundary</p>
         <h2>Give each engine the work it handles best</h2>
-        <p>An ACiM tile is one execution resource inside a heterogeneous system. The software stack must coordinate control, transfers, exact digital work, analog computation, and recovery.</p>
+        <p>An ACiM tile is one execution resource inside a heterogeneous system. The software stack must coordinate control, transfers, deterministic or higher-precision digital work, analog computation, and recovery.</p>
       </div>
 
-      <div class="acim-hybrid-flow" aria-label="Hybrid CPU digital NPU and ACiM execution architecture">
+      <div class="acim-callout"><b>Technology scope</b><span>The detailed conductance programming, drift, and endurance path below assumes a nonvolatile resistive or phase-change crossbar. SRAM or charge-domain ACiM uses the same partitioning and mapping ideas, but loads volatile weights and emphasizes PVT, parasitics, mismatch, noise, compute linearity, and converter calibration instead.</span></div>
+
+      <div class="acim-hybrid-flow" role="group" aria-label="Hybrid CPU digital NPU and ACiM execution architecture">
         <article class="acim-hybrid-node">
           <span>Control plane</span>
           <h3>Host CPU</h3>
@@ -390,15 +392,15 @@
           <h3>Hybrid NPU</h3>
           <p>Uses a costed partition rather than sending every nominal matrix operation to analog.</p>
           <div class="acim-engine-pair">
-            <div><b>Digital engine</b><small>Activation, pooling, reduction, control, exact math</small></div>
+            <div><b>Digital engine</b><small>Activation, pooling, reduction, control, deterministic fallback math</small></div>
             <div><b>ACiM engine</b><small>Dense or convolutional matrix-vector kernels with reusable weights</small></div>
           </div>
         </article>
         <article class="acim-hybrid-node">
           <span>Physical plane</span>
           <h3>Devices + sensors</h3>
-          <p>Store conductance values and report conditions that affect the computation.</p>
-          <ul><li>Program-and-verify</li><li>Temperature and drift</li><li>Fault map and calibration</li></ul>
+          <p>Store or stage weight states and report conditions that affect the computation.</p>
+          <ul><li>Load or program-and-verify</li><li>Temperature, variation, and drift</li><li>Fault map and calibration</li></ul>
         </article>
       </div>
       <div class="acim-callout"><b>Memory hook</b><span>CPU orchestrates → fabric feeds → digital completes → ACiM multiplies → telemetry corrects.</span></div>
@@ -417,11 +419,11 @@
           <li><span class="acim-stack-number">02</span><strong>High-level graph IR</strong><p>Represent operators, tensors, shape constraints, quantization intent, control flow, and source-level debug names without prematurely committing to a tile or command format.</p></li>
           <li><span class="acim-stack-number">03</span><strong>Legalization and fusion</strong><p>Rewrite unsupported forms, fold constants, canonicalize convolution/GEMM, fuse activation or bias where legal, and expose boundaries where analog-to-digital transfers would erase the gain.</p></li>
           <li><span class="acim-stack-number">04</span><strong>Analog-aware optimization</strong><p>Choose weight/activation precision, scaling and clipping; run quantization-aware or noise-aware training; model device variation, drift, nonlinearity, saturation, and finite ADC resolution.</p></li>
-          <li><span class="acim-stack-number">05</span><strong>ACiM versus digital partition</strong><p>Use capability, accuracy, latency, energy, conversion, transfer, and fallback costs. Keep irregular, exact, small, or poorly utilized work on CPU/digital engines.</p></li>
+          <li><span class="acim-stack-number">05</span><strong>ACiM versus digital partition</strong><p>Use capability, accuracy, latency, energy, conversion, transfer, and fallback costs. Keep irregular, higher-precision, small, or poorly utilized work on CPU/digital engines.</p></li>
           <li><span class="acim-stack-number">06</span><strong>Tensor mapping and placement</strong><p>Tile matrices to physical arrays; bit-slice precision; encode signed weights; place tiles around faults and bandwidth; route partial sums; assign ADC/DAC ranges and digital accumulation widths.</p></li>
           <li><span class="acim-stack-number">07</span><strong>Memory planning and scheduling</strong><p>Allocate activation SRAM, arrange DMA, double-buffer stages, overlap CPU/digital/ACiM work, preserve dependencies, enforce thermal/power limits, and prevent the converters from becoming the serialized path.</p></li>
-          <li><span class="acim-stack-number">08</span><strong>Code generation and model bundle</strong><p>Emit command buffers, microcode, DMA descriptors, barriers, weight-programming payloads, fallback code, relocation data, calibration-profile IDs, and trace metadata.</p></li>
-          <li><span class="acim-stack-number">09</span><strong>Runtime, driver, firmware, and hardware</strong><p>Load and authenticate bundles, program-and-verify weights, submit queues, handle interrupts and faults, apply calibration, collect counters, reset safely, and feed measured behavior back to the toolchain.</p></li>
+          <li><span class="acim-stack-number">08</span><strong>Code generation and model bundle</strong><p>Emit command buffers, microcode, DMA descriptors, barriers, weight-loading or programming payloads, fallback code, relocation data, calibration-profile IDs, and trace metadata.</p></li>
+          <li><span class="acim-stack-number">09</span><strong>Runtime, driver, firmware, and hardware</strong><p>Load and authenticate bundles, load weights or program-and-verify target cells, submit queues, handle interrupts and faults, apply calibration, collect counters, reset safely, and feed measured behavior back to the toolchain.</p></li>
         </ol>
 
         <aside class="acim-feedback-rail" aria-label="Characterization feedback path">
@@ -473,9 +475,9 @@
         <article class="acim-mapping-card">
           <span>Array-aware tiling</span>
           <h3>Split dimensions that do not fit</h3>
-          <p>Map input channels across rows and output channels across columns. Accumulate row-split partial sums digitally; schedule column splits as independent outputs.</p>
-          <div class="acim-tile-map" aria-label="Logical matrix split across four crossbar tiles">
-            <div class="acim-matrix" aria-label="Logical weight matrix"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p>This guide assumes input channels drive rows and column currents encode outputs; some arrays transpose that convention. Split the input dimension into digitally accumulated partial sums and the output dimension into independent result slices.</p>
+          <div class="acim-tile-map" role="group" aria-label="Logical matrix split across four crossbar tiles">
+            <div class="acim-matrix" role="img" aria-label="Logical weight matrix divided into a four by four grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
             <b aria-hidden="true">→</b>
             <div class="acim-tiles"><i>Tile 0<br>rows 0–R</i><i>Tile 1<br>cols C–2C</i><i>Tile 2<br>rows R–2R</i><i>Tile 3<br>partial sum</i></div>
           </div>
@@ -485,7 +487,7 @@
           <span>Precision lowering</span>
           <h3>Bit-slice what a cell cannot represent</h3>
           <p>Represent a logical weight across cells, subarrays, or time steps. The mapper must account for extra conversions, shifts, and accumulation.</p>
-          <div class="acim-bit-slices" aria-label="Weight precision split into analog bit slices">
+          <div class="acim-bit-slices" role="group" aria-label="Weight precision split into analog bit slices">
             <i>MSB slice<br>high significance</i><b>+</b><i>middle slice</i><b>+</b><i>LSB slice<br>fine detail</i><b>→</b><i>wide digital accumulator</i>
           </div>
           <div class="acim-callout"><b>Signed weights</b><span>Differential pair, offset encoding, or separate positive/negative arrays—each changes utilization and error.</span></div>
@@ -494,8 +496,8 @@
         <article class="acim-mapping-card">
           <span>Analog range</span>
           <h3>Use the converters’ useful window</h3>
-          <p>Choose per-tensor or per-channel scales that limit clipping without wasting ADC levels on unused range.</p>
-          <div class="acim-range-flow" aria-label="DAC crossbar and ADC range flow"><div>Quantized activation</div><div>DAC code + pulse</div><div>Crossbar current sum</div><div>ADC range + code</div><div>Scale + accumulate</div></div>
+          <p>Choose per-tensor scales—or per-channel scales when the target and compiler support them—that limit clipping without wasting ADC levels on unused range.</p>
+          <div class="acim-range-flow" role="group" aria-label="DAC crossbar and ADC range flow"><div>Quantized activation</div><div>DAC code + pulse</div><div>Crossbar current sum</div><div>ADC range + code</div><div>Scale + accumulate</div></div>
           <div class="acim-callout"><b>Watch</b><span>Saturation, low signal-to-noise ratio, periphery energy, calibration mismatch, and range changes across batches.</span></div>
         </article>
 
@@ -503,7 +505,7 @@
           <span>Pipeline schedule</span>
           <h3>Hide transfers behind useful work</h3>
           <p>Double-buffer activations so DMA fills one buffer while an engine consumes the other. Explicit events preserve data dependencies.</p>
-          <div class="acim-buffer-timeline" aria-label="Double-buffered NPU execution timeline">
+          <div class="acim-buffer-timeline" role="region" aria-label="Double-buffered NPU execution timeline" tabindex="0">
             <span>Stage</span><i>T0</i><i>T1</i><i>T2</i><i>T3</i>
             <span>DMA A</span><i class="acim-active">fill A</i><i>idle</i><i class="acim-active">fill A</i><i>idle</i>
             <span>ACiM</span><i>idle</i><i class="acim-active">use A</i><i class="acim-active">use B</i><i class="acim-active">use A</i>
@@ -538,11 +540,11 @@
         <p>The steady-state inference path should be fast, but first load, failure, recalibration, reset, and firmware compatibility are equally part of the design.</p>
       </div>
 
-      <div class="acim-runtime-flow" aria-label="Runtime driver and firmware execution flow">
+      <div class="acim-runtime-flow" role="group" aria-label="Runtime driver and firmware execution flow">
         <article><span>01</span><strong>Authenticate bundle</strong><p>Verify signature, versions, target compatibility, limits, and permissions.</p></article>
         <article><span>02</span><strong>Select profile</strong><p>Match device, tile health, temperature, age, and required accuracy.</p></article>
-        <article><span>03</span><strong>Program weights</strong><p>Write conductance targets with bounded retries, wear policy, and interruption safety.</p></article>
-        <article><span>04</span><strong>Program-and-verify</strong><p>Read back, compare tolerance, adjust pulses, quarantine failures, update the fault map.</p></article>
+        <article><span>03</span><strong>Load or program weights</strong><p>Load volatile SRAM/charge-domain state, or program nonvolatile conductance with bounded retries, wear policy, and interruption safety.</p></article>
+        <article><span>04</span><strong>Verify readiness</strong><p>Check weight integrity and calibration state; for resistive targets, read back conductance, adjust pulses, quarantine failures, and update the fault map.</p></article>
         <article><span>05</span><strong>Submit queues</strong><p>Bind buffers, DMA, commands, events, deadlines, and power hints.</p></article>
         <article><span>06</span><strong>Run + observe</strong><p>Handle interrupts, saturation, ECC/fault events, timeouts, thermal throttling, and traces.</p></article>
         <article><span>07</span><strong>Complete or recover</strong><p>Return outputs, retry safely, fall back digitally, reset scoped engines, or invalidate a profile.</p></article>
@@ -557,8 +559,8 @@
         <p>Characterization is not a one-time lab report. The deployed device produces evidence that can select a profile, remap a model, or trigger retraining.</p>
       </div>
 
-      <div class="acim-control-loop" aria-label="Device characterization compilation execution and recalibration loop">
-        <article><span>Characterize</span><strong>Measure the device</strong><p>Sweep conductance, converters, temperature, voltage, noise, drift, and write behavior.</p></article>
+      <div class="acim-control-loop" role="group" aria-label="Device characterization compilation execution and recalibration loop">
+        <article><span>Characterize</span><strong>Measure the device</strong><p>Sweep target-specific weight state, converters, temperature, voltage, noise, drift or retention, and load/write behavior.</p></article>
         <article><span>Model</span><strong>Build error + cost profiles</strong><p>Fit distributions and costs at tile granularity; version them with hardware and firmware.</p></article>
         <article><span>Compile</span><strong>Optimize and place</strong><p>Quantize, train, partition, map around faults, choose ranges, and predict accuracy/efficiency.</p></article>
         <article><span>Execute</span><strong>Run the workload</strong><p>Apply profile corrections and capture counters, sentinel checks, temperature, and timing.</p></article>
@@ -591,7 +593,7 @@
             <tr><td>ADC energy / latency</td><td>Converters dominate cycles or joules; arrays wait for output conversion.</td><td>High resolution, too many conversions, narrow reuse, serialized lanes.</td><td>Lower precision/range, fuse work, share or parallelize ADCs, reduce partial sums, keep more work local.</td><td>Accuracy, area, calibration, and converter contention.</td></tr>
             <tr><td>DAC / activation delivery</td><td>Input path cannot feed arrays; poor tile occupancy.</td><td>Activation bandwidth, broadcast limits, high input precision, routing conflict.</td><td>Reuse/broadcast activations, compress, double-buffer, choose dataflow and placement around fan-out.</td><td>SRAM capacity, decode cost, and scheduling constraints.</td></tr>
             <tr><td>Array underutilization</td><td>Many empty rows/columns; theoretical TOPS far above sustained throughput.</td><td>Small/irregular shapes, depthwise/grouped ops, excess precision slices.</td><td>Pack compatible matrices, reshape/fuse, specialized mapping, or keep the operator digital.</td><td>Packing complexity, isolation, and longer compile time.</td></tr>
-            <tr><td>Weight programming</td><td>Cold-start/model-switch latency; many verify retries; endurance consumption.</td><td>Slow writes, tight tolerance, model churn, worn cells.</td><td>Cache resident models, batch programming, adaptive tolerance, wear leveling, background preload.</td><td>Memory capacity, accuracy, power, and model freshness.</td></tr>
+            <tr><td>Weight load / programming</td><td>Cold-start or model-switch latency; for nonvolatile arrays, verify retries and endurance consumption.</td><td>Weight-transfer bandwidth or, on resistive targets, slow writes, tight tolerance, model churn, and worn cells.</td><td>Cache resident models, preload in the background, batch loads; use adaptive tolerance and wear leveling when the device requires programming.</td><td>Memory capacity, accuracy, power, endurance, and model freshness.</td></tr>
             <tr><td>Inter-tile traffic</td><td>NoC queues and partial-sum transfers dominate.</td><td>Fragmented placement, row splits, multicast pressure, remote accumulation.</td><td>Co-locate producer/consumer tiles, minimize cuts, multicast efficiently, place accumulation near data.</td><td>Fragmentation and reduced placement flexibility.</td></tr>
             <tr><td>Digital accumulation</td><td>ACiM finishes but outputs wait in digital reduction.</td><td>Many tile/bit-slice partials, narrow accumulator throughput.</td><td>Wider/tree accumulators, schedule overlap, reduce splits, accumulate locally, tune precision.</td><td>Area, power, and overflow/error behavior.</td></tr>
             <tr><td>Unsupported operators</td><td>Frequent CPU/digital fallback and synchronization.</td><td>Control flow, nonlinear/reduction ops, dynamic shapes, missing kernels.</td><td>Fuse boundaries, add digital kernels, improve legalization, keep contiguous digital subgraphs.</td><td>Compiler scope and digital silicon area.</td></tr>
@@ -623,7 +625,7 @@
         </ul>
       </div>
 
-      <div class="acim-interview-flow" aria-label="Proposed interview architecture">
+      <div class="acim-interview-flow" role="group" aria-label="Proposed interview architecture">
         <div>Model + calibration data</div><div>Graph compiler + analog optimizer</div><div>Partition + mapper + scheduler</div><div>Signed model bundle</div><div>Runtime + driver + firmware</div><div>Hybrid NPU + telemetry</div>
       </div>
 
@@ -662,7 +664,7 @@
           <header><span>32–37 min</span><strong>Design load and execution</strong></header>
           <p>Cover the path that starts before the first inference.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>What happens from signed bundle to a completed result?</span></div>
-          <details><summary>Reveal coaching</summary><div><p>The runtime authenticates the bundle, checks ABI/firmware/capability compatibility, selects a calibration profile, reserves resources, and asks firmware to program-and-verify weights. The driver maps buffers, queues DMA/commands, and handles interrupts. Firmware owns safe pulse sequences, tile health, reset, and power state. On timeout, saturation, thermal, or profile failure, retry only idempotent steps, reset the smallest scope, or execute a declared digital fallback.</p></div></details>
+          <details><summary>Reveal coaching</summary><div><p>The runtime authenticates the bundle, checks ABI/firmware/capability compatibility, selects a calibration profile, reserves resources, and asks firmware to load weights or program-and-verify nonvolatile cells. The driver maps buffers, queues DMA/commands, and handles interrupts. Firmware owns safe target-specific load/program sequences, tile health, reset, and power state. On timeout, saturation, thermal, or profile failure, retry only idempotent steps, reset the smallest scope, or execute a declared digital fallback.</p></div></details>
         </li>
         <li>
           <header><span>37–41 min</span><strong>Close the calibration loop</strong></header>
@@ -699,6 +701,7 @@
         <article><span>Compiler architecture</span><h3>Compiling Neural Networks for a Computational Memory Accelerator</h3><p>A research software stack centered on the hardware/software interface and mapping neural-network models onto a multi-core computational-memory accelerator.</p><a href="https://arxiv.org/abs/2003.04293">Read the paper on arXiv ↗</a></article>
         <article><span>CPU + accelerator integration</span><h3>ALPINE</h3><p>A system architecture for tight integration of analog in-memory acceleration with multi-core CPUs, including an ISA extension and software library.</p><a href="https://arxiv.org/abs/2205.10042">Read the ALPINE paper ↗</a></article>
         <article><span>Crossbar nonidealities</span><h3>Sandia CrossSim</h3><p>An open-source crossbar simulator for exploring analog hardware effects and neural-network inference with Torch- and Keras-compatible layers.</p><a href="https://github.com/sandialabs/cross-sim">Sandia CrossSim on GitHub ↗</a></article>
+        <article><span>SRAM ACiM</span><h3>A Charge Domain SRAM Compute-in-Memory Macro</h3><p>An IEEE Journal of Solid-State Circuits design using C-2C ladder-based 8-bit MAC units, with analysis of PVT, parasitics, mismatch, noise, and multibit linearity.</p><a href="https://doi.org/10.1109/JSSC.2022.3232601">Read the IEEE paper ↗</a></article>
       </div>
       <div class="acim-callout"><b>Practice loop</b><span>Choose one model → establish a digital baseline → add calibrated nonidealities → partition and map → measure end-to-end → explain the trade-off.</span></div>
     </section>

@@ -6,8 +6,8 @@
   <meta name="description" content="A visual Systems Engineering field guide covering stakeholder needs, ConOps, requirements, architecture, interfaces, trade studies, risk, integration, verification, validation, and interview practice.">
   <meta name="theme-color" content="#07111f">
   <title>Systems Engineering · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717a">
-  <script src="app.js?v=20260717a" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717b">
+  <script src="app.js?v=20260717b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -46,7 +46,7 @@
       </div>
       <section class="hero-panel" aria-label="Systems Engineering preview">
         <div class="terminal-bar"><i></i><i></i><i></i><span>mission.se</span></div>
-        <pre><code><span class="muted"># Trace every decision to a real need</span>
+        <pre tabindex="0"><code><span class="muted"># Trace every decision to a real need</span>
 need = understand(<b>stakeholders, context, lifecycle</b>)
 requirements = make_measurable(need)
 functions = decompose(<b>what the system must do</b>)
@@ -94,7 +94,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <article><span>Supply side</span><strong>Suppliers · production · logistics</strong><small>Parts, tooling, skills, lead time</small></article>
           <article><span>End of life</span><strong>Recovery · disposal · replacement</strong><small>Data, materials, safety, continuity</small></article>
         </div>
-        <figcaption id="context-caption">Arrows are implied in both directions: every external exchange needs an owner, interface, unit, timing rule, failure behavior, and verification method.</figcaption>
+        <figcaption id="context-caption">Draw each exchange in its actual direction; use two arrows only when the interface is bidirectional. Every exchange needs an owner, interface, unit, timing rule, failure behavior, and verification method.</figcaption>
       </figure>
 
       <div class="data-grid se-boundary-cards">
@@ -148,7 +148,7 @@ validate(<b>solves the mission</b>)</code></pre>
         <p>Systems Engineering is iterative. A discovery at any step can change earlier assumptions, requirements, interfaces, or plans.</p>
       </div>
 
-      <div class="master-design-flow se-design-flow" aria-label="Systems Engineering reasoning flow">
+      <div class="master-design-flow se-design-flow" role="group" aria-label="Systems Engineering reasoning flow">
         <div class="design-flow-root"><span>Start</span><strong>What mission outcome matters?</strong><small>Capture stakeholders, context, constraints, and measures of effectiveness.</small></div>
         <div class="vertical-connector" aria-hidden="true"></div>
         <ol class="design-flow-steps">
@@ -161,14 +161,14 @@ validate(<b>solves the mission</b>)</code></pre>
           <li><span>07</span><div><strong>Allocate</strong><p>Assign functions and requirements to hardware, software, people, and externals.</p></div><small>Artifact: physical architecture</small></li>
           <li><span>08</span><div><strong>Balance</strong><p>Resolve interfaces, budgets, risks, cost, schedule, and technical margins.</p></div><small>Artifact: selected baseline</small></li>
           <li><span>09</span><div><strong>Integrate</strong><p>Build in planned increments, verify interfaces, and retire integration risk early.</p></div><small>Artifact: qualified system</small></li>
-          <li><span>10</span><div><strong>Validate</strong><p>Demonstrate the complete system solves the stakeholder’s real operational need.</p></div><small>Artifact: acceptance evidence</small></li>
+          <li><span>10</span><div><strong>Validate</strong><p>Validate implemented and integrated products at appropriate levels; final operational validation demonstrates that the complete system solves the stakeholder need.</p></div><small>Artifact: acceptance evidence</small></li>
         </ol>
       </div>
 
       <div class="se-requirement-anatomy">
         <div class="diagram-title"><span>Requirement anatomy</span><strong>Make every “shall” statement traceable and provable.</strong></div>
         <blockquote>When operating in <b>[condition]</b>, the <b>[system]</b> shall <b>[action]</b> on <b>[object]</b> to <b>[measurable performance]</b> within <b>[constraint]</b>.</blockquote>
-        <div class="algorithm-actions" aria-label="Requirement quality checks">
+        <div class="algorithm-actions" role="group" aria-label="Requirement quality checks">
           <span class="algorithm-chip">necessary</span><span class="algorithm-chip">singular</span><span class="algorithm-chip">unambiguous</span><span class="algorithm-chip">feasible</span><span class="algorithm-chip">bounded</span><span class="algorithm-chip">verifiable</span><span class="algorithm-chip">traceable</span>
         </div>
       </div>
@@ -299,7 +299,7 @@ validate(<b>solves the mission</b>)</code></pre>
             <tr><th scope="row">Update flexibility</th><td>10%</td><td>2</td><td>5</td><td>4</td></tr>
             <tr><th scope="row">Certification clarity</th><td>10%</td><td>4</td><td>2</td><td>3</td></tr>
           </tbody>
-          <tfoot><tr><th scope="row">Weighted total</th><td>100%</td><td>3.80</td><td>3.05</td><td><strong>4.00</strong></td></tr></tfoot>
+          <tfoot><tr><th scope="row">Weighted total</th><td>100%</td><td>3.75</td><td>3.05</td><td><strong>3.95</strong></td></tr></tfoot>
         </table>
       </div>
 
@@ -315,7 +315,7 @@ validate(<b>solves the mission</b>)</code></pre>
       <div class="section-heading">
         <p class="eyebrow">08 · Risk, FMEA, and fault trees</p>
         <h2>Find failure paths before the system finds them for you</h2>
-        <p>Hazards describe potential harm. Failure modes describe how elements fail. Risk combines likelihood, consequence, uncertainty, and exposure.</p>
+        <p>Hazards describe potential harm. Failure modes describe how elements fail. Risk is characterized by a scenario, its likelihood, and its consequence; uncertainty belongs in the likelihood and consequence estimates. Exposure scores may help prioritize work, but they are derived metrics rather than a universal fourth component.</p>
       </div>
 
       <div class="dual-flow se-risk-tools">

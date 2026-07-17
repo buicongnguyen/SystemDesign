@@ -6,8 +6,8 @@
   <meta name="description" content="A visual atlas for backend, systems engineering, hardware, embedded, and ACiM NPU system design.">
   <meta name="theme-color" content="#07111f">
   <title>System Design Atlas — Choose Your Track</title>
-  <link rel="stylesheet" href="styles.css?v=20260717a">
-  <script src="app.js?v=20260717a" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717b">
+  <script src="app.js?v=20260717b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -26,11 +26,11 @@
         <h1>Choose the system boundary. <span>Then choose the method.</span></h1>
         <p class="hero-lead">System design can mean a global backend, a processor and memory hierarchy, a real-time device, an entire multidisciplinary mission, or an analog AI accelerator. Start with what you are responsible for designing.</p>
         <div class="hero-actions"><a class="button primary" href="#tracks">Choose a track</a><a class="button secondary" href="#selector">Open the decision map →</a></div>
-        <ul class="hero-stats" aria-label="Atlas summary"><li><strong>5</strong><span>design tracks</span></li><li><strong>50+</strong><span>visual models</span></li><li><strong>5</strong><span>interview cases</span></li></ul>
+        <ul class="hero-stats" aria-label="Atlas summary"><li><strong>5</strong><span>design tracks</span></li><li><strong>50+</strong><span>visual models</span></li><li><strong>7</strong><span>interview prompts</span></li></ul>
       </div>
       <section class="hero-panel" aria-label="System boundary preview">
         <div class="terminal-bar"><i></i><i></i><i></i><span>choose-boundary.md</span></div>
-        <pre><code><span class="muted"># The word “system” is contextual</span>
+        <pre tabindex="0"><code><span class="muted"># The word “system” is contextual</span>
 boundary = identify_responsibility()
 
 if boundary == <b>"services + data"</b>:
@@ -50,7 +50,7 @@ state_requirements_and_tradeoffs()</code></pre>
 
     <section class="section atlas-tracks" id="tracks">
       <div class="section-heading centered-heading"><p class="eyebrow">01 · Track selector</p><h2>What are you designing?</h2><p>Each track shares systems thinking, but its constraints, artifacts, bottlenecks, and interview language are different.</p></div>
-      <div class="track-map" aria-label="System design track map">
+      <div class="track-map" role="group" aria-label="System design track map">
         <div class="track-root"><span>System boundary</span><strong>Which elements are inside your responsibility?</strong></div>
         <div class="track-connector" aria-hidden="true"></div>
         <div class="track-grid">
@@ -95,7 +95,7 @@ state_requirements_and_tradeoffs()</code></pre>
     </section>
 
     <section class="section" id="practice">
-      <div class="section-heading"><p class="eyebrow">04 · Interview practice matrix</p><h2>Practice the right conversation for each role</h2><p>Each track ends with a 45-minute case, revealable coaching notes, pressure tests and a self-score.</p></div>
+      <div class="section-heading"><p class="eyebrow">04 · Interview practice matrix</p><h2>Practice the right conversation for each role</h2><p>Each track ends with a timed 45–55 minute practice arena, revealable coaching notes, pressure tests, and a self-score.</p></div>
       <div class="practice-matrix">
         <a href="backend.html#practice"><span>Backend</span><strong>URL shortener · feed · chat</strong><small>Scale, storage, consistency, bottlenecks</small></a>
         <a href="systems-engineering.html#practice"><span>Systems</span><strong>Autonomous delivery drone</strong><small>ConOps, allocation, interfaces, V&amp;V</small></a>
