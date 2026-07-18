@@ -60,6 +60,7 @@ function cssVariable(block, name) {
 }
 
 const requiredTrackLinks = ["index.html", "backend.html", "systems-engineering.html", "hardware.html", "embedded.html", "npu-acim.html"];
+const expectedTrackLabels = ["Atlas", "Backend", "Systems engineering", "Hardware", "Embedded", "NPU + ACiM"];
 
 for (const [file, html] of entries) {
   if (!html.startsWith("<!DOCTYPE html>")) throw new Error(`${file}: missing canonical doctype`);
@@ -69,6 +70,16 @@ for (const [file, html] of entries) {
   const localTargets = new Set(hrefsByPage[file].map(href => resolveLocalHref(file, href)?.target).filter(Boolean));
   for (const target of requiredTrackLinks) {
     if (!localTargets.has(target)) throw new Error(`${file}: missing track navigation to ${target}`);
+  }
+  if (file !== "index.html") {
+    const trackNav = html.match(/<nav\s+aria-label=["']Track navigation["'][^>]*>([\s\S]*?)<\/nav>/i)?.[1];
+    if (!trackNav) throw new Error(`${file}: missing consistently named track navigation`);
+    const trackLinks = [...trackNav.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi)];
+    const targets = trackLinks.map(match => match[1]);
+    const labels = trackLinks.map(match => match[2].trim());
+    if (JSON.stringify(targets) !== JSON.stringify(requiredTrackLinks) || JSON.stringify(labels) !== JSON.stringify(expectedTrackLabels)) {
+      throw new Error(`${file}: track navigation targets, labels, or order are inconsistent`);
+    }
   }
   if (/\son[a-z]+\s*=/i.test(html)) throw new Error(`${file}: inline event handlers are not allowed`);
 
@@ -97,7 +108,17 @@ for (const [file, html] of entries) {
 
   for (const href of hrefsByPage[file]) {
     if (/^http:/i.test(href)) throw new Error(`${file}: external links must use HTTPS (${href})`);
-    if (/^https:/i.test(href) || /^(?:mailto|tel):/i.test(href)) continue;
+    if (/^https:/i.test(href)) {
+      let external;
+      try {
+        external = new URL(href);
+      } catch {
+        throw new Error(`${file}: malformed HTTPS link (${href})`);
+      }
+      if (external.protocol !== "https:" || !external.hostname) throw new Error(`${file}: malformed HTTPS link (${href})`);
+      continue;
+    }
+    if (/^(?:mailto|tel):/i.test(href)) continue;
     if (/^[a-z][a-z0-9+.-]*:/i.test(href)) throw new Error(`${file}: unsafe or unsupported link scheme (${href})`);
     const local = resolveLocalHref(file, href);
     if (!local || !documents[local.target]) throw new Error(`${file}: local link target does not exist (${href})`);
@@ -113,7 +134,7 @@ const pageChecks = {
   "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof"],
   "hardware.html": ["thinking", "metrics", "constraints", "memory", "compute", "fabric", "physical", "bottlenecks", "sizing-workbench", "practice", "Edge AI", "recovery contract"],
   "embedded.html": ["practice", "sensor", "real-time", "timing-workbench", "Hardware-in-the-loop", "task model", "transition and recovery"],
-  "npu-acim.html": ["boundary", "stack", "decision", "mapping", "artifacts", "runtime", "feedback", "bottlenecks", "compiler-workbench", "practice", "Analog Compute-in-Memory", "Technology scope", "SRAM / charge-domain ACiM", "Four IR", "health generation"]
+  "npu-acim.html": ["boundary", "stack", "decision", "mapping", "artifacts", "runtime", "feedback", "bottlenecks", "compiler-workbench", "practice", "Analog Compute-in-Memory", "Technology scope", "storage type, volatility/retention", "analog signal domain", "Four IR", "health generation"]
 };
 for (const [file, checks] of Object.entries(pageChecks)) {
   for (const check of checks) {
@@ -122,15 +143,21 @@ for (const [file, checks] of Object.entries(pageChecks)) {
 }
 
 const requiredSources = {
-  "backend.html": ["donnemartin/system-design-primer", "ashishps1/awesome-system-design-resources", "oreilly.com", "sre.google", "rfc-editor.org/rfc/rfc9110", "rfc-editor.org/rfc/rfc9111", "kafka.apache.org/43/design", "people.csail.mit.edu/karger", "research.google/pubs/the-chubby"],
-  "systems-engineering.html": ["nasa.gov", "incose.org", "sebokwiki.org", "iso.org/standard/81702", "appendix-c-how-to-write-a-good-requirement", "6-5-configuration-management"],
-  "hardware.html": ["lbl.gov", "developer.arm.com", "docs.kernel.org", "riscv.org", "doi.org/10.1145/1498765.1498785", "intel.com/content/www/us/en/docs/vtune-profiler"],
-  "embedded.html": ["doi.org/10.1145/321738.321743", "doi.org/10.1093/comjnl/29.5.390", "doi.org/10.1007/BF01088593", "docs.zephyrproject.org", "freertos.org", "docs.kernel.org/core-api/dma-api-howto", "docs.mcuboot.com", "mipi_i3c-and-i3c-basic_app-note-system-integrator"],
-  "npu-acim.html": ["onnx.ai/onnx/repo-docs/IR", "mlir.llvm.org/docs/DialectConversion", "iree.dev", "github.com/IBM/aihwkit", "arxiv.org/abs/2003.04293", "arxiv.org/abs/2205.10042", "github.com/sandialabs/cross-sim", "github.com/Accelergy-Project/accelergy", "github.com/mit-emze/cimloop", "doi.org/10.1109/JSSC.2022.3232601"]
+  "backend.html": ["donnemartin/system-design-primer", "ashishps1/awesome-system-design-resources", "oreilly.com", "sre.google", "rfc-editor.org/rfc/rfc9110", "rfc-editor.org/rfc/rfc9111", "kafka.apache.org/43/design", "prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox", "postgresql.org/docs/current/indexes-multicolumn", "people.csail.mit.edu/karger", "research.google/pubs/the-chubby"],
+  "systems-engineering.html": ["nasa.gov", "incose.org", "sebokwiki.org", "iso.org/standard/81702", "appendix-c-how-to-write-a-good-requirement", "6-5-configuration-management", "swehb.nasa.gov/spaces/SWEHBVD/pages/102695803", "nasa.gov/wp-content/uploads/2023/08/nasa-risk-mgmt-handbook"],
+  "hardware.html": ["lbl.gov", "developer.arm.com", "docs.kernel.org", "riscv.org", "doi.org/10.1145/1498765.1498785", "intel.com/content/www/us/en/docs/vtune-profiler", "docs.nvidia.com/cuda/cuda-programming-guide", "gstreamer.freedesktop.org/documentation/coreelements/tee", "docs.nvidia.com/metropolis/deepstream"],
+  "embedded.html": ["doi.org/10.1145/321738.321743", "doi.org/10.1093/comjnl/29.5.390", "doi.org/10.1007/BF01088593", "docs.zephyrproject.org", "freertos.org", "docs.kernel.org/core-api/dma-api-howto", "docs.mcuboot.com", "ti.com/lit/an/slva740a", "mipi_i3c-and-i3c-basic_app-note-system-integrator"],
+  "npu-acim.html": ["onnx.ai/onnx/repo-docs/IR", "mlir.llvm.org/docs/DialectConversion", "iree.dev", "github.com/IBM/aihwkit", "arxiv.org/abs/2003.04293", "arxiv.org/abs/2205.10042", "github.com/sandialabs/cross-sim", "github.com/Accelergy-Project/accelergy", "github.com/mit-emze/cimloop", "doi.org/10.1109/JSSC.2022.3232601", "doi.org/10.1109/ICTA56932.2022.9963070", "doi.org/10.1109/TCSI.2021.3083275", "doi.org/10.1109/TCSII.2021.3049844"]
 };
 for (const [file, sources] of Object.entries(requiredSources)) {
+  const normalizedTargets = hrefsByPage[file]
+    .filter(href => /^https:/i.test(href))
+    .map(href => {
+      const url = new URL(href);
+      return `${url.hostname}${url.pathname}`.toLowerCase();
+    });
   for (const source of sources) {
-    if (!hrefsByPage[file].some(href => href.includes(source))) throw new Error(`${file}: missing linked source ${source}`);
+    if (!normalizedTargets.some(target => target.includes(source.toLowerCase()))) throw new Error(`${file}: missing linked source ${source}`);
   }
 }
 
@@ -141,35 +168,29 @@ for (const file of pages.filter(file => file !== "index.html")) {
   if (!documents[file].includes('class="detail-table-wrap"')) throw new Error(`${file}: missing detailed decision/evidence table`);
 }
 
-for (const [file, tableClass] of [
-  ["hardware.html", "hw-bottleneck-table"],
-  ["embedded.html", "em-protocol-table"],
-  ["npu-acim.html", "acim-table"]
-]) {
-  const table = documents[file].match(new RegExp(`<table\\s+class=["']${tableClass}["'][^>]*>([\\s\\S]*?)<\\/table>`, "i"))?.[1];
-  if (!table) throw new Error(`${file}: missing ${tableClass}`);
-  if (!/<caption\b/i.test(table)) throw new Error(`${file}: ${tableClass} needs a caption`);
-  if (!/<th\b[^>]*\bscope=["']col["']/i.test(table)) throw new Error(`${file}: ${tableClass} needs scoped column headers`);
-  if (!/<th\b[^>]*\bscope=["']row["']/i.test(table)) throw new Error(`${file}: ${tableClass} needs scoped row headers`);
-}
+for (const file of pages) {
+  const html = documents[file];
+  const tables = [...html.matchAll(/<table\b([^>]*)>([\s\S]*?)<\/table>/gi)];
+  for (const [index, table] of tables.entries()) {
+    const label = table[1].match(/\bclass=["']([^"']+)["']/i)?.[1] || `table ${index + 1}`;
+    const body = table[2];
+    if (!/<caption\b/i.test(body)) throw new Error(`${file}: ${label} needs a caption`);
+    if (!/<th\b[^>]*\bscope=["']col["']/i.test(body)) throw new Error(`${file}: ${label} needs scoped column headers`);
+    if (!/<th\b[^>]*\bscope=["']row["']/i.test(body)) throw new Error(`${file}: ${label} needs scoped row headers`);
 
-for (const [file, wrapClass] of [
-  ["hardware.html", "hw-bottleneck-table-wrap"],
-  ["embedded.html", "em-protocol-table-wrap"],
-  ["npu-acim.html", "acim-table-wrap"]
-]) {
-  const wrapper = documents[file].match(new RegExp(`<div\\b(?=[^>]*\\bclass=["'][^"']*${wrapClass}[^"']*["'])[^>]*>`, "i"))?.[0];
-  if (!wrapper || !/\btabindex=["']0["']/i.test(wrapper) || !/\brole=["']region["']/i.test(wrapper)) {
-    throw new Error(`${file}: scrollable ${wrapClass} must be a keyboard-focusable region`);
+    const directWrapper = html.slice(0, table.index).match(/<div\b[^>]*>\s*$/i)?.[0];
+    if (!directWrapper || !/\btabindex=["']0["']/i.test(directWrapper) || !/\brole=["']region["']/i.test(directWrapper) || !/\baria-label=["'][^"']+["']/i.test(directWrapper)) {
+      throw new Error(`${file}: ${label} must have a directly enclosing keyboard-focusable, labelled region`);
+    }
   }
 }
 
 const forbiddenClaims = {
-  "backend.html": ["Ordered event history", "replicate clockwise to multiple owners", "stop work immediately when ownership is lost"],
-  "systems-engineering.html": ["Artifact: qualified system", "Most system failures happen between components", "No single identified failure"],
-  "hardware.html": ["L1 / local scratchpad", "L2 / shared SRAM", "HBM / DRAM", "Compute issue rate", "Deterministic I/O", "decode · resize · normalize"],
-  "embedded.html": ["<b>Peripheral event</b>", "conversion and battery margin", "<span>Restore order</span>", "Independent supervisor lane", "Catches: buses, clocks, electrical/timing faults"],
-  "npu-acim.html": ["control + deterministic digital", "DAC → crossbar → ADC", "Tile 3<br>partial sum", "Tile/cell corrections", "Bounded idempotent retry", "when evaluation is bit-serial"]
+  "backend.html": ["Ordered event history", "replicate clockwise to multiple owners", "stop work immediately when ownership is lost", "every request eventually gets a non-error response", "writes/sec × logical bytes/write × 31.5M", "index columns in the order used by filters, sorting, and joins", "(1 − availability target) × 43,200 minutes", "One business effect per payment request", "one charge per idempotency key"],
+  "systems-engineering.html": ["Artifact: qualified system", "Most system failures happen between components", "No single identified failure", "Allocation + growth + margin ≤ limit", "closed requirements (pass or approved waiver/deviation)", "10 km reference mission, 2 kg payload, declared weather envelope", "80 Wh required landing reserve"],
+  "hardware.html": ["L1 / local scratchpad", "L2 / shared SRAM", "HBM / DRAM", "Compute issue rate", "Deterministic I/O", "decode · resize · normalize", "while measured &lt; required", "prevent bulk traffic from blocking control", "Memory hierarchy from closest to farthest", "Edge AI computer main data flow"],
+  "embedded.html": ["<b>Peripheral event</b>", "conversion and battery margin", "<span>Restore order</span>", "Independent supervisor lane", "Catches: buses, clocks, electrical/timing faults", "E_load ÷ η_conversion", "Illustrative measured WCET values"],
+  "npu-acim.html": ["control + deterministic digital", "DAC → crossbar → ADC", "Tile 3<br>partial sum", "Tile/cell corrections", "Bounded idempotent retry", "when evaluation is bit-serial", "<th scope=\"col\">SRAM / charge-domain ACiM</th>", "E_region = E_nominal + Σ(E_load,wave", "warm batch-1 inference at the stated arrival rate", "Require p95 &lt; 20 ms at the 80-request/s steady mix"]
 };
 for (const [file, claims] of Object.entries(forbiddenClaims)) {
   for (const claim of claims) {
@@ -187,6 +208,26 @@ if (!js.includes("function readTheme()") || !js.includes("function applyTheme(th
 const applyThemeBody = js.match(/function applyTheme\(theme\)\s*{([\s\S]*?)\n}/)?.[1] || "";
 if (applyThemeBody.includes("aria-pressed")) throw new Error("app.js: theme action label must not be combined with an ambiguous pressed state");
 if (!js.includes("if (answer && tradeoffs)") || !js.includes("if (signalList)")) throw new Error("app.js: page-specific widgets must be safely guarded");
+
+for (const requiredDecisionEvidence of ["Break down p95/p99 latency by hop", "If stateless compute is limiting", "shard only when", "Start from the required SLO", "Measure latency and residency needs by region"]) {
+  if (!js.includes(requiredDecisionEvidence)) throw new Error(`app.js: decision guidance lost diagnostic condition: ${requiredDecisionEvidence}`);
+}
+for (const prematurePrescription of ["Add cache-aside for hot reads and measure hit rate.", "Choose a stable partition key, shard data, and plan rebalancing."]) {
+  if (js.includes(prematurePrescription)) throw new Error(`app.js: symptom-to-component shortcut returned: ${prematurePrescription}`);
+}
+
+const semanticContentChecks = {
+  "backend.html": ["transactional outbox", "Acknowledge after durable acceptance", "Write ingress", "Live logical data", "Append-log storage", "Time-based error budget", "Request-based error budget", "non-failing node", "no finite latency bound", "provider idempotency plus uncertain-outcome reconciliation"],
+  "systems-engineering.html": ["Keep two ledgers distinct", "Verification compliance", "Administrative disposition", "authorized relief—not proof of compliance", "Which quantitative fielded-system measures enable it?", "Parent safety objective—derive", "required usable-at-condition capacity is (570 + 70 + 80) ÷ (1 − 0.20) = 900 Wh", "That leaves 180 Wh"],
+  "hardware.html": ["while not all_satisfied", "not one universal ladder", "QoS tag alone is not isolation", "Bounded inference queue", "Bounded recording queue", "Independent bounded processing branches"],
+  "embedded.html": ["load-profile-weighted effective value", "converter quiescent loss exactly once", "observed maxima as provisional—not automatic WCET", "E_quiescent,not-yet-counted"],
+  "npu-acim.html": ["Storage technology and analog signal domain are separate axes", "W × P_a = 2 × 4 = 8", "E_complete_path(p)", "80-request/s steady", "110-request/s burst", "separately for vision and audio", "steady arrival to remain below sustained thermally limited service"]
+};
+for (const [file, checks] of Object.entries(semanticContentChecks)) {
+  for (const check of checks) {
+    if (!documents[file].includes(check)) throw new Error(`${file}: missing reviewed semantic correction ${check}`);
+  }
+}
 
 const scenarioIds = ["title", "prompt", "signals"];
 for (const checkpoint of ["clarify", "estimate", "model", "flow", "deep", "close"]) {

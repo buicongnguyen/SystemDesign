@@ -6,8 +6,8 @@
   <meta name="description" content="A visual field guide to designing the compiler, runtime, firmware, and calibration loop for a hybrid digital and analog compute-in-memory NPU.">
   <meta name="theme-color" content="#07111f">
   <title>NPU + ACiM Software Stack · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717d">
-  <script src="app.js?v=20260717d" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260719a">
+  <script src="app.js?v=20260719a" defer></script>
   <style>
     .acim-hero h1 span {
       background-image: linear-gradient(110deg, var(--green), var(--cyan), var(--violet));
@@ -321,15 +321,13 @@
       <span class="brand-mark" aria-hidden="true">SD</span>
       <span>System Design <b>Atlas</b></span>
     </a>
-    <nav aria-label="Atlas tracks">
-      <a href="index.html">Tracks</a>
+    <nav aria-label="Track navigation">
+      <a href="index.html">Atlas</a>
       <a href="backend.html">Backend</a>
       <a href="systems-engineering.html">Systems engineering</a>
       <a href="hardware.html">Hardware</a>
       <a href="embedded.html">Embedded</a>
       <a href="npu-acim.html" aria-current="page">NPU + ACiM</a>
-      <a href="#practice">Interview case</a>
-      <a href="https://buicongnguyen.github.io/Leetcode/">DSA Atlas ↗</a>
     </nav>
     <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
   </header>
@@ -344,6 +342,7 @@
           <a class="button primary" href="#stack">Trace the compiler stack</a>
           <a class="button secondary" href="#decision">Choose analog or digital →</a>
           <a class="button secondary" href="#practice">Practice the interview</a>
+          <a class="button secondary" href="https://buicongnguyen.github.io/Leetcode/">Return to DSA Atlas</a>
         </div>
         <ul class="hero-stats" aria-label="Page summary">
           <li><strong>9</strong><span>software layers</span></li>
@@ -372,22 +371,22 @@
         <p>An ACiM tile is one execution resource inside a heterogeneous system. The software stack must coordinate control, transfers, higher-precision or reproducible digital work when required, analog computation, and recovery.</p>
       </div>
 
-      <div class="acim-callout"><b>Technology scope</b><span>The detailed conductance programming, drift, and endurance path below assumes a nonvolatile resistive or phase-change crossbar. SRAM or charge-domain ACiM uses the same partitioning and mapping ideas, but loads volatile weights and emphasizes PVT, parasitics, mismatch, noise, compute linearity, and converter calibration instead.</span></div>
+      <div class="acim-callout"><b>Technology scope</b><span>The two columns below are example target families: a nonvolatile resistive current-summing crossbar and a volatile SRAM charge-domain macro. Storage technology and analog signal domain are separate axes: SRAM designs may compute in charge, current, or time, while nonvolatile devices can also support charge-domain CiM. Record both axes before choosing lifecycle, error, and recovery behavior.</span></div>
 
-      <div class="detail-table-wrap" role="region" aria-label="Resistive and SRAM analog compute in memory comparison" tabindex="0">
+      <div class="detail-table-wrap" role="region" aria-label="Example nonvolatile resistive crossbar and volatile SRAM charge-domain compute in memory comparison" tabindex="0">
         <table class="detail-table">
-          <caption>Resistive and SRAM/charge-domain ACiM can share graph partitioning, tiling, scheduling, and fallback passes—but not one device lifecycle.</caption>
-          <thead><tr><th scope="col">Concern</th><th scope="col">Resistive / PCM / RRAM ACiM</th><th scope="col">SRAM / charge-domain ACiM</th></tr></thead>
+          <caption>These example families can share graph partitioning, tiling, scheduling, and fallback passes—but their storage and compute-circuit contracts create different device lifecycles.</caption>
+          <thead><tr><th scope="col">Concern</th><th scope="col">Example A · nonvolatile resistive current-summing crossbar</th><th scope="col">Example B · volatile SRAM charge-domain macro</th></tr></thead>
           <tbody>
-            <tr><th scope="row">Weight state</th><td>Nonvolatile conductance, usually programmed and verified against a target distribution.</td><td>Volatile SRAM state loaded after boot, wake, eviction, or model switch; charge/voltage/current behavior performs computation.</td></tr>
-            <tr><th scope="row">Main error sources</th><td>Programming/read error, drift, endurance, stuck devices, line resistance/IR drop, and converter/periphery limits.</td><td>PVT variation, mismatch, parasitics, gain/offset, linearity, reference and converter error, retention/residency integrity.</td></tr>
-            <tr><th scope="row">Profile data</th><td>Weight-to-conductance map, program/read distributions, drift time origin/model, fault state, verify history, and endurance policy.</td><td>Per-macro/lane gain, offset, nonlinearity, valid PVT corners, weight-image identity/checksum, and disabled resources.</td></tr>
-            <tr><th scope="row">Recovery</th><td>Bounded re-pulse/readback, remap, quarantine, recalibrate, recompile, or digital fallback.</td><td>Reload weights, recalibrate, disable a macro/lane, remap/recompile, or digital fallback.</td></tr>
+            <tr><th scope="row">Weight state</th><td>Nonvolatile conductance programmed toward a target value or acceptance window and verified when the target exposes that operation.</td><td>Volatile SRAM bits; reload after state loss, non-retentive wake, eviction, or model switch. Charge is redistributed or accumulated during computation but is not the retained weight.</td></tr>
+            <tr><th scope="row">Main error sources</th><td>Programming/read error, drift, endurance, stuck devices, line resistance/IR drop, and converter/periphery limits.</td><td>PVT variation, mismatch, parasitics, gain/offset, linearity, references/converters, SRAM integrity, and residency identity.</td></tr>
+            <tr><th scope="row">Profile data</th><td>Weight-to-conductance map, program/read distributions, drift time origin/model, fault state, verify/endurance state, and supported programming/readback contract.</td><td>Per-macro/lane gain, offset, nonlinearity, valid PVT corners, retained-power assumptions, weight-image identity/checksum, and disabled resources.</td></tr>
+            <tr><th scope="row">Recovery</th><td>Where supported: bounded program/verify continuation, remap, quarantine, recalibrate, recompile, or digital fallback.</td><td>Reload lost/corrupt weights, recalibrate, disable a macro/lane, remap/recompile, or digital fallback.</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="evidence-note"><b>Schema rule:</b> keep technology-specific data in tagged variants. Do not require conductance, drift, or endurance fields in a generic ACiM profile, and do not apply the resistive equation <code>Iⱼ ≈ Σᵢ VᵢGᵢⱼ</code> to a charge-domain SRAM macro.</p>
-      <div class="reference-trail"><strong>Device evidence</strong><a href="https://www.nature.com/articles/s41467-020-16108-9">Computational PCM inference ↗</a><a href="https://doi.org/10.1109/JSSC.2022.3232601">Charge-domain SRAM ACiM ↗</a></div>
+      <p class="evidence-note"><b>Schema rule:</b> keep technology-specific data in tagged variants and expose storage type, volatility/retention, programming/readback support, and analog signal domain as separate capability fields. The label “SRAM / charge-domain ACiM” is shorthand only for Example B, not a taxonomy that makes SRAM and charge-domain synonymous. Do not require conductance, drift, or endurance fields in a generic ACiM profile, and do not apply the resistive equation <code>Iⱼ ≈ Σᵢ VᵢGᵢⱼ</code> to a charge-domain SRAM macro.</p>
+      <div class="reference-trail"><strong>Device evidence</strong><a href="https://www.nature.com/articles/s41467-020-16108-9">Computational PCM inference ↗</a><a href="https://doi.org/10.1109/JSSC.2022.3232601">Charge-domain SRAM ACiM ↗</a><a href="https://doi.org/10.1109/ICTA56932.2022.9963070">Current-domain SRAM CiM ↗</a><a href="https://doi.org/10.1109/TCSI.2021.3083275">Time-domain SRAM CiM ↗</a><a href="https://doi.org/10.1109/TCSII.2021.3049844">Nonvolatile charge-domain CiM ↗</a></div>
 
       <div class="acim-hybrid-flow" role="group" aria-label="Hybrid CPU digital NPU and ACiM execution architecture">
         <article class="acim-hybrid-node">
@@ -695,9 +694,9 @@
           <ol class="evidence-chain">
             <li><div><b>Compute effective geometry</b><span><code>R_eff = 256</code> and <code>C_logical = floor(128 ÷ 2) = 64</code>. Faults, spares, reserved columns, or converter topology can reduce these values further.</span></div></li>
             <li><div><b>Split K and M</b><span><code>N_K = ceil(512 ÷ 256) = 2</code> input blocks; <code>N_M = ceil(512 ÷ 64) = 8</code> output blocks. K splits create partial sums to reduce; M splits create independent outputs to concatenate.</span></div></li>
-            <li><div><b>Pay for weight precision</b><span><code>S_w = ceil(4 ÷ 2) = 2</code>, so a fully spatial mapping needs <code>2 × 8 × 2 = 32</code> array placements. Sixteen one-array tiles require at least two time-multiplexed residency waves. A request therefore needs a wave switch unless requests are batched by resident wave, which trades programming work for activation/partial-result storage and added latency.</span></div></li>
-            <li><div><b>Pay for activation precision</b><span><code>ceil(8 ÷ 2) = 4</code> input phases when two activation bits are applied per digit-serial phase. Weight slices and input phases may be spatial, temporal, or mixed, so they affect capacity, cycles, or both.</span></div></li>
-            <li><div><b>Close the fit decision</b><span>One vector performs <code>512 × 512 = 262,144</code> MACs under the stated convention. Ask whether reuse or resident-wave batching amortizes load/program and wave switching without unacceptable storage or latency, then include conversion, reductions, and engine transitions; otherwise keep it digital.</span></div></li>
+            <li><div><b>Pay for weight precision</b><span><code>S_w = ceil(4 ÷ 2) = 2</code>, so a fully spatial mapping needs <code>2 × 8 × 2 = 32</code> array placements. Sixteen one-array tiles require <code>W = ceil(32 ÷ 16) = 2</code> schedule/residency waves. On volatile SRAM this means loading the next resident weight image when it is not already retained; on a field-programmable nonvolatile target it means reprogramming only if program time, energy, and endurance make that policy viable.</span></div></li>
+            <li><div><b>Pay for activation precision</b><span><code>P_a = ceil(8 ÷ 2) = 4</code> digit-serial input phases. With all 16 arrays and the required converter lanes available concurrently, the mapping therefore needs at least <code>W × P_a = 2 × 4 = 8</code> array-evaluation slots per input vector, before any extra converter serialization, setup, sensing, or reduction cycles. Spatial/temporal choices can move cost between arrays and cycles but cannot erase it.</span></div></li>
+            <li><div><b>Close the fit decision</b><span>One vector performs <code>512 × 512 = 262,144</code> MACs under the stated convention. Ask whether reuse or resident-wave batching amortizes SRAM reload—or, only where supported and viable, nonvolatile programming—without unacceptable activation/partial-result storage or latency. Then include at least eight evaluation slots, conversion, reductions, and engine transitions; otherwise keep it digital.</span></div></li>
           </ol>
         </article>
 
@@ -707,7 +706,7 @@
           <div class="formula-stack">
             <div class="formula-line"><b>Dimension splits</b><code>N_K = ceil(K / R_eff); C_logical = floor(C_eff / c_sign); N_M = ceil(M / C_logical)</code><small><code>c_sign</code> is the physical-column cost of the selected signed encoding; it is not universally two.</small></div>
             <div class="formula-line"><b>Precision cost</b><code>S_w = ceil(weight_bits / cell_bits); placements = N_K × N_M × S_w</code><small>Use this placement formula only when each slice occupies a distinct array; a temporal design converts placement pressure into cycles.</small></div>
-            <div class="formula-line"><b>Input phases</b><code>phases = ceil(activation_bits / drive_bits)</code><small>Add encoding overhead and target-specific sign handling; converter lanes may serialize additional work.</small></div>
+            <div class="formula-line"><b>Temporal evaluation floor</b><code>W = ceil(placements / available_arrays); slots_min = W × ceil(activation_bits / drive_bits)</code><small>This lower bound assumes each wave’s arrays and required converter lanes operate concurrently. Add encoding/sign phases, setup, sensing, converter serialization, and reduction cycles required by the target.</small></div>
             <div class="formula-line"><b>Shape utilization</b><code>U_shape = (M × K) / ((N_K × R_eff) × (N_M × C_logical))</code><small>Keep shape fill separate from disabled capacity, precision phases, queue duty cycle, converter stalls, and useful sustained throughput.</small></div>
           </div>
         </aside>
@@ -719,7 +718,7 @@
           <thead><tr><th scope="col">Budget</th><th scope="col">Include</th><th scope="col">Correct reasoning</th><th scope="col">Evidence</th></tr></thead>
           <tbody>
             <tr><th scope="row">Latency</th><td>DMA, layout conversion, weight load/program, input encoding, array evaluation, sensing/ADC, digital accumulation/activation, synchronization, fallback.</td><td><code>T_region = critical_path(scheduled event graph)</code>. Overlapped transfer and compute contribute through dependencies, not a naïve sum.</td><td>Warm and cold p50/p95/p99 by shape, arrival rate, batch, concurrency, profile, and operating corner.</td></tr>
-            <tr><th scope="row">Energy</th><td>Movement, amortized load/program, input drive, array, sensing/conversion, accumulation, digital work, leakage/idle, retries, calibration, fallback.</td><td><code>E_region = E_nominal + Σ(E_load,wave ÷ inferences sharing residency) + E_retry,expected + E_calibration,window ÷ N_inferences,window + E_fallback,expected</code>. Define <code>E_nominal</code> at the same boundary and report nominal and worst-case separately.</td><td>Per-rail or modeled component energy with synchronized counters and a declared SoC/accelerator boundary.</td></tr>
+            <tr><th scope="row">Energy</th><td>Movement, amortized load/program, input drive, array, sensing/conversion, accumulation, digital work, leakage/idle, retries, calibration, fallback.</td><td><code>E_region,expected = Σ_p P(p) × E_complete_path(p) + E_calibration,window ÷ N_inferences,window</code>, where paths distinguish nominal success, retry then success, fallback after partial ACiM work, early digital fallback, and rejection. Put each load/program/recovery action only in paths that execute it, amortize residency inside those path costs, and report nominal, expected, and worst-valid energy separately.</td><td>Per-rail or modeled component energy with synchronized counters and a declared SoC/accelerator boundary.</td></tr>
             <tr><th scope="row">Accuracy</th><td>Quantization/rounding/overflow, clipping, mapping, analog noise/nonlinearity/saturation, PVT, drift/retention, faults, calibration, fallback boundaries.</td><td>Validate the composed system on representative data; use layer sensitivity to allocate an error budget. One percentage point and one percent relative loss are different.</td><td>Named metric/dataset from FP baseline through worst valid temperature, age, profile, and degraded geometry.</td></tr>
             <tr><th scope="row">Sustained benefit</th><td>Useful operations, wall time, occupancy, queue gaps, converter duty, bytes moved, transitions, fallback, throttling, health maintenance.</td><td>Compare end-to-end against the best digital baseline with equal accuracy and power boundary—not against isolated array peak.</td><td>Representative models and request mixes after thermal equilibrium, including model switches and recovery.</td></tr>
           </tbody>
@@ -756,10 +755,10 @@
         <div>
           <span>45-minute prompt</span>
           <h3>Deploy vision and audio models on a 5 W edge SoC</h3>
-          <p>The SoC contains a quad-core CPU, digital vector NPU, 16 one-array ACiM tiles, shared SRAM, DMA/NoC, and analog converter periphery. Assume warm batch-1 inference at the stated arrival rate, 5 W for the complete SoC, and less than one percentage-point task-metric loss on a named dataset unless you explicitly revise those assumptions.</p>
+          <p>The SoC contains a quad-core CPU, digital vector NPU, 16 one-array ACiM tiles, shared SRAM, DMA/NoC, and analog converter periphery. Assume warm batch-1 requests from up to four concurrent contexts: vision arrives at 30 requests/s steady and bursts to 60 requests/s for 2 s, while audio arrives at 50 windows/s steady. Require p95 &lt; 20 ms separately for vision and audio at the 80-request/s steady mix after thermal equilibrium, bounded backlog with an explicit per-class latency/drop policy during the 110-request/s burst, 5 W for the complete SoC, and less than one percentage-point task-metric loss on a named dataset per model unless you explicitly revise those assumptions.</p>
         </div>
         <ul class="acim-interview-signals" aria-label="Interview constraints">
-          <li>PyTorch + ONNX</li><li>warm batch-1 p95 &lt; 20 ms</li><li>5 W complete SoC</li><li>&lt; 1 percentage-point metric loss</li><li>multi-model</li><li>field drift</li><li>secure updates</li><li>digital fallback</li>
+          <li>PyTorch + ONNX</li><li>80 req/s steady</li><li>110 req/s · 2 s burst</li><li>4 contexts</li><li>per-class warm p95 &lt; 20 ms at thermal steady state</li><li>5 W complete SoC</li><li>&lt; 1 percentage-point metric loss/model</li><li>field drift</li><li>secure updates</li><li>digital fallback</li>
         </ul>
       </div>
 
@@ -772,7 +771,7 @@
           <header><span>00–05 min</span><strong>Clarify workload and success</strong></header>
           <p>Separate model, product, silicon, lifecycle, and safety constraints.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>Which questions decide the architecture before you draw the stack?</span></div>
-          <details><summary>Reveal coaching</summary><div><p>Ask about model families/operators and shapes; batch and concurrency; latency percentile, throughput, energy, accuracy-loss budget, determinism, and cold start; model size/update frequency; ACiM array geometry/device precision and fault rate; converter/SRAM/NoC limits; target temperatures and lifetime; security/isolation; and whether the stack owns training. State exclusions, such as not designing the memory device itself.</p></div></details>
+          <details><summary>Reveal coaching</summary><div><p>Confirm whether the supplied vision/audio rates, four-context concurrency, two-second burst, percentile boundary, and drop policy reflect product intent; then state the queue boundary and require steady arrival to remain below sustained thermally limited service. Ask about model families/operators and shapes; per-model deadlines and priority; energy and accuracy-loss budgets; determinism and cold start; model size/update frequency; ACiM array geometry/device precision and fault rate; converter/SRAM/NoC limits; target temperatures and lifetime; security/isolation; and whether the stack owns training. State exclusions, such as not designing the memory device itself.</p></div></details>
         </li>
         <li>
           <header><span>05–10 min</span><strong>Define the hardware/software contract</strong></header>

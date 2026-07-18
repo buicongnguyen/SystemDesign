@@ -6,8 +6,8 @@
   <meta name="description" content="A visual system design atlas covering scalable architecture, data, caching, queues, reliability, and interview strategy.">
   <meta name="theme-color" content="#07111f">
   <title>Backend &amp; Distributed Systems — System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717d">
-  <script src="app.js?v=20260717d" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260719a">
+  <script src="app.js?v=20260719a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -16,15 +16,13 @@
       <span class="brand-mark" aria-hidden="true">SD</span>
       <span>System Design <b>Atlas</b></span>
     </a>
-    <nav aria-label="Primary navigation">
-      <a href="index.html">All tracks</a>
+    <nav aria-label="Track navigation">
+      <a href="index.html">Atlas</a>
       <a href="backend.html" aria-current="page">Backend</a>
-      <a href="#thinking-flow">Thinking flow</a>
-      <a href="#practice">Practice</a>
-      <a href="systems-engineering.html">Systems</a>
+      <a href="systems-engineering.html">Systems engineering</a>
       <a href="hardware.html">Hardware</a>
       <a href="embedded.html">Embedded</a>
-      <a href="npu-acim.html">ACiM</a>
+      <a href="npu-acim.html">NPU + ACiM</a>
     </nav>
     <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
   </header>
@@ -66,20 +64,20 @@ measure_and_iterate()</code></pre>
     <section class="section" id="request">
       <div class="section-heading">
         <p class="eyebrow">01 · Request journey</p>
-        <h2>Follow one request through the system</h2>
-        <p>Memorize this spine. Most design choices attach to one of these stages.</p>
+        <h2>Trace where one request can return, continue, or detach</h2>
+        <p>Use this as a branching trace, not a mandatory serial stack. A cache hit returns early; deferred work leaves the synchronous response path only after a durable handoff.</p>
       </div>
-      <ol class="request-flow">
-        <li><span>01</span><strong>Client</strong><small>Retry carefully · cache locally</small></li>
-        <li><span>02</span><strong>DNS + CDN</strong><small>Route nearby · serve static data</small></li>
-        <li><span>03</span><strong>Load balancer</strong><small>Health checks · spread traffic</small></li>
-        <li><span>04</span><strong>API gateway</strong><small>Auth · rate limit · route</small></li>
-        <li><span>05</span><strong>Service</strong><small>Stateless logic · validation</small></li>
-        <li><span>06</span><strong>Cache</strong><small>Fast hot reads · TTL</small></li>
-        <li><span>07</span><strong>Database</strong><small>Durable source of truth</small></li>
-        <li><span>08</span><strong>Queue + worker</strong><small>Slow work off the request path</small></li>
+      <ol class="request-flow" aria-label="Request path with early-return and deferred-work branches">
+        <li><span>01 · enter</span><strong>Client</strong><small>Set a deadline · retry only safe or idempotent operations</small></li>
+        <li><span>02 · locate</span><strong>DNS + edge route</strong><small>Resolve the endpoint · choose an eligible region or edge</small></li>
+        <li><span>03 · branch</span><strong>CDN lookup</strong><small>Hit: return now · miss or dynamic request: continue to origin</small></li>
+        <li><span>04 · origin</span><strong>LB + gateway</strong><small>Health-route · authenticate · authorize · limit</small></li>
+        <li><span>05 · compute</span><strong>Service</strong><small>Validate the contract · execute domain logic</small></li>
+        <li><span>06 · branch</span><strong>Cache lookup</strong><small>Hit: return now · miss: read the authoritative store</small></li>
+        <li><span>07 · persist</span><strong>Database</strong><small>Read on a miss · commit mutations under the required invariant</small></li>
+        <li><span>08 · optional branch</span><strong>Durable handoff</strong><small>Queue-only job or transactional outbox → acknowledge → worker</small></li>
       </ol>
-      <div class="memory-strip"><b>Memory hook</b><span>Enter → route → protect → compute → accelerate → persist → defer.</span></div>
+      <div class="memory-strip"><b>Memory hook</b><span>At each stage ask: can this request return, must it continue, or may work detach after durable acceptance?</span></div>
     </section>
 
     <section class="section" id="scale">
@@ -103,7 +101,7 @@ measure_and_iterate()</code></pre>
       <div class="section-heading centered-heading">
         <p class="eyebrow">03 · Architecture decision graph</p>
         <h2>Choose from the requirement, not the trend</h2>
-        <p>Select the dominant pressure to reveal a practical first move and its cost.</p>
+        <p>Select the observed pressure to reveal what to diagnose, when a candidate pattern fits, and what it costs.</p>
       </div>
       <div class="decision-board">
         <div class="decision-root"><span>Start</span><strong>What is failing—or about to fail?</strong><small>Use evidence: latency, errors, saturation, or cost.</small></div>
@@ -116,8 +114,8 @@ measure_and_iterate()</code></pre>
           <button class="decision-node" type="button" data-decision="global" aria-pressed="false"><span>05</span>Global users</button>
         </div>
         <div class="decision-result" aria-live="polite">
-          <div><span class="decision-result-label">First move</span><p id="decision-answer">Add cache-aside for hot reads and measure hit rate.</p></div>
-          <div><span class="decision-result-label">Trade-offs to say aloud</span><div class="algorithm-actions" id="decision-tradeoffs"></div></div>
+          <div><span class="decision-result-label">Diagnose, then choose</span><p id="decision-answer">Break down tail latency by hop and inspect the query plan. If repeated cacheable reads dominate, test cache-aside and measure end-to-end benefit.</p></div>
+          <div><span class="decision-result-label">Fit conditions + trade-offs</span><div class="algorithm-actions" id="decision-tradeoffs"></div></div>
         </div>
       </div>
     </section>
@@ -147,19 +145,19 @@ measure_and_iterate()</code></pre>
       <div class="section-heading">
         <p class="eyebrow">05 · Distributed trade-offs</p>
         <h2>During a partition, choose the operation’s contract</h2>
-        <p>When communication is lost or indefinitely delayed, an operation cannot guarantee both atomic consistency and an eventual non-error response to every request. Make that failure behavior explicit instead of labeling the whole product “CP” or “AP.”</p>
+        <p>When communication is lost or indefinitely delayed, an operation cannot guarantee both atomic consistency and an eventual valid response to every request received by a non-failing node. Make that failure behavior explicit instead of labeling the whole product “CP” or “AP.”</p>
       </div>
       <div class="cap-layout">
         <div class="cap-triangle" role="group" aria-label="CAP theorem triangle">
           <div class="cap-node c"><b>C</b><span>Atomic consistency</span><small>one real-time-respecting order</small></div>
-          <div class="cap-node a"><b>A</b><span>CAP availability</span><small>every request eventually gets a non-error response</small></div>
+          <div class="cap-node a"><b>A</b><span>CAP availability</span><small>every request to a non-failing node eventually gets a valid response; no finite latency bound</small></div>
           <div class="cap-node p"><b>P</b><span>Partition tolerance</span><small>network can split</small></div>
           <div class="cap-center">When<br>partitioned</div>
         </div>
         <div class="tradeoff-list">
           <article><span>Prefer consistency</span><strong>Payments · inventory · locks</strong><p>Reject or delay operations rather than expose conflicting truth.</p></article>
           <article><span>Prefer availability</span><strong>Feeds · likes · presence</strong><p>Serve possibly stale data and reconcile later.</p></article>
-          <article><span>Practical note</span><strong>Choose behavior per operation</strong><p>When communication is lost or indefinitely delayed, an operation cannot guarantee both atomic consistency and a response. Reject or wait to preserve atomic semantics, or respond from reachable state and reconcile under a weaker model; practical systems may sacrifice some of both.</p></article>
+          <article><span>Practical note</span><strong>Choose behavior per operation</strong><p>When communication is lost or indefinitely delayed, an operation cannot guarantee both atomic consistency and an eventual valid response at every non-failing node. Reject or wait to preserve atomic semantics, or respond from reachable state and reconcile under a weaker model; practical systems may sacrifice some of both.</p></article>
         </div>
       </div>
       <p class="section-source">Formal basis: <a href="https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf">Gilbert and Lynch’s CAP review ↗</a>. Consistency models and session guarantees are a toolbox—not one total ordering of “strength.”</p>
@@ -181,9 +179,9 @@ measure_and_iterate()</code></pre>
         <article>
           <header><span>Asynchronous work</span><h3>Slow path</h3></header>
           <ol class="mini-flow queue-flow">
-            <li><b>1</b>API validates</li><li><b>2</b>Publish event</li><li><b>3</b>Queue buffers</li><li><b>4</b>Worker consumes</li><li><b>5</b>Retry → DLQ</li>
+            <li><b>1</b>Validate + operation ID</li><li><b>2</b>Durably enqueue, or commit state + outbox</li><li><b>3</b>Acknowledge after durable acceptance</li><li><b>4</b>Relay + worker consume</li><li><b>5</b>Bounded retry → DLQ</li>
           </ol>
-          <p><b>Remember:</b> at-least-once delivery means consumers must tolerate duplicates—typically with idempotent effects, deduplication state, or an atomic inbox/write transaction.</p>
+          <p><b>Remember:</b> a job-only request may acknowledge after the broker confirms durable acceptance. If a database mutation must emit an event, commit business state and an outbox record in one local transaction, then relay it. At-least-once delivery means consumers must tolerate duplicates—typically with idempotent effects, deduplication state, or an atomic inbox/write transaction.</p>
         </article>
       </div>
     </section>
@@ -219,8 +217,8 @@ measure_and_iterate()</code></pre>
       </ol>
       <div class="estimation-card">
         <div><span>Back-of-envelope</span><h3>Use powers of ten, not false precision</h3></div>
-        <dl><dt>Average QPS</dt><dd>daily requests ÷ 86,400</dd><dt>Peak QPS</dt><dd>average × peak factor</dd><dt>Raw logical storage/year</dt><dd>writes/sec × logical bytes/write × 31.5M</dd><dt>Response egress</dt><dd>response QPS × response bytes</dd></dl>
-        <p>Then add indexes, replication, metadata, allocator overhead, compression, backups, protocol overhead, and request ingress as separate assumptions.</p>
+        <dl><dt>Average QPS</dt><dd>daily requests ÷ 86,400</dd><dt>Peak QPS</dt><dd>average × peak factor</dd><dt>Write ingress</dt><dd>mutations/sec × bytes/mutation</dd><dt>Live logical data</dt><dd>active records × average bytes/record, or net retained creations/sec × bytes/record × retention</dd><dt>Append-log storage</dt><dd>events/sec × bytes/event × retention</dd><dt>Response egress</dt><dd>response QPS × response bytes</dd></dl>
+        <p>Do not treat every update as a newly retained record. Then add indexes, versions, replication, metadata, allocator overhead, compression, backups, protocol overhead, and request ingress as separate assumptions.</p>
       </div>
     </section>
 
@@ -377,7 +375,7 @@ measure_and_iterate()</code></pre>
         </details>
         <details>
           <summary><span>06</span><strong>Queue + worker pool</strong><small>Buffer spikes and remove slow work from request latency</small></summary>
-          <div><p><b>Use when:</b> work may complete later, arrives in bursts, needs retry, or depends on a slower system.</p><p><b>How:</b> validate synchronously, publish a durable job, process with horizontally scaled consumers, retry transient faults, and move poison jobs to a DLQ.</p><p><b>Watch:</b> duplicate delivery, queue lag, unbounded retries, ordering requirements, and backpressure.</p></div>
+          <div><p><b>Use when:</b> work may complete later, arrives in bursts, needs retry, or depends on a slower system.</p><p><b>How:</b> assign a stable operation ID and validate synchronously. For a job-only API, wait for durable broker acceptance before acknowledging; when a database mutation must emit work, commit business state plus an outbox record atomically and relay it. Process with horizontally scaled, duplicate-tolerant consumers; bound transient retries and isolate poison jobs in a DLQ.</p><p><b>Watch:</b> database/broker dual-write gaps, ambiguous publish outcomes, duplicate delivery, queue lag, unbounded retries, ordering requirements, and backpressure.</p></div>
         </details>
         <details>
           <summary><span>07</span><strong>Event stream / pub-sub</strong><small>Distribute state changes to independent consumers</small></summary>
@@ -385,7 +383,7 @@ measure_and_iterate()</code></pre>
         </details>
         <details>
           <summary><span>08</span><strong>Database index</strong><small>Trade write/storage cost for targeted query speed</small></summary>
-          <div><p><b>Use when:</b> a frequent selective query otherwise scans too many rows.</p><p><b>How:</b> index columns in the order used by filters, sorting, and joins; verify the query plan and keep the index narrow.</p><p><b>Watch:</b> slower writes, extra storage, unused indexes, low-selectivity fields, and indexes that do not match query order.</p></div>
+          <div><p><b>Use when:</b> a frequent selective query otherwise scans too many rows.</p><p><b>How:</b> design for one high-value query and the chosen database/index type. For a typical B-tree, consider leading equality predicates, the first range predicate, required sort order, and whether included columns enable a covering read; verify with the actual query plan and keep the index narrow.</p><p><b>Watch:</b> engine-specific rules, slower writes, extra storage, unused indexes, low-selectivity fields, and indexes whose leading columns or ordering do not match the query.</p></div>
         </details>
         <details>
           <summary><span>09</span><strong>Materialized view / precomputation</strong><small>Move repeated aggregation from read time to write or background time</small></summary>
@@ -453,8 +451,11 @@ measure_and_iterate()</code></pre>
           <div class="formula-stack">
             <div class="formula-line"><b>Peak request rate</b><code>requests ÷ active seconds × burst factor</code><small>Show average and peak separately; state whether retries and internal fan-out are included.</small></div>
             <div class="formula-line"><b>Average in-flight work</b><code>L = λ × W</code><small>Use consistent units and a clearly named boundary. It is an average relation, not a tail-latency bound.</small></div>
-            <div class="formula-line"><b>Raw logical storage</b><code>writes/s × bytes/write × retention seconds</code><small>Add indexes, metadata, replication, allocator overhead, backups, and compression as explicit factors.</small></div>
-            <div class="formula-line"><b>30-day error budget</b><code>(1 − availability target) × 43,200 minutes</code><small>99.9% allows about 43.2 minutes; 99.99% about 4.32 minutes. Define which requests and failure classes count.</small></div>
+            <div class="formula-line"><b>Write ingress</b><code>mutations/s × bytes/mutation</code><small>This sizes the write path; an update is traffic but does not necessarily add another live record.</small></div>
+            <div class="formula-line"><b>Live logical data</b><code>active records × bytes/record</code><small>For retained creations, use net creations/s × bytes/record × retention. Add indexes, versions, replication, metadata, backups, and compression separately.</small></div>
+            <div class="formula-line"><b>Append-log storage</b><code>events/s × bytes/event × retention seconds</code><small>Use this form only when each event or mutation is retained as a distinct append-only record.</small></div>
+            <div class="formula-line"><b>Time-based error budget</b><code>(1 − availability target) × window duration</code><small>Over 30 days, 99.9% permits 43.2 minutes and 99.99% permits 4.32 minutes of time-based unavailability.</small></div>
+            <div class="formula-line"><b>Request-based error budget</b><code>(1 − availability target) × eligible requests</code><small>Count bad eligible events, not downtime minutes. Define success, exclusions, and scope; peak-traffic failures burn this budget faster.</small></div>
           </div>
         </aside>
       </div>
@@ -464,7 +465,7 @@ measure_and_iterate()</code></pre>
           <caption>Make correctness local: write the invariant, choose its smallest consistency scope, then test the ambiguous outcome.</caption>
           <thead><tr><th scope="col">Invariant</th><th scope="col">Scope</th><th scope="col">Candidate mechanism</th><th scope="col">Failure test</th></tr></thead>
           <tbody>
-            <tr><th scope="row">One business effect per payment request</th><td>Idempotency key</td><td>Stable key plus an atomic mutation/result record; add an outbox when an event must follow.</td><td>The commit succeeds, the response is lost, and the client retries with the same and then a conflicting payload.</td></tr>
+            <tr><th scope="row">One local payment intent/result per scoped idempotency key</th><td>Merchant + operation + idempotency key</td><td>Atomically persist local intent, result, and outbox; propagate the same authenticated key to a provider that supports idempotency. If the remote outcome is unknown, query and reconcile before retry.</td><td>The provider charge succeeds but the response is lost; prove lookup/reconciliation prevents a second charge and rejects a conflicting payload for the same scoped key.</td></tr>
             <tr><th scope="row">Sellable inventory never drops below zero</th><td>SKU or reservation</td><td>Transactional conditional decrement, or a durable expiring reservation with an explicit release path.</td><td>Many buyers race for the last unit; a checkout crashes after reservation but before payment.</td></tr>
             <tr><th scope="row">Messages stay ordered inside one conversation</th><td>Conversation</td><td>Per-conversation sequence numbers or one ordered partition; reject, buffer, or reconcile gaps.</td><td>Two devices send concurrently while one reconnects and replays an earlier request.</td></tr>
             <tr><th scope="row">A short alias names at most one URL</th><td>Alias key</td><td>Conditional insert or unique constraint at the authoritative store.</td><td>Two creators claim the same custom alias at the same time.</td></tr>
@@ -498,13 +499,13 @@ measure_and_iterate()</code></pre>
       <p class="evidence-note"><b>Interview close:</b> leave a decision ledger, contract sheet, capacity sheet, failure matrix, observability plan, and open-risk register. “Exactly once” is useful only after naming the source, processing boundary, destination, and replay behavior.</p>
 
       <div class="workbench-grid">
-        <article class="workbench-card"><span>Correctness</span><h3>Name the invariant</h3><p>Examples: one charge per idempotency key, no negative sellable inventory, ordered messages within one conversation. Then choose the smallest transaction or consensus boundary that protects it.</p></article>
+        <article class="workbench-card"><span>Correctness</span><h3>Name the invariant</h3><p>Examples: one local payment intent per scoped key; one external charge only with provider idempotency plus uncertain-outcome reconciliation; no negative sellable inventory; ordered messages within one conversation. Then choose the smallest transaction or consensus boundary that protects each claim.</p></article>
         <article class="workbench-card"><span>Overload</span><h3>Choose who waits or loses</h3><p>Bound queues, shed optional work, reserve critical capacity, and return a deliberate response. An unbounded queue converts overload into memory pressure and unusable tail latency.</p></article>
         <article class="workbench-card"><span>Recovery</span><h3>Design the replay path</h3><p>Record durable intent, make consumers duplicate-tolerant, quarantine poison work, reconcile derived views, and prove that failover cannot expose two owners without fencing.</p></article>
         <article class="workbench-card"><span>Evidence</span><h3>Connect claim to signal</h3><p>For each major decision name an SLI, load or fault test, saturation threshold, alert, rollback signal, and capacity owner. “Highly available” is not measurable until the request contract is defined.</p></article>
       </div>
 
-      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1287/opre.9.3.383">Little’s Law paper ↗</a><a href="https://www.rfc-editor.org/rfc/rfc9110.html">RFC 9110 HTTP semantics ↗</a><a href="https://www.rfc-editor.org/rfc/rfc9111.html">RFC 9111 caching ↗</a><a href="https://kafka.apache.org/43/design/design/">Kafka delivery semantics ↗</a><a href="https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter">AWS retries + jitter ↗</a><a href="https://sre.google/sre-book/addressing-cascading-failures/">Google SRE cascading failures ↗</a><a href="https://cassandra.apache.org/doc/latest/cassandra/developing/cql/ddl.html">Cassandra data model ↗</a><a href="https://people.csail.mit.edu/karger/Papers/web.pdf">Consistent hashing paper ↗</a><a href="https://research.google/pubs/the-chubby-lock-service-for-loosely-coupled-distributed-systems/">Chubby + fencing context ↗</a></div>
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1287/opre.9.3.383">Little’s Law paper ↗</a><a href="https://www.rfc-editor.org/rfc/rfc9110.html">RFC 9110 HTTP semantics ↗</a><a href="https://www.rfc-editor.org/rfc/rfc9111.html">RFC 9111 caching ↗</a><a href="https://kafka.apache.org/43/design/design/">Kafka delivery semantics ↗</a><a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html">AWS transactional outbox ↗</a><a href="https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter">AWS retries + jitter ↗</a><a href="https://sre.google/sre-book/embracing-risk/">Google SRE availability + error budgets ↗</a><a href="https://sre.google/sre-book/addressing-cascading-failures/">Google SRE cascading failures ↗</a><a href="https://www.postgresql.org/docs/current/indexes-multicolumn.html">PostgreSQL multicolumn indexes ↗</a><a href="https://cassandra.apache.org/doc/latest/cassandra/developing/cql/ddl.html">Cassandra data model ↗</a><a href="https://people.csail.mit.edu/karger/Papers/web.pdf">Consistent hashing paper ↗</a><a href="https://research.google/pubs/the-chubby-lock-service-for-loosely-coupled-distributed-systems/">Chubby + fencing context ↗</a></div>
     </section>
 
     <section class="section practice-arena" id="practice">

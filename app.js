@@ -33,24 +33,24 @@ themeToggle?.addEventListener("click", () => {
 
 const decisions = {
   latency: {
-    answer: "Add cache-aside for hot reads and measure hit rate.",
-    tradeoffs: ["staleness", "invalidation", "memory cost", "stampede risk"]
+    answer: "Break down p95/p99 latency by hop and inspect the query plan. If repeated cacheable reads dominate, test cache-aside and measure end-to-end benefit.",
+    tradeoffs: ["fit: repeated hot reads", "staleness", "invalidation", "stampede risk"]
   },
   traffic: {
-    answer: "Make compute stateless, load balance replicas, and buffer slow work.",
-    tradeoffs: ["session storage", "autoscaling lag", "retry storms", "queue delay"]
+    answer: "Compare arrival rate, queue time, compute, pools, and downstream saturation. If stateless compute is limiting, load balance replicas; if work may finish later, use a durable queue.",
+    tradeoffs: ["fit: measured saturation", "autoscaling lag", "retry storms", "queue delay"]
   },
   storage: {
-    answer: "Choose a stable partition key, shard data, and plan rebalancing.",
-    tradeoffs: ["cross-shard queries", "hot partitions", "resizing", "global uniqueness"]
+    answer: "Separate live-set growth, write ingress, and log retention. Archive, compress, or tier cold data first; shard only when storage, writes, or the working set exceed one node or isolation boundary.",
+    tradeoffs: ["fit: one-node limit", "cross-shard work", "hot partitions", "rebalancing"]
   },
   reliability: {
-    answer: "Remove single points of failure and add timeouts, isolation, and failover.",
-    tradeoffs: ["complexity", "recovery time", "consistency", "cost"]
+    answer: "Start from the required SLO, RTO/RPO, and named failure mode. Add the narrowest redundancy, isolation, or failover mechanism, then prove it with a fault test.",
+    tradeoffs: ["fit: named failure", "recovery time", "consistency", "cost"]
   },
   global: {
-    answer: "Serve at the edge, route by region, and define data ownership.",
-    tradeoffs: ["replication lag", "data residency", "conflict resolution", "operability"]
+    answer: "Measure latency and residency needs by region. Cache eligible content at the edge; add regional ownership or replication only when the targets require it, with explicit failover and conflict behavior.",
+    tradeoffs: ["fit: regional target", "replication lag", "data residency", "operability"]
   }
 };
 

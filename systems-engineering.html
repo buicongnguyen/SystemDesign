@@ -6,8 +6,8 @@
   <meta name="description" content="A visual Systems Engineering field guide covering stakeholder needs, ConOps, requirements, architecture, interfaces, trade studies, risk, integration, verification, validation, and interview practice.">
   <meta name="theme-color" content="#07111f">
   <title>Systems Engineering · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260717d">
-  <script src="app.js?v=20260717d" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260719a">
+  <script src="app.js?v=20260719a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -16,10 +16,10 @@
       <span class="brand-mark" aria-hidden="true">SD</span>
       <span>System Design <b>Atlas</b></span>
     </a>
-    <nav aria-label="Primary navigation">
+    <nav aria-label="Track navigation">
       <a href="index.html">Atlas</a>
       <a href="backend.html">Backend</a>
-      <a href="systems-engineering.html" aria-current="page">Systems Engineering</a>
+      <a href="systems-engineering.html" aria-current="page">Systems engineering</a>
       <a href="hardware.html">Hardware</a>
       <a href="embedded.html">Embedded</a>
       <a href="npu-acim.html">NPU + ACiM</a>
@@ -258,7 +258,7 @@ validate(<b>solves the mission</b>)</code></pre>
       </div>
 
       <div class="factor-compass se-budget-compass">
-        <div class="factor-center"><span>Control the total</span><strong>Allocation + growth + margin ≤ limit</strong></div>
+        <div class="factor-center"><span>Control the total</span><strong>Σ estimates + growth allowance + system margin ≤ limit</strong></div>
         <article><span>Mass</span><strong>What must move?</strong><p>Structure, payload, energy, wiring, fasteners, growth allowance, and center of gravity.</p></article>
         <article><span>Power</span><strong>What consumes energy?</strong><p>Peak, average, startup, conversion loss, duty cycle, reserve, and degradation.</p></article>
         <article><span>Thermal</span><strong>Where does heat go?</strong><p>Dissipation by mode, junction limits, path resistance, ambient, and hot spots.</p></article>
@@ -272,8 +272,10 @@ validate(<b>solves the mission</b>)</code></pre>
       </div>
 
       <div class="se-budget-equation slo-equation">
-        <span>Budget control loop</span><strong>Requirement</strong><i>sets limit</i><b>→</b><strong>Allocation</strong><i>assigns ownership</i><b>→</b><strong>Estimate</strong><i>shows status</i><b>→</b><strong>Margin</strong><i>absorbs uncertainty</i><b>→</b><strong>Test</strong><i>retires uncertainty</i>
+        <span>Budget control loop</span><strong>Requirement</strong><i>sets limit</i><b>→</b><strong>Allocation</strong><i>assigns ceilings</i><b>→</b><strong>Estimate</strong><i>shows expected use</i><b>→</b><strong>Growth + margin</strong><i>cover defined uncertainty</i><b>→</b><strong>Test</strong><i>updates the estimate</i>
       </div>
+      <p class="evidence-note"><b>Keep two ledgers distinct:</b> an estimate-based status uses <i>Σ current best estimates + growth allowances + unallocated system margin ≤ system limit</i>. An allocation-based plan uses <i>Σ subsystem allocations + system reserve ≤ system limit</i>; do not add growth again when it is already inside an allocation. State the denominator, confidence, lifecycle phase, and owner for every margin.</p>
+      <p class="section-source">Accounting anchor: <a href="https://swehb.nasa.gov/spaces/SWEHBVD/pages/102695803/9.12%2BResource%2BMargins">NASA resource-margin guidance ↗</a>. Tailor the convention, but keep its terms and sign visible.</p>
     </section>
 
     <section class="section se-trade-section" id="trades">
@@ -357,7 +359,8 @@ validate(<b>solves the mission</b>)</code></pre>
           </tbody>
         </table>
       </div>
-      <div class="memory-strip"><b>Risk response</b><span>Avoid <i>→</i> reduce likelihood <i>→</i> reduce consequence <i>→</i> detect and contain <i>→</i> transfer <i>→</i> accept with an accountable owner.</span></div>
+      <div class="memory-strip"><b>Risk response choices</b><span>Prefer eliminate / avoid, then reduce likelihood or consequence, detect / contain / recover, and accept only the explicit residual risk with accountable authority. Sharing or transferring financial or contractual exposure does not remove the underlying safety hazard; responses may be combined and are not a mandatory sequence.</span></div>
+      <p class="section-source">Risk anchor: <a href="https://www.nasa.gov/wp-content/uploads/2023/08/nasa-risk-mgmt-handbook.pdf">NASA Risk Management Handbook ↗</a>. Distinguish performance-risk disposition from safety-hazard control and approval.</p>
     </section>
 
     <section class="section se-integration-section" id="integration">
@@ -466,7 +469,8 @@ validate(<b>solves the mission</b>)</code></pre>
           <div class="formula-stack">
             <div class="formula-line"><b>Absolute margin</b><code>allocated limit − current best estimate</code><small>Keep the definition and sign convention in the budget. A positive number is useful only if uncertainty and growth policy are also visible.</small></div>
             <div class="formula-line"><b>Margin percentage</b><code>(limit − estimate) ÷ limit × 100%</code><small>Do not compare percentages that use different denominators, lifecycle states, or confidence levels.</small></div>
-            <div class="formula-line"><b>Verification closure</b><code>closed requirements (pass or approved waiver/deviation) + open requirements = baseline requirements</code><small>Track anomalies separately with status and links to affected requirements and evidence; one requirement can have many anomalies. Closure evidence must match the baseline configuration and acceptance criterion.</small></div>
+            <div class="formula-line"><b>Verification compliance</b><code>verified-pass requirements ÷ applicable baseline requirements</code><small>Count a pass only when configuration-matched evidence satisfies the acceptance criterion. A waiver, deviation, or accepted nonconformance is authorized relief—not proof of compliance.</small></div>
+            <div class="formula-line"><b>Administrative disposition</b><code>pass + approved relief + failed/open + not run + not applicable = baseline</code><small>Report every category separately and link anomalies, risk acceptance, approval authority, and affected evidence. Never present administrative closure as verification success.</small></div>
             <div class="formula-line"><b>Change impact path</b><code>need → requirement → function → element → interface → budget → risk → evidence</code><small>Revisit both upstream rationale and downstream implementation whenever a controlled item changes.</small></div>
           </div>
         </aside>
@@ -479,7 +483,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <tbody>
             <tr><th scope="row">Need</th><td>Why does the system exist?</td><td>Deliver a time-sensitive medical package safely.</td><td>Frames the outcome and stakeholder, without prescribing a design.</td></tr>
             <tr><th scope="row">MOE</th><td>Does the mission create value?</td><td>At least 99% of eligible reference missions deliver within 25 minutes with accepted package condition.</td><td>Judged in the operational context; unsuccessful or excluded missions must not be hidden by averaging.</td></tr>
-            <tr><th scope="row">MOP</th><td>What fielded-system performance enables it?</td><td>10 km reference mission, 2 kg payload, declared weather envelope, bounded package temperature, and safe immediate behavior without the command link.</td><td>Creates measurable system performance and suitability requirements.</td></tr>
+            <tr><th scope="row">MOP</th><td>Which quantitative fielded-system measures enable it?</td><td>Payload capacity ≥ 2.0 kg; range ≥ 10 km; package temperature remains between 2 and 8 °C; command-link-loss contingency starts within 1.0 s; landing reserve ≥ 20% usable energy.</td><td>Each threshold is measured under the separately declared reference route, wind, ambient temperature, battery age, payload, and operating mode; those conditions are not themselves measures.</td></tr>
             <tr><th scope="row">TPM</th><td>Is the developing design converging?</td><td>Predicted mission energy and landing reserve, takeoff mass, navigation error, thermal margin, and sensor-to-actuator latency.</td><td>Trend requirement/budget, current estimate, margin, uncertainty, evidence date, and owner across reviews.</td></tr>
           </tbody>
         </table>
@@ -578,7 +582,7 @@ validate(<b>solves the mission</b>)</code></pre>
               <li>After command-link loss, the vehicle shall continue an independently safe contingency plan without requiring remote commands.</li>
               <li>The system shall prevent release unless vehicle position, pad identity, and recipient authorization all satisfy policy.</li>
               <li>The operator shall be able to command hold, reroute to an approved site, or safe termination within the defined authority and latency constraints.</li>
-              <li>For every single failure classified as credible in baselined Hazard Analysis HA-001, the vehicle shall maintain controlled flight or reach the defined safe state without uncontrolled descent within the approved operating envelope. Define the credible-failure set, exclusions, response time, “controlled flight,” and “safe state” in controlled terms.</li>
+              <li><b>Parent safety objective—derive, do not verify as one compound requirement:</b> no credible single failure in baselined Hazard Analysis HA-001 may cause uncontrolled descent within the approved operating envelope. Derive one atomic requirement per failure class and mode, naming the required outcome (controlled flight or one specific safe state), detection assumption, transition time, envelope, and verification method; trace each child back to HA-001.</li>
             </ul>
             <p>Define measurable availability, dispatch success, delivery success, containment, geofence, detect-and-avoid range, navigation accuracy, noise, turnaround, maintainability, cybersecurity, audit, RTO, and data retention targets. Mark every number as confirmed, assumed, derived, or allocated.</p>
           </div>
@@ -607,7 +611,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <div>
             <p><b>Your turn:</b> identify five critical interfaces and sketch mass, energy, latency, and communication budgets.</p>
             <p><b>Coaching:</b> critical interfaces include battery–power distribution, flight computer–motor controllers, sensors–estimator, primary controller–safety monitor, vehicle–operator, vehicle–pad, container–vehicle, fleet service–airspace service, and maintainer–configuration system. Specify units, update rates, freshness, authority, timeout, degraded behavior, integrity, and versioning.</p>
-            <p><b>Illustrative energy budget:</b> 800 Wh usable mission allocation = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload + 70 Wh contingency maneuver + 80 Wh landing reserve + 80 Wh ageing/temperature margin. Validate with power profiles rather than averages alone. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
+            <p><b>Illustrative energy budget:</b> expected use is 570 Wh = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload. Keep the 20% landing reserve independent from consumable allowances: with 70 Wh contingency consumption and 80 Wh analysis/growth allowance, required usable-at-condition capacity is (570 + 70 + 80) ÷ (1 − 0.20) = 900 Wh. That leaves 180 Wh, or 20% of 900 Wh, at landing after the full 720 Wh consumption allowance. Apply ageing and cold-temperature derating only when converting the 900 Wh usable-at-condition requirement into installed nameplate capacity; do not count the same derating again as margin. Validate with time-resolved power profiles rather than averages alone. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
           </div>
         </details>
 
