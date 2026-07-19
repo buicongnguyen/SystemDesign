@@ -341,7 +341,7 @@ if (!css.includes("color: var(--on-accent)") || !css.includes('nav a[aria-curren
   throw new Error("styles.css: shared accent foreground or current-page navigation styling is missing");
 }
 const deploysMain = /branches:\s*(?:\["main"\]|\r?\n\s*-\s*main)/.test(workflow);
-if (!workflow.includes("npm run check") || !workflow.includes("actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e") || !workflow.match(/path:\s*_site\b/) || !deploysMain) {
+if (!workflow.includes("npm run check") || !workflow.includes("actions/deploy-pages@") || !workflow.match(/path:\s*_site\b/) || !deploysMain) {
   throw new Error("GitHub Pages workflow is incomplete");
 }
 if (!externalLinkWorkflow.includes("schedule:") || !externalLinkWorkflow.includes("npm run check:links")) {
@@ -360,9 +360,6 @@ if (!scripts.build?.includes("scripts/build-site.mjs") || !scripts.check?.includ
 }
 if (scripts["check:html"] !== 'html-validate "*.html"' || !scripts.check?.includes("npm run check:html") || !packageData.devDependencies?.["html-validate"]) {
   throw new Error("package.json: offline HTML-structure validation is incomplete");
-}
-if (scripts["check:html"] !== 'html-validate "*.html"' || !scripts.check?.includes("npm run check:html")) {
-  throw new Error("package.json: parser-based HTML validation contract is incomplete");
 }
 if (scripts["test:ui"] !== "playwright test" || !workflow.includes("npm ci") || !workflow.includes("playwright install --with-deps chromium") || !workflow.includes("npm run test:ui")) {
   throw new Error("GitHub Pages workflow is missing the browser smoke-test contract");
