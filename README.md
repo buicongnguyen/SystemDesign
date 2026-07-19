@@ -1,5 +1,8 @@
 # System Design Atlas
 
+[![Deploy GitHub Pages](https://github.com/buicongnguyen/SystemDesign/actions/workflows/pages.yml/badge.svg)](https://github.com/buicongnguyen/SystemDesign/actions/workflows/pages.yml)
+[![Check external links](https://github.com/buicongnguyen/SystemDesign/actions/workflows/external-links.yml/badge.svg)](https://github.com/buicongnguyen/SystemDesign/actions/workflows/external-links.yml)
+
 A visual, interview-oriented guide to five related design disciplines:
 
 - Backend and distributed systems
@@ -28,15 +31,44 @@ The worked numbers are deliberately labeled as illustrative assumptions. Recalcu
 - `embedded.html` — real-time embedded and cyber-physical design
 - `npu-acim.html` — analog compute-in-memory NPU compiler/runtime stack
 
-## Validate
+## Local development
+
+The site has no runtime dependencies. Development and validation require Node.js 24 or newer. Install the locked development tools first:
+
+```sh
+npm ci
+```
+
+```sh
+npm run serve
+```
+
+Open <http://127.0.0.1:43129/>. To use another port, set the `PORT` environment variable before starting the server.
+
+Build the exact public artifact:
+
+```sh
+npm run build
+```
+
+This recreates `_site/` from an explicit allowlist. Repository metadata, scripts, and workflow files are not published.
+
+Run the fast static checks:
 
 ```sh
 npm run check
 ```
 
-The repository includes a GitHub Pages workflow that validates the site before deployment.
+The check command syntax-checks all browser and repository scripts, rebuilds `_site/`, validates the source content, and confirms that the artifact contains only the intended public files with byte-for-byte matching content.
 
-The validator checks all six pages, internal files and fragments, shared navigation, source anchors, core calculation sentinels, accessible table contracts, responsive CSS tokens, contrast, and the Pages workflow.
+For browser smoke tests, install Chromium once and run Playwright:
+
+```sh
+npx playwright install chromium
+npm run test:ui
+```
+
+The site validator checks all six pages, internal files and fragments, shared navigation, encoded attributes, source anchors, core calculation sentinels, accessible table contracts, responsive CSS tokens, contrast, the packaged artifact, and pinned Pages workflows. A separate scheduled workflow checks external references weekly; access-controlled or rate-limited responses are reported as inconclusive rather than broken.
 
 ## Reference policy
 
@@ -50,9 +82,24 @@ Detailed sections link sources beside the decision they support. The Atlas favor
 
 Sources explain a model or contract; they do not prove a particular design meets its requirements. A real project still needs configuration-controlled assumptions, current product specifications, representative load/fault tests, calibrated measurements, and explicit acceptance criteria.
 
+Reference availability was reviewed on 2026-07-19. Links containing `current` or `latest` intentionally follow living documentation; record the exact applicable revision and access date when using one in a design decision.
+
 ## Deployment
 
 - Repository: <https://github.com/buicongnguyen/SystemDesign>
 - GitHub Pages: <https://buicongnguyen.github.io/SystemDesign/>
 
-Like the companion DSA Atlas, pull requests run validation and pushes to `main` publish the static site through GitHub Actions.
+Like the companion DSA Atlas, pull requests run static and browser validation, and pushes to `main` publish the allowlisted static artifact through GitHub Actions.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the evidence, accessibility, and validation expectations used for changes. Please report suspected vulnerabilities according to [SECURITY.md](SECURITY.md), not in a public issue.
+
+## License
+
+The repository uses separate licenses by material type:
+
+- Source code, styles, automation, and configuration are available under the MIT License.
+- Original educational prose and diagrams in the HTML pages are available under the Creative Commons Attribution 4.0 International License.
+
+See the standard [MIT code license](LICENSE) and the [educational-content license](LICENSE-CONTENT.md) for exact scope and attribution guidance. Third-party works remain under their respective owners' terms.

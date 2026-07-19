@@ -1,22 +1,71 @@
-import { access, readFile } from "node:fs/promises";
+import { access, lstat, readFile, readdir } from "node:fs/promises";
+import { resolve } from "node:path";
+import { assertReviewedCalculations } from "./reviewed-calculations.mjs";
+import { pages, publicFiles } from "./site-files.mjs";
 
-const pages = [
-  "index.html",
-  "backend.html",
-  "systems-engineering.html",
-  "hardware.html",
-  "embedded.html",
-  "npu-acim.html"
+const required = [
+  ...publicFiles,
+  "package.json",
+  "package-lock.json",
+  ".htmlvalidate.json",
+  "playwright.config.mjs",
+  "tests/site.spec.mjs",
+  "scripts/build-site.mjs",
+  "scripts/check-external-links.mjs",
+  "scripts/reviewed-calculations.mjs",
+  "scripts/serve.mjs",
+  ".github/workflows/pages.yml",
+  ".github/workflows/external-links.yml",
+  ".github/dependabot.yml"
 ];
-const required = [...pages, "styles.css", "app.js", ".nojekyll", ".github/workflows/pages.yml"];
 await Promise.all(required.map(file => access(file)));
 
 const entries = await Promise.all(pages.map(async file => [file, await readFile(file, "utf8")]));
 const documents = Object.fromEntries(entries);
 const css = await readFile("styles.css", "utf8");
 const js = await readFile("app.js", "utf8");
+const backendJs = await readFile("backend.js", "utf8");
 const workflow = await readFile(".github/workflows/pages.yml", "utf8");
+const externalLinkWorkflow = await readFile(".github/workflows/external-links.yml", "utf8");
+const packageData = JSON.parse(await readFile("package.json", "utf8"));
 const canonicalAssetVersion = documents["index.html"].match(/styles\.css\?v=([^"']+)/)?.[1];
+
+async function artifactFiles(directory, prefix = "") {
+  const files = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const name = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const path = resolve(directory, entry.name);
+    if (entry.isSymbolicLink()) throw new Error(`Artifact must not contain symbolic links (${name})`);
+    if (entry.isDirectory()) files.push(...await artifactFiles(path, name));
+    else if (entry.isFile()) files.push(name);
+    else throw new Error(`Artifact contains an unsupported filesystem entry (${name})`);
+  }
+  return files;
+}
+
+async function validateArtifact(directory) {
+  const info = await lstat(directory);
+  if (!info.isDirectory() || info.isSymbolicLink()) throw new Error(`${directory}: artifact path must be a real directory`);
+
+  const actual = (await artifactFiles(directory)).sort();
+  const expected = [...publicFiles].sort();
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    const missing = expected.filter(file => !actual.includes(file));
+    const unexpected = actual.filter(file => !expected.includes(file));
+    throw new Error(`${directory}: artifact allowlist mismatch (missing: ${missing.join(", ") || "none"}; unexpected: ${unexpected.join(", ") || "none"})`);
+  }
+
+  for (const file of publicFiles) {
+    const [source, packaged] = await Promise.all([readFile(file), readFile(resolve(directory, file))]);
+    if (!source.equals(packaged)) throw new Error(`${directory}: packaged ${file} differs from its source`);
+  }
+}
+
+const artifactFlag = process.argv.slice(2);
+if (artifactFlag.length && (artifactFlag.length !== 2 || artifactFlag[0] !== "--artifact")) {
+  throw new Error("Usage: node scripts/check-site.mjs [--artifact DIRECTORY]");
+}
+if (artifactFlag.length) await validateArtifact(resolve(artifactFlag[1]));
 
 function anchorHrefs(html) {
   return [...html.matchAll(/<a\b[^>]*\bhref\s*=\s*(["'])(.*?)\1/gis)].map(match => match[2]);
@@ -61,6 +110,11 @@ function cssVariable(block, name) {
 
 const requiredTrackLinks = ["index.html", "backend.html", "systems-engineering.html", "hardware.html", "embedded.html", "npu-acim.html"];
 const expectedTrackLabels = ["Atlas", "Backend", "Systems engineering", "Hardware", "Embedded", "NPU + ACiM"];
+const trackStyles = {
+  "hardware.html": "hardware.css",
+  "embedded.html": "embedded.css",
+  "npu-acim.html": "npu-acim.css"
+};
 
 for (const [file, html] of entries) {
   if (!html.startsWith("<!DOCTYPE html>")) throw new Error(`${file}: missing canonical doctype`);
@@ -82,6 +136,19 @@ for (const [file, html] of entries) {
     }
   }
   if (/\son[a-z]+\s*=/i.test(html)) throw new Error(`${file}: inline event handlers are not allowed`);
+  if (/<style\b/i.test(html)) throw new Error(`${file}: page-specific CSS must live in a deployable stylesheet`);
+
+  const trackStyle = trackStyles[file];
+  if (trackStyle && !html.includes(`href="${trackStyle}?v=${canonicalAssetVersion}"`)) {
+    throw new Error(`${file}: missing versioned track stylesheet ${trackStyle}`);
+  }
+
+  for (const attribute of html.matchAll(/\s([^\s"'<>\/=]+)\s*=\s*(["'])(.*?)\2/gis)) {
+    const [, name, , value] = attribute;
+    if (/&(?!(?:[a-z][a-z0-9]+|#\d+|#x[\da-f]+);)/i.test(value)) {
+      throw new Error(`${file}: raw ampersand in ${name} attribute; encode it as &amp;`);
+    }
+  }
 
   const styleVersion = html.match(/styles\.css\?v=([^"']+)/)?.[1];
   const scriptVersion = html.match(/app\.js\?v=([^"']+)/)?.[1];
@@ -202,23 +269,23 @@ for (const selector of [":root", ".site-header", ".hero", ".section", ":focus-vi
   if (!css.includes(selector)) throw new Error(`styles.css: missing shared responsive selector ${selector}`);
 }
 if (!js.includes("theme-toggle") || !js.includes("dsa-theme")) throw new Error("app.js: theme persistence is missing");
-if (!js.includes("function readTheme()") || !js.includes("function applyTheme(theme)") || !js.includes("Switch to ${targetTheme} theme") || !js.includes("try {")) {
+if (!js.includes("function storedTheme()") || !js.includes("function preferredTheme()") || !js.includes("function applyTheme(theme)") || !js.includes("Switch to ${targetTheme} theme") || !js.includes("try {")) {
   throw new Error("app.js: resilient and accessible theme control is incomplete");
 }
 const applyThemeBody = js.match(/function applyTheme\(theme\)\s*{([\s\S]*?)\n}/)?.[1] || "";
 if (applyThemeBody.includes("aria-pressed")) throw new Error("app.js: theme action label must not be combined with an ambiguous pressed state");
-if (!js.includes("if (answer && tradeoffs)") || !js.includes("if (signalList)")) throw new Error("app.js: page-specific widgets must be safely guarded");
+if (!backendJs.includes("if (answer && tradeoffs)") || !backendJs.includes("if (signalList)")) throw new Error("backend.js: page-specific widgets must be safely guarded");
 
 for (const requiredDecisionEvidence of ["Break down p95/p99 latency by hop", "If stateless compute is limiting", "shard only when", "Start from the required SLO", "Measure latency and residency needs by region"]) {
-  if (!js.includes(requiredDecisionEvidence)) throw new Error(`app.js: decision guidance lost diagnostic condition: ${requiredDecisionEvidence}`);
+  if (!backendJs.includes(requiredDecisionEvidence)) throw new Error(`backend.js: decision guidance lost diagnostic condition: ${requiredDecisionEvidence}`);
 }
 for (const prematurePrescription of ["Add cache-aside for hot reads and measure hit rate.", "Choose a stable partition key, shard data, and plan rebalancing."]) {
-  if (js.includes(prematurePrescription)) throw new Error(`app.js: symptom-to-component shortcut returned: ${prematurePrescription}`);
+  if (backendJs.includes(prematurePrescription)) throw new Error(`backend.js: symptom-to-component shortcut returned: ${prematurePrescription}`);
 }
 
 const semanticContentChecks = {
   "backend.html": ["transactional outbox", "Acknowledge after durable acceptance", "Write ingress", "Live logical data", "Append-log storage", "Time-based error budget", "Request-based error budget", "non-failing node", "no finite latency bound", "provider idempotency plus uncertain-outcome reconciliation"],
-  "systems-engineering.html": ["Keep two ledgers distinct", "Verification compliance", "Administrative disposition", "authorized relief—not proof of compliance", "Which quantitative fielded-system measures enable it?", "Parent safety objective—derive", "required usable-at-condition capacity is (570 + 70 + 80) ÷ (1 − 0.20) = 900 Wh", "That leaves 180 Wh"],
+  "systems-engineering.html": ["Keep two ledgers distinct", "Verification compliance", "Administrative disposition", "authorized relief—not proof of compliance", "Which quantitative fielded-system measures enable it?", "Parent safety objective—derive", "20% acceptance lower bound", "2-percentage-point combined BMS-estimator/test tolerance", "C<sub>u</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh", "subtracting the 2-point tolerance leaves the required 20% lower bound"],
   "hardware.html": ["while not all_satisfied", "not one universal ladder", "QoS tag alone is not isolation", "Bounded inference queue", "Bounded recording queue", "Independent bounded processing branches"],
   "embedded.html": ["load-profile-weighted effective value", "converter quiescent loss exactly once", "observed maxima as provisional—not automatic WCET", "E_quiescent,not-yet-counted"],
   "npu-acim.html": ["Storage technology and analog signal domain are separate axes", "W × P_a = 2 × 4 = 8", "E_complete_path(p)", "80-request/s steady", "110-request/s burst", "separately for vision and audio", "steady arrival to remain below sustained thermally limited service"]
@@ -243,13 +310,8 @@ if (!documents["backend.html"].includes('role="group"') || !documents["backend.h
   throw new Error("backend.html: scenario selector needs button-group semantics and state");
 }
 
-if (!js.includes("about 600 GB") || js.includes("about 60 GB")) throw new Error("app.js: URL-shortener storage estimate is incorrect");
-if (!documents["systems-engineering.html"].includes("<td>3.75</td>") || !documents["systems-engineering.html"].includes("<strong>3.95</strong>")) {
-  throw new Error("systems-engineering.html: weighted trade-study totals are incorrect");
-}
-if (!documents["embedded.html"].includes("44.4 mWh/day") || documents["embedded.html"].includes("Wh-millihours")) {
-  throw new Error("embedded.html: daily energy calculation or units are incorrect");
-}
+assertReviewedCalculations(documents, backendJs);
+if (documents["embedded.html"].includes("Wh-millihours")) throw new Error("embedded.html: invalid energy unit returned");
 if (!documents["index.html"].includes("7</strong><span>interview prompts") || !documents["index.html"].includes("45–55 minute")) {
   throw new Error("index.html: practice counts or duration are stale");
 }
@@ -279,8 +341,31 @@ if (!css.includes("color: var(--on-accent)") || !css.includes('nav a[aria-curren
   throw new Error("styles.css: shared accent foreground or current-page navigation styling is missing");
 }
 const deploysMain = /branches:\s*(?:\["main"\]|\r?\n\s*-\s*main)/.test(workflow);
-if (!workflow.includes("npm run check") || !workflow.includes("actions/deploy-pages@v4") || !deploysMain) {
+if (!workflow.includes("npm run check") || !workflow.includes("actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e") || !workflow.match(/path:\s*_site\b/) || !deploysMain) {
   throw new Error("GitHub Pages workflow is incomplete");
 }
+if (!externalLinkWorkflow.includes("schedule:") || !externalLinkWorkflow.includes("npm run check:links")) {
+  throw new Error("Scheduled external-link workflow is incomplete");
+}
+for (const action of `${workflow}\n${externalLinkWorkflow}`.matchAll(/uses:\s*([^\s@]+)@([^\s#]+)/g)) {
+  if (!/^[0-9a-f]{40}$/.test(action[2])) throw new Error(`GitHub Action ${action[1]} must be pinned to a full commit SHA`);
+}
 
-console.log(`System Design Atlas validation passed: ${pages.length} pages, local links and fragments, interaction contracts, selected calculations, contextual source anchors, responsive CSS tokens, contrast checks, and Pages workflow.`);
+const scripts = packageData.scripts || {};
+for (const entry of ["node --check theme-init.js", "node --check app.js", "node --check backend.js"]) {
+  if (!scripts["check:syntax"]?.includes(entry)) throw new Error(`package.json: check:syntax is missing ${entry}`);
+}
+if (!scripts.build?.includes("scripts/build-site.mjs") || !scripts.check?.includes("--artifact _site")) {
+  throw new Error("package.json: build or packaged-artifact validation contract is incomplete");
+}
+if (scripts["check:html"] !== 'html-validate "*.html"' || !scripts.check?.includes("npm run check:html") || !packageData.devDependencies?.["html-validate"]) {
+  throw new Error("package.json: offline HTML-structure validation is incomplete");
+}
+if (scripts["check:html"] !== 'html-validate "*.html"' || !scripts.check?.includes("npm run check:html")) {
+  throw new Error("package.json: parser-based HTML validation contract is incomplete");
+}
+if (scripts["test:ui"] !== "playwright test" || !workflow.includes("npm ci") || !workflow.includes("playwright install --with-deps chromium") || !workflow.includes("npm run test:ui")) {
+  throw new Error("GitHub Pages workflow is missing the browser smoke-test contract");
+}
+
+console.log(`System Design Atlas validation passed: ${pages.length} pages, local links and fragments, interaction contracts, selected calculations, contextual source anchors, responsive CSS tokens, contrast checks, packaged-artifact allowlist, and pinned Pages workflows.`);

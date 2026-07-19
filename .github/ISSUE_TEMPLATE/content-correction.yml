@@ -1,0 +1,40 @@
+name: Content correction
+description: Report inaccurate, ambiguous, or insufficiently sourced system-design guidance.
+title: "[Content]: "
+labels:
+  - content
+body:
+  - type: dropdown
+    id: track
+    attributes:
+      label: Track
+      options:
+        - Atlas landing page
+        - Backend and distributed systems
+        - Systems engineering
+        - Hardware
+        - Embedded
+        - NPU and ACiM
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Section or URL
+      placeholder: Page URL, heading, or line reference
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is inaccurate or unclear?
+      description: Explain the boundary conditions, units, or failure mode that change the conclusion.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting evidence
+      description: Link standards, official documentation, papers, or measurements that support the correction.
+    validations:
+      required: true

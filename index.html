@@ -5,9 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A visual atlas for backend, systems engineering, hardware, embedded, and ACiM NPU system design.">
   <meta name="theme-color" content="#07111f">
+  <meta name="color-scheme" content="dark light">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="System Design Atlas">
+  <meta property="og:title" content="System Design Atlas — Choose Your Track">
+  <meta property="og:description" content="A visual atlas for backend, systems engineering, hardware, embedded, and ACiM NPU system design.">
+  <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
   <title>System Design Atlas — Choose Your Track</title>
-  <link rel="stylesheet" href="styles.css?v=20260719a">
-  <script src="app.js?v=20260719a" defer></script>
+  <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script src="theme-init.js?v=20260719b"></script>
+  <link rel="stylesheet" href="styles.css?v=20260719b">
+  <script src="app.js?v=20260719b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -84,7 +95,7 @@ state_requirements_and_tradeoffs()</code></pre>
         <article><span>Official implementation docs</span><strong>Close ownership details</strong><p>References such as the <a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA guide</a> turn “move data” into mappings, direction, synchronization, barriers, and cleanup.</p></article>
         <article><span>Measured evidence</span><strong>Prove this configuration</strong><p>Use representative load/fault tests, calibrated equipment, raw traces, versions, and acceptance criteria. The <a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">NASA SE Handbook</a> is a useful evidence-planning anchor.</p></article>
       </div>
-      <p class="evidence-note"><b>Reference rule:</b> every detailed track now links sources beside the decision they support. Treat examples and Atlas schemas as illustrative; current product specifications, safety obligations, silicon manuals, and measured target behavior remain authoritative.</p>
+      <p class="evidence-note"><b>Reference rule · audited 2026-07-19:</b> every detailed track links sources beside the decision they support. A URL containing <code>current</code> or <code>latest</code> is a living document, not a reproducible revision: record the exact product, standard, library, or manual version and the date checked in a real decision log. Treat examples and Atlas schemas as illustrative; applicable safety obligations, silicon manuals, and measured target behavior remain authoritative.</p>
     </section>
 
     <section class="section decision-section" id="selector">

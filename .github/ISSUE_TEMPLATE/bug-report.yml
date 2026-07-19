@@ -1,0 +1,30 @@
+name: Site bug
+description: Report a broken interaction, layout, accessibility, or deployment problem.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened?
+      description: Include the browser, viewport or assistive technology, and exact reproduction steps.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting evidence
+      description: Add screenshots, console messages, or accessibility-tool output when available.

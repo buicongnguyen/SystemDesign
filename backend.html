@@ -5,9 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A visual system design atlas covering scalable architecture, data, caching, queues, reliability, and interview strategy.">
   <meta name="theme-color" content="#07111f">
+  <meta name="color-scheme" content="dark light">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="System Design Atlas">
+  <meta property="og:title" content="Backend &amp; Distributed Systems — System Design Atlas">
+  <meta property="og:description" content="A visual interview guide to scalable architecture, data, caching, queues, reliability, bottlenecks, and trade-offs.">
+  <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/backend.html">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
   <title>Backend &amp; Distributed Systems — System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260719a">
-  <script src="app.js?v=20260719a" defer></script>
+  <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/backend.html">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script src="theme-init.js?v=20260719b"></script>
+  <link rel="stylesheet" href="styles.css?v=20260719b">
+  <script src="app.js?v=20260719b" defer></script>
+  <script src="backend.js?v=20260719b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -50,16 +62,30 @@
 load = estimate(<b>qps, storage, bandwidth</b>)
 path = <b>client → edge → service → data</b>
 
-if reads_dominate:
-    add(<b>cache + replicas</b>)
-if writes_need_buffering:
-    add(<b>queue + workers</b>)
+bottleneck = measure(<b>latency by hop + saturation</b>)
+if cacheable_repetition_limits_origin:
+    test(<b>cache</b>)
+if eligible_reads_saturate_data_node:
+    test(<b>read replicas</b>)
+if deferrable_bursts_create_backlog:
+    test(<b>durable queue + bounded workers</b>)
 
 state_tradeoffs()
 design_for_failure()
 measure_and_iterate()</code></pre>
       </section>
     </section>
+
+    <nav class="page-nav" aria-label="Backend topics">
+      <a href="#request">Request path</a>
+      <a href="#scale">Scaling</a>
+      <a href="#decisions">Decision graph</a>
+      <a href="#interview">Interview loop</a>
+      <a href="#thinking-flow">Reasoning</a>
+      <a href="#workbench">Deep dive</a>
+      <a href="#practice">Practice</a>
+      <a href="#resources">Resources</a>
+    </nav>
 
     <section class="section" id="request">
       <div class="section-heading">
@@ -91,9 +117,9 @@ measure_and_iterate()</code></pre>
         <article><span>Level 1</span><h3>Vertical scale</h3><p>More CPU, memory, and disk. Easy but has a hard ceiling.</p><small>Machine is saturated</small></article>
         <article><span>Level 2</span><h3>Separate data</h3><p>Move the database out. Scale compute and storage independently.</p><small>Resource contention</small></article>
         <article><span>Level 3</span><h3>Horizontal app</h3><p>Stateless replicas behind a load balancer.</p><small>Compute QPS rises</small></article>
-        <article><span>Level 4</span><h3>Cache + CDN</h3><p>Remove repeated work and move content closer to users.</p><small>Reads dominate</small></article>
-        <article><span>Level 5</span><h3>Replicate + shard</h3><p>Copy for read capacity; partition for write and storage capacity.</p><small>Data node is the limit</small></article>
-        <article><span>Level 6</span><h3>Async services</h3><p>Queues absorb spikes; workers isolate slow jobs.</p><small>Bursty or slow work</small></article>
+        <article><span>Level 4</span><h3>Cache + CDN</h3><p>Reuse staleness-tolerant results or serve cacheable content nearer users.</p><small>Measured repetition or distance</small></article>
+        <article><span>Level 5</span><h3>Replicate + shard</h3><p>Copy eligible reads for capacity; partition ownership when storage, writes, or working set exceed one node.</p><small>Data-node capacity is the limit</small></article>
+        <article><span>Level 6</span><h3>Async services</h3><p>Durable queues smooth bounded bursts; workers isolate deferrable slow jobs. Shed or throttle sustained overload.</p><small>Deferrable work + drain headroom</small></article>
       </div>
     </section>
 
@@ -250,7 +276,7 @@ measure_and_iterate()</code></pre>
         <div class="factor-center"><span>Before choosing</span><strong>What factor dominates?</strong></div>
         <article><span>Traffic</span><strong>How much and how bursty?</strong><p>Average and peak QPS, concurrency, seasonality, and growth.</p></article>
         <article><span>Data</span><strong>How large and how long?</strong><p>Record size, retention, growth, relationships, and access patterns.</p></article>
-        <article><span>Read / write</span><strong>Which path dominates?</strong><p>Read-heavy favors cache/replicas; write-heavy pressures partitioning and logs.</p></article>
+        <article><span>Access shape</span><strong>What makes each path expensive?</strong><p>A ratio chooses nothing alone: check repetition, staleness tolerance, query cost, hot keys, contention, ordering, and durability.</p></article>
         <article><span>Latency</span><strong>Where is the deadline?</strong><p>Interactive requests, background jobs, tail latency, and geographic distance.</p></article>
         <article><span>Correctness</span><strong>How stale may data be?</strong><p>Consistency boundary, ordering, uniqueness, transactions, and conflict policy.</p></article>
         <article><span>Availability</span><strong>What may stop working?</strong><p>SLO, redundancy, graceful degradation, RTO, and RPO.</p></article>
@@ -338,7 +364,7 @@ measure_and_iterate()</code></pre>
         <article><span>Compute is saturated</span><strong>Stateless replicas + load balancer</strong><small>Externalize sessions and verify downstream capacity.</small></article>
         <article><span>Read database is saturated</span><strong>Read replicas</strong><small>Accept or control replication lag and read-after-write behavior.</small></article>
         <article><span>Data or writes exceed one node</span><strong>Sharding</strong><small>Choose a stable key; avoid hot partitions and cross-shard work.</small></article>
-        <article><span>Bursty or slow processing</span><strong>Queue + workers</strong><small>Define idempotency, retry budget, ordering, backpressure, and DLQ.</small></article>
+        <article><span>Deferrable burst exceeds synchronous capacity</span><strong>Queue + workers</strong><small>Prove durable acceptance, idempotency, bounded backlog, drain time, backpressure, and DLQ.</small></article>
         <article><span>Many consumers need changes</span><strong>Event stream / pub-sub</strong><small>Define schema evolution, replay, delivery semantics, and ownership.</small></article>
         <article><span>Full-text or relevance queries</span><strong>Search index</strong><small>Accept asynchronous indexing and reconcile with the source of truth.</small></article>
         <article><span>Heavy relationship traversal</span><strong>Graph model</strong><small>Use only when multi-hop access dominates simpler key or relational queries.</small></article>
@@ -367,15 +393,15 @@ measure_and_iterate()</code></pre>
         </details>
         <details>
           <summary><span>04</span><strong>Read replication</strong><small>Copy data to increase read capacity and tolerate node failure</small></summary>
-          <div><p><b>Use when:</b> reads dominate and one primary can still accept the write load.</p><p><b>How:</b> route writes to the primary and eligible reads to replicas; send read-after-write traffic to the primary or track a consistency token. Availability improves only when routing, health detection, quorum or promotion rules, and tested failover can use the copies correctly.</p><p><b>Watch:</b> replica lag, stale reads, failover correctness, synchronous-replication write availability, and multiplying expensive queries across replicas.</p></div>
+          <div><p><b>Use when:</b> measured read load exhausts a data node after query and index fixes, eligible reads can accept the chosen replica semantics, and the primary retains write and replication headroom.</p><p><b>How:</b> route writes to the primary and eligible reads to replicas; send read-after-write traffic to the primary or track a consistency token. Availability improves only when routing, health detection, quorum or promotion rules, and tested failover can use the copies correctly.</p><p><b>Watch:</b> replica lag, stale reads, failover correctness, synchronous-replication write availability, and multiplying expensive queries across replicas.</p></div>
         </details>
         <details>
           <summary><span>05</span><strong>Sharding / partitioning</strong><small>Split ownership so data and writes scale beyond one node</small></summary>
           <div><p><b>Use when:</b> storage, write throughput, or working set exceeds a single database node.</p><p><b>How:</b> choose a high-cardinality stable partition key, route requests consistently, and design rebalancing before growth demands it.</p><p><b>Watch:</b> hot partitions, cross-shard joins/transactions, resharding, global indexes, and unique ID generation.</p></div>
         </details>
         <details>
-          <summary><span>06</span><strong>Queue + worker pool</strong><small>Buffer spikes and remove slow work from request latency</small></summary>
-          <div><p><b>Use when:</b> work may complete later, arrives in bursts, needs retry, or depends on a slower system.</p><p><b>How:</b> assign a stable operation ID and validate synchronously. For a job-only API, wait for durable broker acceptance before acknowledging; when a database mutation must emit work, commit business state plus an outbox record atomically and relay it. Process with horizontally scaled, duplicate-tolerant consumers; bound transient retries and isolate poison jobs in a DLQ.</p><p><b>Watch:</b> database/broker dual-write gaps, ambiguous publish outcomes, duplicate delivery, queue lag, unbounded retries, ordering requirements, and backpressure.</p></div>
+          <summary><span>06</span><strong>Queue + worker pool</strong><small>Buffer bounded bursts and remove deferrable work from request latency</small></summary>
+          <div><p><b>Use when:</b> work may safely complete later and bounded bursts, retries, or a slower dependency need durable buffering. Long-run worker capacity must exceed admitted arrival rate, or admission control must cap it; a queue does not fix sustained overload.</p><p><b>How:</b> assign a stable operation ID and validate synchronously. For a job-only API, wait for durable broker acceptance before acknowledging; when a database mutation must emit work, commit business state plus an outbox record atomically and relay it. Process with horizontally scaled, duplicate-tolerant consumers; bound transient retries and isolate poison jobs in a DLQ.</p><p><b>Watch:</b> database/broker dual-write gaps, ambiguous publish outcomes, duplicate delivery, queue lag, unbounded retries, ordering requirements, and backpressure.</p></div>
         </details>
         <details>
           <summary><span>07</span><strong>Event stream / pub-sub</strong><small>Distribute state changes to independent consumers</small></summary>

@@ -1,0 +1,15 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "doctype-style": ["error", { "style": "uppercase" }],
+    "heading-level": "error",
+    "no-dup-id": "error",
+    "prefer-native-element": "off",
+    "valid-id": "error",
+    "wcag/h30": "error",
+    "wcag/h32": "error",
+    "wcag/h37": "error",
+    "wcag/h63": "error",
+    "wcag/h67": "error"
+  }
+}

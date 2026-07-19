@@ -5,314 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A visual field guide to designing the compiler, runtime, firmware, and calibration loop for a hybrid digital and analog compute-in-memory NPU.">
   <meta name="theme-color" content="#07111f">
+  <meta name="color-scheme" content="dark light">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="System Design Atlas">
+  <meta property="og:title" content="NPU + ACiM Software Stack — System Design Atlas">
+  <meta property="og:description" content="A visual interview guide to hybrid NPU compilers, analog-aware mapping, runtime, firmware, calibration, recovery, and digital fallback.">
+  <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/npu-acim.html">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
   <title>NPU + ACiM Software Stack · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260719a">
-  <script src="app.js?v=20260719a" defer></script>
-  <style>
-    .acim-hero h1 span {
-      background-image: linear-gradient(110deg, var(--green), var(--cyan), var(--violet));
-    }
-
-    .acim-hero-panel {
-      position: relative;
-      min-height: 430px;
-      padding: 1.2rem;
-      overflow: hidden;
-      border: 1px solid color-mix(in srgb, var(--cyan) 38%, var(--line));
-      border-radius: 1rem;
-      background:
-        radial-gradient(circle at 80% 15%, rgba(99, 213, 237, .13), transparent 14rem),
-        linear-gradient(145deg, var(--surface), var(--surface-2));
-      box-shadow: var(--shadow);
-    }
-
-    .acim-hero-panel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(99, 213, 237, .04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(99, 213, 237, .04) 1px, transparent 1px);
-      background-size: 28px 28px;
-    }
-
-    .acim-chip-title,
-    .acim-chip-grid,
-    .acim-chip-note { position: relative; z-index: 1; }
-    .acim-chip-title { display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
-    .acim-chip-title span { color: var(--green); font: 800 .68rem ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
-    .acim-chip-title small { color: var(--muted); }
-    .acim-chip-grid { margin-top: 1.25rem; display: grid; grid-template-columns: .72fr 1fr; gap: .65rem; }
-    .acim-chip-grid article { min-height: 110px; padding: .9rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: .7rem; background: color-mix(in srgb, var(--surface) 88%, transparent); }
-    .acim-chip-grid article:nth-child(2),
-    .acim-chip-grid article:nth-child(5) { border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); }
-    .acim-chip-grid article:nth-child(4) { border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
-    .acim-chip-grid span { color: var(--amber); font: 800 .64rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-chip-grid strong { margin: .4rem 0; }
-    .acim-chip-grid small { margin-top: auto; color: var(--muted); line-height: 1.4; }
-    .acim-chip-grid .acim-chip-wide { grid-column: 1 / -1; min-height: 78px; }
-    .acim-chip-note { margin-top: .7rem; padding: .75rem .9rem; border-left: 3px solid var(--green); background: var(--surface); color: var(--muted); font-size: .78rem; }
-
-    .acim-callout {
-      margin-top: .8rem;
-      padding: 1rem 1.2rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: .7rem 1rem;
-      align-items: baseline;
-      border: 1px solid var(--line);
-      background: var(--surface-2);
-    }
-
-    .acim-callout b { color: var(--green); }
-    .acim-callout span { color: var(--muted); }
-
-    .acim-hybrid-flow {
-      display: grid;
-      grid-template-columns: .8fr 1.1fr 1.55fr .9fr;
-      gap: 1.35rem;
-      align-items: stretch;
-    }
-
-    .acim-hybrid-node {
-      position: relative;
-      min-height: 230px;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid var(--line);
-      border-top: 3px solid var(--blue);
-      border-radius: .8rem;
-      background: var(--surface);
-    }
-
-    .acim-hybrid-node:not(:last-child)::after {
-      content: "→";
-      position: absolute;
-      top: 50%;
-      right: -.95rem;
-      z-index: 2;
-      color: var(--cyan);
-      font-size: 1.4rem;
-      transform: translate(50%, -50%);
-    }
-
-    .acim-hybrid-node:nth-child(2) { border-top-color: var(--green); }
-    .acim-hybrid-node:nth-child(3) { border-top-color: var(--violet); }
-    .acim-hybrid-node:nth-child(4) { border-top-color: var(--amber); }
-    .acim-hybrid-node > span { color: var(--amber); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-hybrid-node h3 { margin: .65rem 0; }
-    .acim-hybrid-node p { margin: 0; color: var(--muted); font-size: .8rem; }
-    .acim-hybrid-node ul { margin: auto 0 0; padding: .8rem 0 0 1rem; color: var(--muted); font-size: .76rem; }
-    .acim-hybrid-node li + li { margin-top: .3rem; }
-    .acim-engine-pair { margin-top: .75rem; display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
-    .acim-engine-pair div { padding: .75rem; border: 1px solid var(--line); background: var(--surface-2); }
-    .acim-engine-pair b { display: block; color: var(--cyan); font-size: .76rem; }
-    .acim-engine-pair small { color: var(--muted); }
-
-    .acim-stack-layout { display: grid; grid-template-columns: 1.45fr .55fr; gap: .8rem; align-items: start; }
-    .acim-stack { margin: 0; padding: 0; display: grid; gap: .55rem; list-style: none; }
-    .acim-stack > li { position: relative; min-height: 118px; padding: 1rem 1rem 1rem 5rem; border: 1px solid var(--line); border-left: 3px solid var(--blue); border-radius: .7rem; background: var(--surface); }
-    .acim-stack > li:nth-child(2), .acim-stack > li:nth-child(6) { border-left-color: var(--cyan); }
-    .acim-stack > li:nth-child(3), .acim-stack > li:nth-child(7) { border-left-color: var(--green); }
-    .acim-stack > li:nth-child(4), .acim-stack > li:nth-child(8) { border-left-color: var(--violet); }
-    .acim-stack > li:nth-child(5), .acim-stack > li:nth-child(9) { border-left-color: var(--amber); }
-    .acim-stack > li::after { content: "↓"; position: absolute; left: 2rem; bottom: -.75rem; z-index: 2; color: var(--blue); }
-    .acim-stack > li:last-child::after { content: none; }
-    .acim-stack-number { position: absolute; top: 1rem; left: 1rem; width: 2.6rem; height: 2.6rem; display: grid; place-items: center; border-radius: .65rem; background: var(--surface-2); color: var(--amber); font: 800 .7rem ui-monospace, monospace; }
-    .acim-stack strong { display: block; margin-bottom: .35rem; font-size: 1rem; }
-    .acim-stack p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.55; }
-    .acim-stack code { color: var(--green); }
-
-    .acim-feedback-rail { position: sticky; top: 6.5rem; padding: 1rem; border: 1px solid color-mix(in srgb, var(--green) 40%, var(--line)); border-radius: .8rem; background: var(--surface-2); }
-    .acim-feedback-rail > span { color: var(--green); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-feedback-rail h3 { margin: .55rem 0; font-size: 1.1rem; }
-    .acim-feedback-rail p { color: var(--muted); font-size: .78rem; }
-    .acim-feedback-rail ol { margin: 1rem 0 0; padding: 0; display: grid; gap: .45rem; list-style: none; }
-    .acim-feedback-rail li { padding: .65rem; border-left: 2px solid var(--green); background: var(--surface); color: var(--muted); font-size: .75rem; }
-    .acim-feedback-rail li b { display: block; color: var(--text); }
-
-    .acim-decision-flow { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.35rem; list-style: none; }
-    .acim-decision-flow > li { position: relative; min-height: 190px; padding: 1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); }
-    .acim-decision-flow > li:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.95rem; color: var(--cyan); transform: translate(50%, -50%); }
-    .acim-decision-flow > li:nth-child(even) { border-color: color-mix(in srgb, var(--violet) 35%, var(--line)); }
-    .acim-decision-flow span { color: var(--amber); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-decision-flow strong { display: block; margin: .65rem 0; }
-    .acim-decision-flow p { margin: 0; color: var(--muted); font-size: .76rem; }
-    .acim-decision-branches { margin-top: .8rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: .65rem; }
-    .acim-decision-branches article { padding: 1rem; border-top: 2px solid var(--green); background: var(--surface-2); }
-    .acim-decision-branches article:nth-child(2) { border-top-color: var(--violet); }
-    .acim-decision-branches article:nth-child(3) { border-top-color: var(--amber); }
-    .acim-decision-branches b { display: block; margin-bottom: .35rem; }
-    .acim-decision-branches p { margin: 0; color: var(--muted); font-size: .78rem; }
-
-    .acim-mapping-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; }
-    .acim-mapping-card { min-width: 0; padding: 1.2rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); }
-    .acim-mapping-card > span { color: var(--amber); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-mapping-card h3 { margin: .55rem 0; }
-    .acim-mapping-card > p { color: var(--muted); font-size: .8rem; }
-    .acim-tile-map { margin-top: 1rem; display: grid; grid-template-columns: .8fr auto 1.2fr; gap: .7rem; align-items: center; }
-    .acim-matrix { min-height: 160px; padding: .55rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .25rem; border: 1px solid var(--line); background: var(--surface-2); }
-    .acim-matrix i { display: block; min-height: 26px; background: color-mix(in srgb, var(--blue) 24%, var(--surface)); }
-    .acim-tile-map > b { color: var(--cyan); }
-    .acim-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: .4rem; }
-    .acim-tiles i { min-height: 76px; padding: .5rem; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--violet) 45%, var(--line)); background: var(--surface-2); color: var(--muted); font-size: .7rem; font-style: normal; text-align: center; }
-    .acim-bit-slices { margin-top: 1rem; display: flex; align-items: stretch; gap: .45rem; }
-    .acim-bit-slices i { flex: 1; min-height: 70px; padding: .5rem; display: grid; place-items: center; border-top: 3px solid var(--green); background: var(--surface-2); color: var(--muted); font-size: .7rem; font-style: normal; text-align: center; }
-    .acim-bit-slices b { align-self: center; color: var(--cyan); }
-    .acim-range-flow { margin-top: 1rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: .75rem; }
-    .acim-range-flow div { position: relative; min-height: 82px; padding: .65rem; display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface-2); text-align: center; font-size: .73rem; }
-    .acim-range-flow div:not(:last-child)::after { content: "→"; position: absolute; right: -.55rem; color: var(--cyan); transform: translateX(50%); }
-    .acim-buffer-timeline { margin-top: 1rem; display: grid; grid-template-columns: 5rem repeat(4, 1fr); gap: .28rem; }
-    .acim-buffer-timeline span, .acim-buffer-timeline i { min-height: 36px; padding: .45rem; display: grid; place-items: center; font-size: .67rem; font-style: normal; }
-    .acim-buffer-timeline span { justify-content: start; color: var(--muted); }
-    .acim-buffer-timeline i { border: 1px solid var(--line); background: var(--surface-2); }
-    .acim-buffer-timeline .acim-active { border-color: var(--green); background: color-mix(in srgb, var(--green) 14%, var(--surface)); color: var(--text); }
-
-    .acim-artifacts { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
-    .acim-artifacts article { min-height: 230px; padding: 1.15rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-top: 3px solid var(--blue); border-radius: .8rem; background: var(--surface); }
-    .acim-artifacts article:nth-child(2), .acim-artifacts article:nth-child(5) { border-top-color: var(--green); }
-    .acim-artifacts article:nth-child(3), .acim-artifacts article:nth-child(6) { border-top-color: var(--violet); }
-    .acim-artifacts span { color: var(--amber); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-artifacts h3 { margin: .65rem 0; }
-    .acim-artifacts p { margin: 0; color: var(--muted); font-size: .78rem; }
-    .acim-artifacts code { margin-top: auto; padding-top: .9rem; color: var(--green); font-size: .72rem; overflow-wrap: anywhere; }
-
-    .acim-runtime-flow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem; }
-    .acim-runtime-flow article { position: relative; min-height: 170px; padding: .85rem; border: 1px solid var(--line); background: var(--surface); }
-    .acim-runtime-flow article:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.72rem; z-index: 2; color: var(--cyan); transform: translate(50%, -50%); }
-    .acim-runtime-flow span { color: var(--amber); font: 800 .62rem ui-monospace, monospace; }
-    .acim-runtime-flow strong { display: block; margin: .55rem 0; font-size: .86rem; }
-    .acim-runtime-flow p { margin: 0; color: var(--muted); font-size: .8rem; }
-
-    .acim-control-loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.25rem; }
-    .acim-control-loop article { position: relative; min-height: 190px; padding: 1rem; border: 1px solid var(--line); border-radius: 50% 50% .75rem .75rem / 16% 16% .75rem .75rem; background: var(--surface); }
-    .acim-control-loop article:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -.9rem; color: var(--green); transform: translate(50%, -50%); }
-    .acim-control-loop article:last-child::after { content: "↺"; right: auto; left: 50%; bottom: -2rem; top: auto; color: var(--green); font-size: 1.6rem; transform: translateX(-50%); }
-    .acim-control-loop span { color: var(--green); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-control-loop strong { display: block; margin: .7rem 0; }
-    .acim-control-loop p { margin: 0; color: var(--muted); font-size: .75rem; }
-    .acim-nonidealities { margin-top: 2.4rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .65rem; }
-    .acim-nonidealities article { padding: 1rem; border-left: 3px solid var(--violet); background: var(--surface-2); }
-    .acim-nonidealities b { display: block; margin-bottom: .35rem; }
-    .acim-nonidealities p { margin: 0; color: var(--muted); font-size: .75rem; }
-
-    .acim-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); }
-    .acim-table { width: 100%; min-width: 900px; border-collapse: collapse; }
-    .acim-table caption { padding: 1rem; color: var(--muted); font-size: .82rem; line-height: 1.5; text-align: left; }
-    .acim-table th, .acim-table td { padding: .9rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-    .acim-table thead th { background: var(--surface-2); color: var(--amber); font: 800 .76rem ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; }
-    .acim-table tbody th { background: transparent; color: var(--text); font-size: .8rem; font-weight: 800; }
-    .acim-table td { color: var(--muted); font-size: .76rem; line-height: 1.45; }
-    .acim-table td:nth-child(4) { color: var(--green); }
-    .acim-table tr:last-child th, .acim-table tr:last-child td { border-bottom: 0; }
-
-    .acim-interview-brief { padding: clamp(1.2rem, 3vw, 2rem); display: grid; grid-template-columns: 1.35fr .65fr; gap: 2rem; align-items: start; border: 1px solid color-mix(in srgb, var(--cyan) 42%, var(--line)); border-radius: 1rem; background: radial-gradient(circle at 92% 12%, rgba(182,156,255,.13), transparent 15rem), var(--surface); }
-    .acim-interview-brief > div > span { color: var(--amber); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-interview-brief h3 { margin: .55rem 0; font-size: clamp(1.5rem, 3vw, 2.25rem); }
-    .acim-interview-brief p { margin: 0; color: var(--muted); }
-    .acim-interview-signals { margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; }
-    .acim-interview-signals li { padding: .5rem .7rem; border: 1px solid color-mix(in srgb, var(--green) 35%, var(--line)); border-radius: 999px; background: color-mix(in srgb, var(--green) 8%, transparent); font-size: .73rem; font-weight: 750; }
-
-    .acim-interview-flow { margin-top: .8rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; }
-    .acim-interview-flow div { position: relative; min-height: 100px; padding: .75rem; display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface-2); text-align: center; font-size: .72rem; }
-    .acim-interview-flow div:not(:last-child)::after { content: "→"; position: absolute; right: -.7rem; color: var(--cyan); transform: translateX(50%); }
-
-    .acim-checkpoints { margin: .8rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; list-style: none; }
-    .acim-checkpoints > li { min-width: 0; padding: 1.15rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); }
-    .acim-checkpoints header { display: flex; gap: .8rem; align-items: baseline; }
-    .acim-checkpoints header span { color: var(--amber); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-checkpoints header strong { font-size: 1rem; }
-    .acim-checkpoints > li > p { color: var(--muted); font-size: .8rem; }
-    .acim-your-turn { min-height: 82px; padding: .85rem; display: grid; gap: .3rem; background: var(--surface-2); }
-    .acim-your-turn b { color: var(--green); font-size: .67rem; text-transform: uppercase; }
-    .acim-your-turn span { font-size: .82rem; font-weight: 650; }
-    .acim-checkpoints details { margin-top: .65rem; border-top: 1px solid var(--line); }
-    .acim-checkpoints summary { padding-top: .75rem; color: var(--blue-2); cursor: pointer; font-size: .78rem; font-weight: 800; }
-    .acim-checkpoints details div { padding-top: .7rem; color: var(--muted); font-size: .78rem; line-height: 1.55; }
-    .acim-checkpoints details p { margin: 0; }
-    .acim-checkpoints details ul { margin: .5rem 0 0; padding-left: 1.1rem; }
-    .acim-checkpoints details li + li { margin-top: .3rem; }
-    .acim-checkpoints code { color: var(--green); }
-
-    .acim-scorecard { margin-top: .8rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: .65rem; }
-    .acim-scorecard article { padding: 1rem; border-top: 3px solid var(--blue); background: var(--surface-2); }
-    .acim-scorecard article:nth-child(2) { border-top-color: var(--cyan); }
-    .acim-scorecard article:nth-child(3) { border-top-color: var(--green); }
-    .acim-scorecard article:nth-child(4) { border-top-color: var(--amber); }
-    .acim-scorecard article:nth-child(5) { border-top-color: var(--violet); }
-    .acim-scorecard b { display: block; margin-bottom: .4rem; }
-    .acim-scorecard p { margin: 0; color: var(--muted); font-size: .74rem; }
-
-    .acim-sources { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; }
-    .acim-sources article { min-height: 230px; padding: 1.2rem; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface); }
-    .acim-sources span { color: var(--amber); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
-    .acim-sources h3 { margin: .65rem 0; }
-    .acim-sources p { margin: 0; color: var(--muted); font-size: .8rem; }
-    .acim-sources a { margin-top: auto; padding-top: 1rem; color: var(--blue-2); font-weight: 800; text-decoration: none; }
-    .acim-sources a:hover, .acim-sources a:focus-visible { text-decoration: underline; }
-
-    @media (max-width: 1050px) {
-      .acim-hybrid-flow { grid-template-columns: repeat(2, 1fr); }
-      .acim-decision-flow { grid-template-columns: repeat(3, 1fr); }
-      .acim-runtime-flow { grid-template-columns: repeat(4, 1fr); }
-      .acim-control-loop { grid-template-columns: repeat(3, 1fr); }
-      .acim-artifacts { grid-template-columns: repeat(2, 1fr); }
-      .acim-scorecard { grid-template-columns: repeat(3, 1fr); }
-      .acim-hybrid-node::after,
-      .acim-decision-flow > li::after,
-      .acim-runtime-flow article::after,
-      .acim-control-loop article::after { display: none; }
-    }
-
-    @media (max-width: 760px) {
-      .acim-hero-panel { min-height: 0; }
-      .acim-chip-grid,
-      .acim-stack-layout,
-      .acim-mapping-grid,
-      .acim-interview-brief,
-      .acim-checkpoints,
-      .acim-sources { grid-template-columns: 1fr; }
-      .acim-chip-grid .acim-chip-wide { grid-column: auto; }
-      .acim-feedback-rail { position: static; }
-      .acim-hybrid-flow,
-      .acim-decision-flow,
-      .acim-decision-branches,
-      .acim-artifacts,
-      .acim-runtime-flow,
-      .acim-control-loop,
-      .acim-nonidealities,
-      .acim-scorecard { grid-template-columns: 1fr; }
-      .acim-hybrid-node:not(:last-child)::after,
-      .acim-decision-flow > li:not(:last-child)::after,
-      .acim-runtime-flow article:not(:last-child)::after,
-      .acim-control-loop article:not(:last-child)::after {
-        display: block;
-        content: "↓";
-        top: auto;
-        right: auto;
-        bottom: -.95rem;
-        left: 50%;
-        transform: translate(-50%, 50%);
-      }
-      .acim-control-loop article:last-child::after { display: block; content: "↺"; }
-      .acim-range-flow { grid-template-columns: 1fr; }
-      .acim-range-flow div:not(:last-child)::after { content: "↓"; right: auto; bottom: -.55rem; left: 50%; transform: translate(-50%, 50%); }
-      .acim-interview-flow { grid-template-columns: 1fr; }
-      .acim-interview-flow div:not(:last-child)::after { content: "↓"; right: auto; bottom: -.7rem; left: 50%; transform: translate(-50%, 50%); }
-    }
-
-    @media (max-width: 520px) {
-      .acim-chip-grid,
-      .acim-engine-pair { grid-template-columns: 1fr; }
-      .acim-tile-map { grid-template-columns: 1fr; }
-      .acim-tile-map > b { text-align: center; transform: rotate(90deg); }
-      .acim-bit-slices { flex-wrap: wrap; }
-      .acim-bit-slices i { flex-basis: 40%; }
-      .acim-buffer-timeline { grid-template-columns: 3.5rem repeat(4, minmax(62px, 1fr)); overflow-x: auto; }
-    }
-  </style>
+  <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/npu-acim.html">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script src="theme-init.js?v=20260719b"></script>
+  <link rel="stylesheet" href="styles.css?v=20260719b">
+  <script src="app.js?v=20260719b" defer></script>
+  <link rel="stylesheet" href="npu-acim.css?v=20260719b">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -364,6 +71,19 @@
       </section>
     </section>
 
+    <nav class="page-nav" aria-label="NPU and ACiM topics">
+      <a href="#boundary">Boundary</a>
+      <a href="#stack">Compiler stack</a>
+      <a href="#decision">Placement</a>
+      <a href="#mapping">Mapping</a>
+      <a href="#runtime">Runtime</a>
+      <a href="#feedback">Calibration</a>
+      <a href="#bottlenecks">Bottlenecks</a>
+      <a href="#compiler-workbench">Deep dive</a>
+      <a href="#practice">Practice</a>
+      <a href="#sources">Sources</a>
+    </nav>
+
     <section class="section" id="boundary">
       <div class="section-heading">
         <p class="eyebrow">01 · System boundary</p>
@@ -385,7 +105,7 @@
           </tbody>
         </table>
       </div>
-      <p class="evidence-note"><b>Schema rule:</b> keep technology-specific data in tagged variants and expose storage type, volatility/retention, programming/readback support, and analog signal domain as separate capability fields. The label “SRAM / charge-domain ACiM” is shorthand only for Example B, not a taxonomy that makes SRAM and charge-domain synonymous. Do not require conductance, drift, or endurance fields in a generic ACiM profile, and do not apply the resistive equation <code>Iⱼ ≈ Σᵢ VᵢGᵢⱼ</code> to a charge-domain SRAM macro.</p>
+      <p class="evidence-note"><b>Schema rule:</b> keep technology-specific data in tagged variants and expose storage type, volatility/retention, and analog signal domain independently. At minimum, use <code>weight_storage</code>, <code>retention_domain</code>, <code>analog_signal_domain</code>, <code>load_mode</code>, <code>readback.kind/granularity</code>, <code>program_verify.mode</code>, <code>journal.durability</code>, <code>reset_effects</code>, and a versioned <code>recovery_recipe_id</code> as separate capability fields. The label “SRAM / charge-domain ACiM” is shorthand only for Example B, not a taxonomy that makes SRAM and charge-domain synonymous. Do not require conductance, drift, or endurance fields in a generic ACiM profile, and do not apply the resistive equation <code>Iⱼ ≈ Σᵢ VᵢGᵢⱼ</code> to a charge-domain SRAM macro.</p>
       <div class="reference-trail"><strong>Device evidence</strong><a href="https://www.nature.com/articles/s41467-020-16108-9">Computational PCM inference ↗</a><a href="https://doi.org/10.1109/JSSC.2022.3232601">Charge-domain SRAM ACiM ↗</a><a href="https://doi.org/10.1109/ICTA56932.2022.9963070">Current-domain SRAM CiM ↗</a><a href="https://doi.org/10.1109/TCSI.2021.3083275">Time-domain SRAM CiM ↗</a><a href="https://doi.org/10.1109/TCSII.2021.3049844">Nonvolatile charge-domain CiM ↗</a></div>
 
       <div class="acim-hybrid-flow" role="group" aria-label="Hybrid CPU digital NPU and ACiM execution architecture">
@@ -535,11 +255,16 @@
           <h3>Hide transfers behind useful work</h3>
           <p>Double-buffer activations so DMA fills one buffer while an engine consumes the other. Explicit events preserve data dependencies.</p>
           <div class="acim-buffer-timeline" role="region" aria-label="Double-buffered NPU execution timeline" tabindex="0">
-            <span>Stage</span><i>T0</i><i>T1</i><i>T2</i><i>T3</i>
-            <span>DMA A</span><i class="acim-active">fill A</i><i>idle</i><i class="acim-active">fill A</i><i>idle</i>
-            <span>ACiM</span><i>idle</i><i class="acim-active">use A</i><i class="acim-active">use B</i><i class="acim-active">use A</i>
-            <span>DMA B</span><i>idle</i><i class="acim-active">fill B</i><i>idle</i><i class="acim-active">fill B</i>
-            <span>Digital</span><i>idle</i><i>idle</i><i class="acim-active">accumulate</i><i class="acim-active">activate</i>
+            <table>
+              <caption>Illustrative event schedule: a buffer may be consumed only after its fill-complete event; reuse waits for the consumer-complete event.</caption>
+              <thead><tr><th scope="col">Stage</th><th scope="col">T0</th><th scope="col">T1</th><th scope="col">T2</th><th scope="col">T3</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">DMA A</th><td class="acim-active">fill A</td><td>idle</td><td class="acim-active">fill A</td><td>idle</td></tr>
+                <tr><th scope="row">ACiM</th><td>idle</td><td class="acim-active">use A</td><td class="acim-active">use B</td><td class="acim-active">use A</td></tr>
+                <tr><th scope="row">DMA B</th><td>idle</td><td class="acim-active">fill B</td><td>idle</td><td class="acim-active">fill B</td></tr>
+                <tr><th scope="row">Digital</th><td>idle</td><td>idle</td><td class="acim-active">accumulate</td><td class="acim-active">activate</td></tr>
+              </tbody>
+            </table>
           </div>
         </article>
       </div>
@@ -553,7 +278,7 @@
       </div>
 
       <div class="acim-artifacts">
-        <article><span>Compiler input · illustrative</span><h3>Capability manifest</h3><p>Legal operator forms, shapes/layouts/alignments, precision and signed encoding, array geometry, topology, SRAM/DMA/coherency, converter/accumulator limits, queues/reset/power states, ABI range, errata, and versioned cost tables.</p><code>target_v3.capabilities.json</code></article>
+        <article><span>Compiler input · illustrative</span><h3>Capability manifest</h3><p>Legal operator forms, geometry, memory/periphery limits, ABI and costs—plus explicit weight storage/retention, load mode, readback kind, program/verify mode, journal durability, reset effects, and vendor recovery recipe.</p><code>target_v3.capabilities.json</code></article>
         <article><span>Compiler middle</span><h3>Multi-level IR</h3><p>Graph IR preserves model meaning; device IR records partitions, tiles, buffers, synchronization, analog attributes, and digital fallback.</p><code>graph → quantized → scheduled → command IR</code></article>
         <article><span>Compiler output · illustrative</span><h3>Signed model bundle</h3><p>Commands, weights, relocations, buffer plan, profile requirements, compatibility range, fallback entry points, debug map, golden outputs, and security metadata.</p><code>model.acim.bundle</code></article>
         <article><span>Device state · target-specific</span><h3>Calibration profile</h3><p>Target/stepping/ABI identity, method and provenance, validity domain, uncertainty/confidence, fault/spare state, and corrections at a practical macro/tile/row/column/converter—or selected-cell—granularity.</p><code>{target, health generation, PVT, age}</code></article>
@@ -567,6 +292,7 @@
           <thead><tr><th scope="col">Contract</th><th scope="col">Required fields</th><th scope="col">Consumer</th><th scope="col">Failure behavior</th></tr></thead>
           <tbody>
             <tr><th scope="row">Capability manifest</th><td>Vendor/device/revision, firmware ABI, legal ops/dtypes/layouts/shapes, effective geometry and signed encoding, periphery/accumulator limits, memory/DMA/coherency, queues/reset/power, cost-model version/units, errata.</td><td>Compiler proves legality and estimates cost; runtime confirms the loaded bundle still matches device and firmware identity.</td><td>Reject, explicitly convert, partition elsewhere, or compile a declared fallback—never silently approximate an illegal form.</td></tr>
+            <tr><th scope="row">Weight-state operations</th><td><code>weight_storage</code> (volatile, factory-programmed, or field-programmable), retention domain, load granularity/idempotence, <code>readback</code> (none, checksum, state, or conductance) with granularity/cost, <code>program_verify</code> (unsupported, atomic, or resumable) with safe progress unit and budgets, journal durability/commit boundary, reset effects, and versioned recovery recipe.</td><td>The compiler emits only supported load/program commands; firmware owns the target sequence; the runtime selects restart, reload, remap, quarantine, or fallback from the declared contract.</td><td>If a field or operation is absent, reject that path. Resistive storage alone does not imply field programming, conductance readback, incremental resume, or a persistent journal.</td></tr>
             <tr><th scope="row">Calibration/health profile</th><td>Target/stepping/ABI/schema/health generation, method/provenance/time/expiry, units/sample count/uncertainty/confidence, valid temperature-voltage-frequency-load-age domain, corrections, faults/spares/effective geometry, integrity and rollback policy.</td><td>Compiler maps against effective capacity/error; runtime selects only a profile valid for this device, operating point, and bundle.</td><td>Select another profile, recalibrate, remap/recompile, or execute digital fallback; do not extrapolate outside the measured validity domain without an explicit bound.</td></tr>
           </tbody>
         </table>
@@ -584,11 +310,11 @@
       <div class="acim-runtime-flow" role="group" aria-label="Runtime driver and firmware execution flow">
         <article><span>01</span><strong>Authenticate bundle</strong><p>Verify signature, versions, target compatibility, limits, and permissions.</p></article>
         <article><span>02</span><strong>Select profile</strong><p>Match device, tile health, temperature, age, and required accuracy.</p></article>
-        <article><span>03</span><strong>Load or program weights</strong><p>Load volatile SRAM weight bits for SRAM/charge-domain macros—the charge is transient during computation. For resistive targets, read current conductance and resume bounded program-and-verify under a wear and interruption policy.</p></article>
-        <article><span>04</span><strong>Verify readiness</strong><p>Check weight integrity and calibration state; for resistive targets, read back conductance, adjust pulses, quarantine failures, and update the fault map.</p></article>
+        <article><span>03</span><strong>Load or program weights</strong><p>Branch on the manifest: load a volatile image, invoke an atomic vendor program transaction, or continue only a target-declared resumable program/verify operation. Never infer resume support from device technology.</p></article>
+        <article><span>04</span><strong>Verify readiness</strong><p>Use the declared proof—image checksum/ECC, vendor self-test, state readback, or conductance readback. If readback is unavailable, use the vendor restart/reload recipe or quarantine/remap/fallback; do not guess partial progress.</p></article>
         <article><span>05</span><strong>Submit queues</strong><p>Bind buffers, DMA, commands, events, deadlines, and power hints.</p></article>
         <article><span>06</span><strong>Run + observe</strong><p>Handle interrupts, saturation, ECC/fault events, timeouts, thermal throttling, and traces.</p></article>
-        <article><span>07</span><strong>Complete or recover</strong><p>Return outputs, retry safely, fall back digitally, reset scoped engines, or invalidate a profile.</p></article>
+        <article><span>07</span><strong>Complete or recover</strong><p>Return outputs only after readiness proof; otherwise run the versioned vendor recovery recipe, fall back digitally, reset a documented scope, or invalidate residency/profile state.</p></article>
       </div>
       <div class="acim-callout"><b>Runtime invariant</b><span>A timeout or reset must never leave unknown weights, aliased buffers, or a stale ownership token visible to the next request.</span></div>
 
@@ -600,7 +326,7 @@
             <tr><th scope="row">Compiler + bundle</th><td>Static partition, placement, schedule, relocations, profile requirements, fallback entry points, debug/source map.</td><td>Compatibility range, resource assumptions, reset-sensitive residency, numeric behavior, and golden/reference outputs.</td></tr>
             <tr><th scope="row">Userspace runtime</th><td>Sessions, admission, priority/deadlines, profile selection, isolation policy, fallback decision, lifecycle telemetry.</td><td>Request/context ID, bundle hash, profile, dependencies, retry class, deadline, power hint, and fallback policy.</td></tr>
             <tr><th scope="row">Kernel driver</th><td>IOMMU/DMA mappings, synchronization, buffer lifetime, queues, interrupts, process isolation, timeout/reset interface.</td><td>Atomic completion/error record, output-valid flag, fault scope, retryability, reset generation, counters.</td></tr>
-            <tr><th scope="row">Firmware</th><td>Privileged register and power/clock sequences, safe load/program-and-verify, local health, scoped reset, device journal/operation ID where needed.</td><td>State transition, partial-side-effect status, resident-weight/profile generation, self-test result, quarantined capacity.</td></tr>
+            <tr><th scope="row">Firmware</th><td>Privileged register and power/clock sequences, supported target-specific load/program/verify, local health, scoped reset, and operation ID/journal only where declared.</td><td>State transition, partial-side-effect status, resident-weight/profile generation, self-test result, quarantined capacity, and selected recovery-recipe version.</td></tr>
             <tr><th scope="row">Hardware</th><td>Protection checks, atomic completion/error capture, counters, fault containment, and documented reset domains.</td><td>Which writes may still arrive after abort/reset and which state is actually cleared or retained.</td></tr>
           </tbody>
         </table>
@@ -613,14 +339,15 @@
           <tbody>
             <tr><th scope="row">Bundle/version/shape rejected</th><td>Reject before any hardware side effect and explain the failed legality/compatibility predicate.</td><td>Negative corpus across malformed metadata, boundary shapes, ABI ranges, and downgrade attempts.</td></tr>
             <tr><th scope="row">Profile mismatch or expiry</th><td>Stop ACiM dispatch; select another valid profile, recalibrate, remap/recompile, or fall back digitally.</td><td>Temperature/voltage/age boundary tests and stale health-generation injection.</td></tr>
-            <tr><th scope="row">Weight load/program failure</th><td>For SRAM, use bounded same-version chunk rewrite plus checksum. For resistive devices, read current conductance and resume program-and-verify under an operation ID, interruption journal, and pulse/endurance budget; replaying pulses is not idempotent. Remap or quarantine persistent failures.</td><td>Interrupt every chunk/pulse/verify phase and prove residency identity before use.</td></tr>
+            <tr><th scope="row">Weight load/program failure</th><td>For volatile images, reload the whole image or only chunks the loader declares independently idempotent, then prove identity/checksum. For a field-programmable target, resume only when the manifest declares resumable program/verify and the firmware can reconcile a crash-consistent journal with target state. Without that contract—or without the required readback—mark residency unknown and run the vendor-defined restart/reload recipe, remap/quarantine, or fall back digitally. Never blindly replay programming pulses.</td><td>Inject interruption at every declared commit boundary and across reset/power loss; prove unavailable operations are rejected, budgets are preserved, and residency identity is established before dispatch.</td></tr>
             <tr><th scope="row">DMA/IOMMU/execution timeout</th><td>Mark output invalid, stop/drain, revoke descriptors, increment reset generation, invalidate affected queues/handles/residency, then reset the smallest safe scope.</td><td>Late completion/write injection; confirm no partial result or stale handle becomes valid.</td></tr>
             <tr><th scope="row">Thermal or accuracy sentinel excursion</th><td>Throttle/reschedule/fallback; invalidate a profile outside its domain, run golden vectors, recalibrate or remap.</td><td>Worst-valid operating corners followed by recovery and renewed health publication.</td></tr>
             <tr><th scope="row">Persistent tile fault</th><td>Quarantine resource, change health generation, invalidate placements built for old capacity, and remap/recompile.</td><td>Fault injection plus end-to-end task metric, latency, and capacity verification on degraded geometry.</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="evidence-note"><b>Reset rule:</b> a scoped reset increments a generation and invalidates every queue, handle, weight residency, and profile assumption in that scope. Retry only an idempotent command or a transaction protected by a firmware operation ID/journal; never return a partial result as valid.</p>
+      <p class="evidence-note"><b>Journal rule:</b> only a target that declares resumable programming may use this path. Its crash-consistent record should bind operation ID, bundle/weight-image hash, device and reset generation, last verified safe progress unit, verify result, and remaining pulse/endurance budget. Firmware commits at a vendor-defined safe boundary and reconciles with device state where readback exists; “last command sent” in host memory is not recovery proof.</p>
+      <p class="evidence-note"><b>Reset rule:</b> a scoped reset increments a generation and invalidates every queue, handle, residency, and profile assumption listed by <code>reset_effects</code>. A journal survives only when its declared durability includes that reset or power-loss class. Retry only an idempotent command or a target-declared recoverable transaction; otherwise restart/reload through the versioned vendor recipe, remap/quarantine, or fall back digitally. Never return a partial result as valid.</p>
     </section>
 
     <section class="section" id="feedback">
@@ -700,7 +427,7 @@
           </ol>
         </article>
 
-        <aside class="formula-board">
+        <aside class="formula-board" aria-label="ACiM mapping equations">
           <span>Mapping equations</span>
           <h3>Make hidden multipliers visible</h3>
           <div class="formula-stack">
@@ -762,6 +489,20 @@
         </ul>
       </div>
 
+      <div class="detail-table-wrap" role="region" aria-label="Burst backlog and drain calculations" tabindex="0">
+        <table class="detail-table">
+          <caption>Close the burst with numbers before drawing queues. This illustrative fluid model treats requests as equal-cost work; a real design repeats the calculation in measured service-time or compute-work units for vision and audio separately.</caption>
+          <thead><tr><th scope="col">Thermally sustainable service μ</th><th scope="col">Peak backlog after 2 s at 110/s</th><th scope="col">Drain after return to 80/s</th><th scope="col">Interview conclusion</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">80 requests/s</th><td><code>B_peak = (110 − 80) × 2 = 60</code> requests.</td><td>No drain: <code>μ − λ_steady = 0</code>. The 60-request queue remains.</td><td>Invalid no-drop design. A finite burst bounds memory, but not recovery time or latency; add capacity or reject/drop/coalesce work.</td></tr>
+            <tr><th scope="row">100 requests/s</th><td><code>B_peak = (110 − 100) × 2 = 20</code> requests.</td><td><code>T_drain = 20 ÷ (100 − 80) = 1 s</code>.</td><td>The last queued work sees roughly <code>20 ÷ 100 = 200 ms</code> of fluid queueing before service, so the 20 ms objective fails even though the queue eventually drains.</td></tr>
+            <tr><th scope="row">110 requests/s</th><td>Zero deterministic fluid backlog during the specified burst.</td><td>Nothing to drain.</td><td>This is only the arithmetic floor. At 100% utilization there is no margin for service variance, retries, calibration, or class interference, so it does not prove p95.</td></tr>
+            <tr><th scope="row">120 requests/s</th><td>Zero deterministic fluid backlog with 10 requests/s burst headroom.</td><td>Nothing to drain in the fluid model.</td><td>A plausible no-drop candidate only after measured per-class queueing + service p95 stays below 20 ms at thermal equilibrium and complete-SoC power remains within 5 W.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="acim-callout"><b>One defensible overload policy at μ = 100/s</b><span>Reserve service for all 50 audio windows/s, then cap accepted vision at no more than 50/s. During the two-second 60/s vision burst, accept at most 100 of 120 frames and drop or coalesce at least 20 according to a declared freshness policy. That stops deterministic growth, but 100/s is still a saturation ceiling—not p95 proof—so lower the admission cap or provision more capacity for queueing and service-time headroom. Measure each class’s total queueing-plus-service latency, not a mixed average. If neither class may drop, the design must sustain the 110/s mix with additional margin.</span></div>
+
       <div class="acim-interview-flow" role="group" aria-label="Proposed interview architecture">
         <div>Model + calibration data</div><div>Graph compiler + analog optimizer</div><div>Partition + mapper + scheduler</div><div>Signed model bundle</div><div>Runtime + driver + firmware</div><div>Hybrid NPU + telemetry</div>
       </div>
@@ -771,13 +512,13 @@
           <header><span>00–05 min</span><strong>Clarify workload and success</strong></header>
           <p>Separate model, product, silicon, lifecycle, and safety constraints.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>Which questions decide the architecture before you draw the stack?</span></div>
-          <details><summary>Reveal coaching</summary><div><p>Confirm whether the supplied vision/audio rates, four-context concurrency, two-second burst, percentile boundary, and drop policy reflect product intent; then state the queue boundary and require steady arrival to remain below sustained thermally limited service. Ask about model families/operators and shapes; per-model deadlines and priority; energy and accuracy-loss budgets; determinism and cold start; model size/update frequency; ACiM array geometry/device precision and fault rate; converter/SRAM/NoC limits; target temperatures and lifetime; security/isolation; and whether the stack owns training. State exclusions, such as not designing the memory device itself.</p></div></details>
+          <details><summary>Reveal coaching</summary><div><p>Confirm whether the supplied vision/audio rates, four-context concurrency, two-second burst, percentile boundary, and drop policy reflect product intent; then state the queue boundary and require steady arrival to remain below sustained thermally limited service. Ask about model families/operators and shapes; per-model deadlines and priority; energy and accuracy-loss budgets; determinism and cold start; model size/update frequency; ACiM array geometry/device precision and fault rate; converter/SRAM/NoC limits; target temperatures and lifetime; security/isolation; and whether the stack owns training. State exclusions, such as not designing the memory device itself.</p><p><b>Close the stated load:</b> use <code>B_peak = max(0, λ_burst − μ) × 2 s</code> and, only when <code>μ &gt; 80/s</code>, <code>T_drain = B_peak ÷ (μ − 80/s)</code>. At μ = 80/s the backlog is 60 and never drains; at μ = 100/s it is 20, drains in one second, and can impose about 200 ms of queueing. Therefore define per-class admission/reservation and deadline behavior before claiming p95.</p></div></details>
         </li>
         <li>
           <header><span>05–10 min</span><strong>Define the hardware/software contract</strong></header>
           <p>Turn the accelerator into a target that a compiler can reason about.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>What must the target expose beyond “16 tiles”?</span></div>
-          <details><summary>Reveal coaching</summary><div><ul><li>Supported operator forms, data types, accumulator behavior, array rows/columns, cell precision and signed encoding.</li><li>Tile topology, SRAM banks, alignment, DMA and NoC bandwidth, converter modes, barriers, queue semantics, interrupts, reset scope, power states.</li><li>Versioned fault/calibration profile and latency/energy/error cost models. The compiler consumes capabilities; the runtime checks compatibility.</li></ul></div></details>
+          <details><summary>Reveal coaching</summary><div><ul><li>Supported operator forms, data types, accumulator behavior, array rows/columns, cell precision and signed encoding.</li><li>Tile topology, SRAM banks, alignment, DMA and NoC bandwidth, converter modes, barriers, queue semantics, interrupts, reset scope, and power states.</li><li>Weight storage and retention domain; load granularity/idempotence; readback kind and granularity; program/verify mode; journal durability and safe commit unit; reset effects; recovery recipe/version.</li><li>Versioned fault/calibration profile and latency/energy/error cost models. The compiler consumes capabilities; the runtime checks compatibility.</li></ul></div></details>
         </li>
         <li>
           <header><span>10–17 min</span><strong>Design import, IR, and transforms</strong></header>
@@ -801,7 +542,7 @@
           <header><span>32–37 min</span><strong>Design load and execution</strong></header>
           <p>Cover the path that starts before the first inference.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>What happens from signed bundle to a completed result?</span></div>
-          <details><summary>Reveal coaching</summary><div><p>The runtime authenticates the bundle, checks ABI/firmware/capability compatibility, selects a calibration profile, reserves resources, and asks firmware to load weights or program-and-verify nonvolatile cells. The driver maps buffers, queues DMA/commands, and handles interrupts. Firmware owns safe target-specific load/program sequences, tile health, reset, and power state. On timeout, saturation, thermal, or profile failure, retry only idempotent steps, reset the smallest scope, or execute a declared digital fallback.</p></div></details>
+          <details><summary>Reveal coaching</summary><div><p>The runtime authenticates the bundle, checks ABI/firmware/capability compatibility, selects a calibration profile, and reserves resources. It asks firmware to load a volatile image, run an atomic vendor program operation, or resume program/verify only when the target explicitly supports that mode and its journal/reconciliation proof. The driver maps buffers, queues DMA/commands, and handles interrupts. Firmware owns the safe target-specific sequence, health, reset, and power state. On interruption, use declared readback and journaling where available; otherwise invalidate residency and run the vendor restart/reload recipe, remap/quarantine, or execute digital fallback.</p></div></details>
         </li>
         <li>
           <header><span>37–41 min</span><strong>Close the calibration loop</strong></header>

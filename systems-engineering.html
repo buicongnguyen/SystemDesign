@@ -5,9 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A visual Systems Engineering field guide covering stakeholder needs, ConOps, requirements, architecture, interfaces, trade studies, risk, integration, verification, validation, and interview practice.">
   <meta name="theme-color" content="#07111f">
+  <meta name="color-scheme" content="dark light">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="System Design Atlas">
+  <meta property="og:title" content="Systems Engineering — System Design Atlas">
+  <meta property="og:description" content="A visual interview guide to stakeholder needs, ConOps, requirements, architecture, interfaces, risk, integration, verification, and validation.">
+  <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
   <title>Systems Engineering · System Design Atlas</title>
-  <link rel="stylesheet" href="styles.css?v=20260719a">
-  <script src="app.js?v=20260719a" defer></script>
+  <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script src="theme-init.js?v=20260719b"></script>
+  <link rel="stylesheet" href="styles.css?v=20260719b">
+  <script src="app.js?v=20260719b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -59,7 +70,7 @@ validate(<b>solves the mission</b>)</code></pre>
       </section>
     </section>
 
-    <nav class="se-page-nav" aria-label="Systems Engineering topics">
+    <nav class="page-nav se-page-nav" aria-label="Systems Engineering topics">
       <a href="#context">Context</a>
       <a href="#conops">ConOps</a>
       <a href="#process">Requirements</a>
@@ -457,7 +468,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <ol class="evidence-chain">
             <li><div><b>Need + operational scenario</b><span>N-01: deliver the declared payload safely within the service area. Scenario records route, wind, temperature, precipitation, communications, operator role, alternates, and emergency landing behavior.</span></div></li>
             <li><div><b>Measure of effectiveness</b><span>MOE-01: at least 99% of eligible reference missions complete within 25 minutes over the declared operating envelope, with package-condition and safety outcomes reported separately. Define the evaluation window and control every exclusion.</span></div></li>
-            <li><div><b>System requirement</b><span>SYS-ENERGY-014: with a 2.0 kg payload on the reference route and environment, the vehicle shall land with at least 20% usable battery energy. Define the battery state estimator and acceptance tolerance.</span></div></li>
+            <li><div><b>System requirement</b><span>SYS-ENERGY-014: with a 2.0 kg payload on the reference route and environment, the vehicle shall land with reserve fraction R = estimated remaining usable energy ÷ verified usable-at-condition capacity ≥ 20%. The denominator is deliverable energy from full charge to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile. Use the configuration-controlled BMS remaining-energy estimator, cross-check it against calibrated energy integration, and subtract the declared combined tolerance; with an illustrative 2-percentage-point tolerance, require an indicated R ≥ 22% so the acceptance lower bound remains 20%.</span></div></li>
             <li><div><b>Allocation + interfaces</b><span>Allocate mass, energy, thermal, navigation, propulsion, and reserve budgets to elements; record voltage, current, update rate, units, timing, ownership, and degraded behavior at every crossing.</span></div></li>
             <li><div><b>Verification + validation</b><span>Verify the requirement with calibrated energy instrumentation and environmental test evidence; validate the route, operator workflow, contingency behavior, turnaround, and customer outcome in representative missions.</span></div></li>
           </ol>
@@ -525,7 +536,7 @@ validate(<b>solves the mission</b>)</code></pre>
         <article class="workbench-card"><span>ORR / acceptance</span><h3>Can the system be operated?</h3><p>Close critical anomalies; prove procedures, training, support, spares, monitoring, recovery, cybersecurity, regulatory obligations, and the transfer of residual risk to an accountable owner.</p></article>
       </div>
 
-      <div class="reference-trail"><strong>Primary trail</strong><a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">NASA SE Handbook ↗</a><a href="https://www.nasa.gov/reference/4-2-technical-requirements-definition/">NASA MOE/MOP/TPM ↗</a><a href="https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/">NASA requirement quality ↗</a><a href="https://www.nasa.gov/reference/6-3-interface-management/">NASA interface management ↗</a><a href="https://www.nasa.gov/reference/6-5-configuration-management/">NASA configuration management ↗</a><a href="https://www.nasa.gov/reference/6-8-decision-analysis/">NASA decision analysis ↗</a><a href="https://www.nasa.gov/reference/2-4-distinctions-between-product-verification-and-product-validation/">NASA V&amp;V distinction ↗</a><a href="https://www.iso.org/standard/81702.html">ISO/IEC/IEEE 15288 ↗</a><a href="https://nodis3.gsfc.nasa.gov/displayAll.cfm?Internal_ID=N_PR_7123_001C_&page_name=all">NPR 7123.1C reviews ↗</a></div>
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">NASA SE Handbook ↗</a><a href="https://www.nasa.gov/reference/4-2-technical-requirements-definition/">NASA MOE/MOP/TPM ↗</a><a href="https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/">NASA requirement quality ↗</a><a href="https://www.nasa.gov/reference/6-3-interface-management/">NASA interface management ↗</a><a href="https://www.nasa.gov/reference/6-5-configuration-management/">NASA configuration management ↗</a><a href="https://www.nasa.gov/reference/6-8-decision-analysis/">NASA decision analysis ↗</a><a href="https://www.nasa.gov/reference/2-4-distinctions-between-product-verification-and-product-validation/">NASA V&amp;V distinction ↗</a><a href="https://www.iso.org/standard/81702.html">ISO/IEC/IEEE 15288 ↗</a><a href="https://nodis3.gsfc.nasa.gov/displayAll.cfm?Internal_ID=N_PR_7123_001C_&amp;page_name=all">NPR 7123.1C reviews ↗</a></div>
     </section>
 
     <section class="section practice-arena se-practice" id="practice">
@@ -611,7 +622,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <div>
             <p><b>Your turn:</b> identify five critical interfaces and sketch mass, energy, latency, and communication budgets.</p>
             <p><b>Coaching:</b> critical interfaces include battery–power distribution, flight computer–motor controllers, sensors–estimator, primary controller–safety monitor, vehicle–operator, vehicle–pad, container–vehicle, fleet service–airspace service, and maintainer–configuration system. Specify units, update rates, freshness, authority, timeout, degraded behavior, integrity, and versioning.</p>
-            <p><b>Illustrative energy budget:</b> expected use is 570 Wh = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload. Keep the 20% landing reserve independent from consumable allowances: with 70 Wh contingency consumption and 80 Wh analysis/growth allowance, required usable-at-condition capacity is (570 + 70 + 80) ÷ (1 − 0.20) = 900 Wh. That leaves 180 Wh, or 20% of 900 Wh, at landing after the full 720 Wh consumption allowance. Apply ageing and cold-temperature derating only when converting the 900 Wh usable-at-condition requirement into installed nameplate capacity; do not count the same derating again as margin. Validate with time-resolved power profiles rather than averages alone. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
+            <p><b>Illustrative energy budget:</b> expected use is 570 Wh = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload. Add 70 Wh contingency consumption and 80 Wh analysis/growth allowance, giving a full consumption allowance of 720 Wh. Define C<sub>u</sub> as deliverable energy from full charge to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile; the reserve denominator is C<sub>u</sub>, not beginning-of-life nameplate capacity. For a 20% acceptance lower bound and an illustrative 2-percentage-point combined BMS-estimator/test tolerance, design to an indicated 22% reserve: C<sub>u</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh. At that minimum, 203.1 Wh remains, or 22% of C<sub>u</sub>; subtracting the 2-point tolerance leaves the required 20% lower bound. Verify the configuration-controlled BMS remaining-energy estimate against calibrated voltage-and-current integration during the time-resolved mission profile. Select installed nameplate capacity so qualification evidence still provides at least 923.1 Wh usable at the declared age and temperature; do not apply the same ageing or temperature loss again as margin. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
           </div>
         </details>
 
@@ -683,7 +694,7 @@ validate(<b>solves the mission</b>)</code></pre>
         <article><span>SEBoK · Architecture</span><h3>Logical and Physical Architecture</h3><p>Explore how functions, behavior, system elements, allocation, viewpoints, and interfaces form a defensible architecture description.</p><a href="https://sebokwiki.org/wiki/System_Architecture_Design_Definition">Study system architecture design ↗</a></article>
         <article><span>Practice loop</span><h3>Create evidence, not flashcards alone</h3><p>For one case, redraw the context, ConOps, requirements tree, allocation, budget, risk path, V-model, and V&amp;V matrix from memory.</p><a href="#practice">Repeat the drone case ↑</a></article>
         <article><span>NASA · Evidence</span><h3>Handbook Appendices</h3><p>Requirement quality checks, verification and validation matrices, functional/timing/state analysis, V&amp;V plan content, interface document outlines, and technical peer-review guidance.</p><a href="https://www.nasa.gov/reference/system-engineering-handbook-appendix/">Open the official appendices ↗</a></article>
-        <article><span>NASA · Governance</span><h3>NPR 7123.1C</h3><p>NASA’s systems-engineering process requirements, lifecycle expectations, technical reviews, measurement, verification, and tailoring framework.</p><a href="https://nodis3.gsfc.nasa.gov/displayAll.cfm?Internal_ID=N_PR_7123_001C_&page_name=all">Read the directive ↗</a></article>
+        <article><span>NASA · Governance</span><h3>NPR 7123.1C</h3><p>NASA’s systems-engineering process requirements, lifecycle expectations, technical reviews, measurement, verification, and tailoring framework.</p><a href="https://nodis3.gsfc.nasa.gov/displayAll.cfm?Internal_ID=N_PR_7123_001C_&amp;page_name=all">Read the directive ↗</a></article>
         <article><span>SEBoK · Decisions</span><h3>Decision Management</h3><p>Frame alternatives, criteria, uncertainty, stakeholder values, analysis methods, and a transparent decision record that can be revisited when evidence changes.</p><a href="https://sebokwiki.org/wiki/Decision_Management">Read the SEBoK article ↗</a></article>
         <article><span>SEBoK · Risk</span><h3>Risk Management</h3><p>Connect scenarios, likelihood, consequence, handling actions, monitoring, ownership, and residual risk across the lifecycle.</p><a href="https://sebokwiki.org/wiki/Risk_Management">Read the SEBoK article ↗</a></article>
       </div>
