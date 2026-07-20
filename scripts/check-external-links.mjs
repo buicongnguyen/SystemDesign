@@ -33,13 +33,14 @@ async function check(url) {
       const status = await request(url);
       if (status >= 200 && status < 400) return { url, status, result: "ok" };
       if (toleratedStatuses.has(status)) return { url, status, result: "inconclusive" };
-      if (status < 500 || attempt === 2) return { url, status, result: "failed" };
+      if (status < 500) return { url, status, result: "failed" };
+      if (attempt === 2) return { url, status, result: "inconclusive" };
     } catch (error) {
       lastError = error;
-      if (attempt === 2) return { url, error: error.message, result: "failed" };
+      if (attempt === 2) return { url, error: error.message, result: "inconclusive" };
     }
   }
-  return { url, error: lastError?.message || "unknown error", result: "failed" };
+  return { url, error: lastError?.message || "unknown error", result: "inconclusive" };
 }
 
 const results = [];
