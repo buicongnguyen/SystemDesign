@@ -11,21 +11,21 @@
   <meta property="og:title" content="Hardware &amp; Computer Systems — System Design Atlas">
   <meta property="og:description" content="A visual interview guide to workload analysis, memory, compute, interconnect, PPA, thermal limits, reliability, and bottlenecks.">
   <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/hardware.html">
-  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-hardware.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="System Design Atlas with five visual interview tracks">
+  <meta property="og:image:alt" content="Hardware systems: count the bytes and meet the physical budget">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
-  <meta name="twitter:image:alt" content="System Design Atlas with five visual interview tracks">
+  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-hardware.png">
+  <meta name="twitter:image:alt" content="Hardware systems: count the bytes and meet the physical budget">
   <title>Hardware &amp; Computer Systems · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/hardware.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260725a"></script>
-  <link rel="stylesheet" href="styles.css?v=20260725a">
-  <script src="app.js?v=20260725a" defer></script>
-  <link rel="stylesheet" href="hardware.css?v=20260725a">
+  <script src="theme-init.js?v=20260726b"></script>
+  <link rel="stylesheet" href="styles.css?v=20260726b">
+  <script src="app.js?v=20260726b" defer></script>
+  <link rel="stylesheet" href="hardware.css?v=20260726b">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -175,13 +175,14 @@ while not all_satisfied(<b>measurements, limits</b>):
         </div>
       </div>
 
-      <article class="hw-roofline" aria-label="Simplified Roofline performance model">
+      <article class="hw-roofline" aria-label="Simplified Roofline performance model" aria-describedby="roofline-description">
         <div class="hw-roofline-copy">
           <span class="hw-inline-label">Roofline reasoning</span>
           <h3>Ask whether the kernel is byte-bound or compute-bound</h3>
           <p>Arithmetic intensity is useful operations divided by bytes moved at the memory boundary being analyzed. The attainable rate is bounded by the lower of compute peak and bandwidth × intensity.</p>
           <dl><dt>Left slope</dt><dd>Increase reuse, coalesce traffic, compress, or add bandwidth.</dd><dt>Flat roof</dt><dd>Improve utilization, vectorization, mapping, frequency, or compute resources.</dd><dt>Below both</dt><dd>Look for serialization, imbalance, instruction overhead, synchronization, or tiny problem sizes.</dd></dl>
         </div>
+        <p id="roofline-description" class="sr-only">The cyan bandwidth slope rises from the lower left to a knee where it meets the flat amber compute ceiling. The streaming-kernel point lies below the slope in the memory-bound region; the reused-tile point lies below the flat ceiling after the knee.</p>
         <div class="hw-roofline-plot" aria-hidden="true">
           <div class="hw-roofline-bandwidth"></div>
           <div class="hw-roofline-ceiling"></div>
@@ -261,7 +262,7 @@ while not all_satisfied(<b>measurements, limits</b>):
       </ol>
       <div class="hw-resilience-grid">
         <article><span>Power integrity</span><strong>Design the transient path</strong><p>Regulator response, decoupling, package/board impedance, rail sequencing, brownout detection, and safe reset.</p></article>
-        <article><span>Thermal</span><strong>Model sustained—not burst—load</strong><p>Thermal resistance/capacitance, hotspots, sensors, cooling curve, ambient, enclosure, and fan failure.</p></article>
+        <article><span>Thermal</span><strong>Model sustained and transient load—not a short benchmark alone</strong><p>Use steady-state resistance for equilibrium and time-dependent thermal impedance/capacitance for pulse width and duty cycle; include hotspots, sensors, cooling curve, ambient, enclosure, and fan failure.</p></article>
         <article><span>Data integrity</span><strong>Detect, contain, recover</strong><p>ECC/parity, CRC, replay, memory scrubbing, poison propagation, watchdogs, and checkpoint/restart.</p></article>
         <article><span>Lifecycle</span><strong>Design for variation and aging</strong><p>Process corners, voltage/temperature margin, wear, endurance, component derating, diagnostics, and field update.</p></article>
       </div>
@@ -370,7 +371,7 @@ while not all_satisfied(<b>measurements, limits</b>):
         <article class="workbench-card"><span>Physical</span><h3>Close PPA and RAS</h3><p>Show rail and thermal budgets, voltage/frequency corners, ECC/parity coverage, poison and retry behavior, watchdog/reset hierarchy, diagnostic visibility, aging assumptions, and degraded service.</p></article>
       </div>
 
-      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1145/1498765.1498785">Original Roofline paper ↗</a><a href="https://dl.acm.org/doi/10.1145/1465482.1465560">Amdahl’s Law paper ↗</a><a href="https://www.intel.com/content/www/us/en/docs/vtune-profiler/cookbook/2025-4/top-down-microarchitecture-analysis-method.html">Intel Top-Down analysis ↗</a><a href="https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/IHI0022H_amba_axi_protocol_spec.pdf">Arm AXI/ACE specification ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA mapping ↗</a><a href="https://docs.kernel.org/driver-api/dma-buf.html">Linux dma-buf + fences ↗</a><a href="https://docs.amd.com/r/en-US/am011-versal-acap-trm/HBM-Interface">AMD HBM interface ↗</a><a href="https://www.ti.com/lit/an/spra953c/spra953c.pdf">TI semiconductor thermal metrics ↗</a></div>
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1145/1498765.1498785">Original Roofline paper ↗</a><a href="https://dl.acm.org/doi/10.1145/1465482.1465560">Amdahl’s Law paper ↗</a><a href="https://www.intel.com/content/www/us/en/docs/vtune-profiler/cookbook/2025-4/top-down-microarchitecture-analysis-method.html">Intel Top-Down analysis ↗</a><a href="https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/IHI0022H_amba_axi_protocol_spec.pdf">Arm AXI/ACE specification ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA mapping ↗</a><a href="https://docs.kernel.org/driver-api/dma-buf.html">Linux dma-buf + fences ↗</a><a href="https://docs.amd.com/r/en-US/am011-versal-acap-trm/HBM-Interface">AMD HBM interface ↗</a><a href="https://www.ti.com/lit/an/spra953c/spra953c.pdf">TI semiconductor thermal metrics ↗</a><a href="https://www.infineon.com/assets/row/public/documents/24/42/infineon-ds-explanation-update-applicationnotes-en.pdf">Infineon transient thermal impedance ↗</a></div>
     </section>
 
     <section class="section" id="practice">

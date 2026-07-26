@@ -106,15 +106,35 @@ const droneEnergy = (() => {
   });
   const expectedUseWh = inputs.cruiseWh + inputs.takeoffLandingWh + inputs.avionicsPayloadWh;
   const allowedConsumptionWh = expectedUseWh + inputs.contingencyWh + inputs.analysisGrowthWh;
-  const indicatedReserve = inputs.acceptanceReserveFraction + inputs.oneSidedGuardBandFraction;
-  const usableCapacityWh = allowedConsumptionWh / (1 - indicatedReserve);
+  const decisionThresholdReserve = inputs.acceptanceReserveFraction + inputs.oneSidedGuardBandFraction;
+  const usableCapacityWh = allowedConsumptionWh / (1 - decisionThresholdReserve);
   return Object.freeze({
     inputs,
     expectedUseWh,
     allowedConsumptionWh,
-    indicatedReserve,
+    decisionThresholdReserve,
     usableCapacityWh,
     remainingWh: usableCapacityWh - allowedConsumptionWh
+  });
+})();
+
+const statisticalEvidence = (() => {
+  const inputs = Object.freeze({
+    alpha: 0.05,
+    targetSuccess: 0.99,
+    planningProportion: 0.99,
+    halfWidth: 0.01,
+    z95: 1.96
+  });
+  const zeroFailureSample = Math.ceil(Math.log(inputs.alpha) / Math.log(inputs.targetSuccess));
+  return Object.freeze({
+    inputs,
+    approximatePrecisionSample: Math.ceil(
+      inputs.z95 ** 2 * inputs.planningProportion * (1 - inputs.planningProportion) / inputs.halfWidth ** 2
+    ),
+    zeroFailureSample,
+    zeroFailureLowerBound: inputs.alpha ** (1 / zeroFailureSample),
+    passProbabilityAtTarget: inputs.targetSuccess ** zeroFailureSample
   });
 })();
 
@@ -182,6 +202,37 @@ const embeddedEnergy = (() => {
     inputs,
     milliwattHoursPerDay: inputs.batteryWh / inputs.targetDays * 1000,
     averageMilliwatts: inputs.batteryWh / (inputs.targetDays * 24) * 1000
+  });
+})();
+
+const controlLoop = (() => {
+  const inputs = Object.freeze({
+    sampleRateHz: 500,
+    crossoverHz: 20,
+    pathMs: 1.30,
+    deadlineMs: 1.50,
+    nominalPhaseMarginDegrees: 60,
+    targetPhaseMarginDegrees: 45,
+    releaseJitterMs: 0.15,
+    apertureJitterMs: 0.02
+  });
+  const samplePeriodMs = 1000 / inputs.sampleRateHz;
+  const pathPhaseDegrees = 360 * inputs.crossoverHz * inputs.pathMs / 1000;
+  const zohPhaseDegrees = 360 * inputs.crossoverHz * (samplePeriodMs / 2) / 1000;
+  return Object.freeze({
+    inputs,
+    samplePeriodMs,
+    samplesPerCrossoverPeriod: inputs.sampleRateHz / inputs.crossoverHz,
+    deadlineSlackMs: inputs.deadlineMs - inputs.pathMs,
+    pathPhaseDegrees,
+    zohPhaseDegrees,
+    screeningPhaseMarginDegrees: inputs.nominalPhaseMarginDegrees - pathPhaseDegrees - zohPhaseDegrees,
+    releaseJitterPhaseDegrees: 360 * inputs.crossoverHz * inputs.releaseJitterMs / 1000,
+    apertureJitterPhaseDegrees: 360 * inputs.crossoverHz * inputs.apertureJitterMs / 1000,
+    phasePenaltyAt15HzDegrees: 360 * 15 * (inputs.pathMs + samplePeriodMs / 2) / 1000,
+    doubledReleasePathMs: inputs.pathMs + inputs.releaseJitterMs,
+    increasedFilterPathMs: inputs.pathMs + 0.30,
+    phasePenaltyAt35HzDegrees: 360 * 35 * (inputs.pathMs + samplePeriodMs / 2) / 1000
   });
 })();
 
@@ -266,9 +317,11 @@ export const reviewedCalculations = Object.freeze({
   flashSale,
   tradeStudy,
   droneEnergy,
+  statisticalEvidence,
   hardwareSizing,
   embeddedTiming,
   embeddedEnergy,
+  controlLoop,
   acimMapping
 });
 
@@ -403,14 +456,39 @@ export function assertReviewedCalculations(documents, backendJs) {
   requireTokens("systems-engineering.html", documents["systems-engineering.html"], [
     "expected use is 570 Wh = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload",
     "Add 70 Wh contingency consumption and 80 Wh analysis/growth allowance",
-    "20% acceptance lower bound",
-    "2-percentage-point combined BMS-estimator/test tolerance",
-    "one-sided acceptance guard band",
+    "physical requirement is R<sub>ref</sub>",
+    "two-percentage-point one-sided guard band",
+    "R_result − 2 percentage points ≥ 20%",
     "720 ÷ (1 − 0.22) = 923.1 Wh",
-    "203.1 Wh remains",
+    "203.1 Wh physically remains",
     "E<sub>discharged,ref</sub>",
-    "E<sub>remaining,ref</sub> = C<sub>u,ref</sub> − E<sub>discharged,ref</sub>",
+    "E<sub>remaining,ref</sub> = E<sub>initial,ref</sub> − E<sub>discharged,ref</sub>",
+    "E<sub>initial,ref</sub> = C<sub>u,ref</sub>",
+    "BMS R<sub>indicated</sub>",
     "integrate signed net battery power"
+  ]);
+
+  if (statisticalEvidence.approximatePrecisionSample !== 381
+    || statisticalEvidence.zeroFailureSample !== 299
+    || !near(statisticalEvidence.zeroFailureLowerBound, 0.9900308532, 1e-9)
+    || !near(statisticalEvidence.passProbabilityAtTarget, 0.0495362566, 1e-9)) {
+    throw new Error("Internal statistical-evidence calculation failed");
+  }
+  requireCalculationData("systems-engineering.html", "statistical-evidence", {
+    alpha: 0.05,
+    "target-success": 0.99,
+    "planning-proportion": 0.99,
+    "half-width": 0.01,
+    "zero-failure-sample": 299
+  });
+  requireTokens("systems-engineering.html", documents["systems-engineering.html"], [
+    "n ≈ z² × p* × (1 − p*) ÷ E²",
+    "n ≈ 381",
+    "L = &alpha;^(1/n)",
+    "n = ceil[ln(&alpha;) ÷ ln(R₀)]",
+    "n = 299 independent successes",
+    "One-sided exact lower bound = 99.003%",
+    "0.99<sup>299</sup> ≈ 4.95%"
   ]);
 
   if (hardwareSizing.cameraFramesPerSecond !== 120 || !near(hardwareSizing.payloadMegabytesPerSecond, 373.248) || !near(hardwareSizing.transferEquivalentGigabytesPerSecond, 1.492992) || hardwareSizing.sustainedTops !== 3.6 || hardwareSizing.minimumPeakTopsAtMeasuredUtilization !== 7.2 || !near(hardwareSizing.acceleratorMillijoulesPerCameraFrame, 41.6666666667, 1e-9)) {
@@ -470,6 +548,40 @@ export function assertReviewedCalculations(documents, backendJs) {
     throw new Error("Internal embedded-energy calculation failed");
   }
   requireTokens("embedded.html", documents["embedded.html"], ["8 Wh", "180 days", "44.4 mWh/day", "1.85 mW average"]);
+
+  if (controlLoop.samplePeriodMs !== 2
+    || controlLoop.samplesPerCrossoverPeriod !== 25
+    || !near(controlLoop.deadlineSlackMs, 0.20)
+    || !near(controlLoop.pathPhaseDegrees, 9.36)
+    || !near(controlLoop.zohPhaseDegrees, 7.20)
+    || !near(controlLoop.screeningPhaseMarginDegrees, 43.44)
+    || !near(controlLoop.releaseJitterPhaseDegrees, 1.08)
+    || !near(controlLoop.apertureJitterPhaseDegrees, 0.144)
+    || !near(controlLoop.phasePenaltyAt15HzDegrees, 12.42)
+    || !near(controlLoop.doubledReleasePathMs, 1.45)
+    || !near(controlLoop.increasedFilterPathMs, 1.60)
+    || !near(controlLoop.phasePenaltyAt35HzDegrees, 28.98)) {
+    throw new Error("Internal embedded control-loop screening calculation failed");
+  }
+  requireCalculationData("embedded.html", "control-loop", {
+    "sample-rate-hz": 500,
+    "crossover-hz": 20,
+    "path-ms": "1.30",
+    "deadline-ms": "1.50",
+    "nominal-phase-margin-deg": 60,
+    "target-phase-margin-deg": 45
+  });
+  requireTokens("embedded.html", documents["embedded.html"], [
+    "T<sub>s</sub> = 1 ÷ 500 Hz = 2.00 ms",
+    "That is 25 samples per 20 Hz crossover period",
+    "φ<sub>path</sub> ≈ −360 f<sub>c</sub> τ<sub>path</sub> = −9.36°",
+    "φ<sub>ZOH</sub> ≈ −360 f<sub>c</sub>(T<sub>s</sub> ÷ 2) = −7.20°",
+    "PM ≈ 60° − 9.36° − 7.20° = 43.44°",
+    "0.20 ms slack",
+    "360 × 20 Hz × 0.00015 s = 1.08°",
+    "47.58° remains",
+    "about 29.0°"
+  ]);
 
   if (acimMapping.steadyArrivalPerSecond !== 80 || acimMapping.burstArrivalPerSecond !== 110 || acimMapping.logicalColumns !== 64 || acimMapping.kSplits !== 2 || acimMapping.mSplits !== 8 || acimMapping.weightSlices !== 2 || acimMapping.placements !== 32 || acimMapping.waves !== 2 || acimMapping.activationPhases !== 4 || acimMapping.minimumSlots !== 8 || acimMapping.macsPerVector !== 262_144 || acimMapping.geometricUtilization !== 1 || acimMapping.burstAt80 !== 60 || acimMapping.burstAt100 !== 20 || acimMapping.peakBurstAt80 !== 60 || acimMapping.peakBurstAt100 !== 20 || acimMapping.drainAt100Seconds !== 1) {
     throw new Error("Internal ACiM mapping or backlog calculation failed");

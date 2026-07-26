@@ -4,6 +4,7 @@ import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 import {
   createPinnedLookup,
+  privateAddress,
   requestExternalLink
 } from "../scripts/external-link-core.mjs";
 import {
@@ -12,6 +13,10 @@ import {
   assertRegularNonSymlinkFile,
   resolveContainedPath
 } from "../scripts/path-safety.mjs";
+import {
+  matchesSourceRequirement,
+  parseSourceRequirement
+} from "../scripts/source-provenance.mjs";
 
 const publicAddress = "93.184.216.34";
 const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null;
@@ -135,9 +140,32 @@ logicTest("pinned lookup returns only pre-vetted addresses and refuses another h
   }), /unexpected hostname/);
 });
 
+logicTest("public-address guard rejects special IPv6 routes and permits global unicast", () => {
+  for (const address of [
+    "::",
+    "::1",
+    "::192.168.1.10",
+    "::ffff:93.184.216.34",
+    "64:ff9b::192.168.1.10",
+    "100::1",
+    "2001:2::1",
+    "2001:db8::1",
+    "2002:c0a8:0101::1",
+    "3fff::1",
+    "fc00::1",
+    "fe80::1",
+    "ff02::1"
+  ]) {
+    assert.equal(privateAddress(address), true, `${address} must not be treated as public`);
+  }
+  for (const address of ["2001:4860:4860::8888", "2606:4700:4700::1111"]) {
+    assert.equal(privateAddress(address), false, `${address} must remain valid global unicast`);
+  }
+});
+
 logicTest("path containment rejects absolute and escaping entries", () => {
   const root = resolveContainedPath(process.cwd(), "sandbox", "Sandbox");
-  assert.equal(resolveContainedPath(root, "assets/card.png", "Asset"), resolveContainedPath(root, "assets/card.png", "Asset"));
+  assert.equal(resolveContainedPath(root, "assets/card.png", "Asset"), resolve(root, "assets/card.png"));
   assert.throws(() => resolveContainedPath(root, "../escape.txt", "Asset"), /escapes its allowed root/);
   assert.throws(() => resolveContainedPath(root, process.cwd(), "Asset"), /must be relative/);
   assert.throws(() => assertInside(root, resolveContainedPath(process.cwd(), "elsewhere", "Elsewhere"), "Candidate"), /escapes its allowed root/);
@@ -151,4 +179,18 @@ logicTest("path guards reject symbolic links and non-regular files", () => {
   assert.throws(() => assertRegularNonSymlinkFile(symbolicFile, "Source"), /regular non-symlink file/);
   assert.throws(() => assertRegularNonSymlinkFile(directory, "Source"), /regular non-symlink file/);
   assert.doesNotThrow(() => assertRegularNonSymlinkFile(regularFile, "Source"));
+});
+
+logicTest("source provenance requires the authoritative host and path prefix", () => {
+  assert.equal(
+    matchesSourceRequirement(
+      "https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/",
+      "nasa.gov/reference/appendix-c-how-to-write-a-good-requirement"
+    ),
+    true
+  );
+  assert.equal(matchesSourceRequirement("https://attacker.example/nasa.gov/reference/appendix-c", "nasa.gov"), false);
+  assert.equal(matchesSourceRequirement("https://nasa.gov.attacker.example/reference/appendix-c", "nasa.gov"), false);
+  assert.equal(matchesSourceRequirement("http://nasa.gov/reference/appendix-c", "nasa.gov"), false);
+  assert.throws(() => parseSourceRequirement("appendix-c-how-to-write-a-good-requirement"), /explicit hostname/);
 });

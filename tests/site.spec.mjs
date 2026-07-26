@@ -18,12 +18,12 @@ test.afterAll(async () => {
 });
 
 const pages = [
-  { path: "/index.html", current: null },
-  { path: "/backend.html", current: "Backend" },
-  { path: "/systems-engineering.html", current: "Systems engineering" },
-  { path: "/hardware.html", current: "Hardware" },
-  { path: "/embedded.html", current: "Embedded" },
-  { path: "/npu-acim.html", current: "NPU + ACiM" }
+  { path: "/index.html", current: null, social: "social-atlas.png" },
+  { path: "/backend.html", current: "Backend", social: "social-backend.png" },
+  { path: "/systems-engineering.html", current: "Systems engineering", social: "social-systems.png" },
+  { path: "/hardware.html", current: "Hardware", social: "social-hardware.png" },
+  { path: "/embedded.html", current: "Embedded", social: "social-embedded.png" },
+  { path: "/npu-acim.html", current: "NPU + ACiM", social: "social-npu-acim.png" }
 ];
 
 for (const entry of pages) {
@@ -45,6 +45,8 @@ for (const entry of pages) {
     await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
     await expect(page.locator('meta[property="og:description"]')).toHaveCount(1);
     await expect(page.locator('meta[property="og:image"]')).toHaveCount(1);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", new RegExp(`/assets/${entry.social.replace(".", "\\.")}$`));
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", new RegExp(`/assets/${entry.social.replace(".", "\\.")}$`));
 
     const tableContract = await page.locator("table").evaluateAll(tables => ({
       captionsMissing: tables.filter(table => !table.querySelector("caption")).length,
@@ -52,10 +54,27 @@ for (const entry of pages) {
     }));
     expect(tableContract).toEqual({ captionsMissing: 0, scopesMissing: 0 });
 
-    await page.setViewportSize({ width: 390, height: 844 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    for (const width of [390, 320, 760, 761, 900, 901]) {
+      await page.setViewportSize({ width, height: 844 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    }
     await page.setViewportSize({ width: 320, height: 844 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    const clippedCaptions = await page.locator("table caption").evaluateAll(captions => captions.filter(caption => {
+      const region = caption.closest('[role="region"]');
+      if (!region) return false;
+      const captionBox = caption.getBoundingClientRect();
+      const regionBox = region.getBoundingClientRect();
+      return captionBox.left < regionBox.left - 1
+        || captionBox.right > regionBox.right + 1
+        || captionBox.width > region.clientWidth + 1;
+    }).length);
+    expect(clippedCaptions).toBe(0);
+
+    const compactTargets = await page.locator(".site-header nav a, footer > a").evaluateAll(targets => targets.map(target => {
+      const box = target.getBoundingClientRect();
+      return { height: box.height, width: box.width };
+    }));
+    expect(compactTargets.every(target => target.height >= 24 && target.width >= 24)).toBeTruthy();
 
     if (entry.current) {
       const current = page.getByRole("link", { name: entry.current, exact: true });
@@ -134,9 +153,152 @@ test("ACiM double-buffer schedule exposes table semantics", async ({ page }) => 
   await expect(schedule.getByRole("rowheader")).toHaveCount(4);
 });
 
+test("ACiM sticky feedback rail clears both navigation layers", async ({ page }) => {
+  await page.goto(`${origin}/npu-acim.html`);
+  for (const width of [761, 900, 901, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    const railDocumentTop = await page.locator(".acim-feedback-rail").evaluate(rail => rail.getBoundingClientRect().top + window.scrollY);
+    await page.evaluate(top => window.scrollTo({ top: top + 160, behavior: "instant" }), railDocumentTop);
+    await expect.poll(() => page.evaluate(() => {
+      const header = document.querySelector(".site-header");
+      const topics = document.querySelector(".page-nav, .se-page-nav");
+      const rail = document.querySelector(".acim-feedback-rail");
+      const blockingBottom = Math.max(header.getBoundingClientRect().bottom, topics.getBoundingClientRect().bottom);
+      return getComputedStyle(rail).position === "sticky"
+        && rail.getBoundingClientRect().top >= blockingBottom - 1;
+    })).toBeTruthy();
+  }
+});
+
+test("Roofline bandwidth slope meets the compute ceiling at one knee", async ({ page }) => {
+  await page.goto(`${origin}/hardware.html`);
+  for (const width of [520, 1000, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    const knee = await page.evaluate(() => {
+      const bandwidth = document.querySelector(".hw-roofline-bandwidth").getBoundingClientRect();
+      const ceiling = document.querySelector(".hw-roofline-ceiling").getBoundingClientRect();
+      return {
+        horizontalGap: Math.abs(bandwidth.right - ceiling.left),
+        verticalGap: Math.abs(bandwidth.top - ceiling.top)
+      };
+    });
+    expect(knee.horizontalGap).toBeLessThanOrEqual(1);
+    expect(knee.verticalGap).toBeLessThanOrEqual(1);
+  }
+  const labelSizes = await page.locator(".hw-roofline-plot").evaluate(plot => {
+    const targets = [plot, ...plot.querySelectorAll(".hw-roofline-label, .hw-roofline-dot small")];
+    const pseudoSizes = [
+      Number.parseFloat(getComputedStyle(plot, "::before").fontSize),
+      Number.parseFloat(getComputedStyle(plot, "::after").fontSize)
+    ];
+    return [...targets.slice(1).map(target => Number.parseFloat(getComputedStyle(target).fontSize)), ...pseudoSizes];
+  });
+  expect(labelSizes.every(size => size >= 13)).toBeTruthy();
+});
+
+test("hash navigation marks and reveals the active interview topic", async ({ page }) => {
+  for (const entry of pages.filter(pageEntry => pageEntry.current)) {
+    await page.setViewportSize({ width: 320, height: 844 });
+    await page.goto(`${origin}${entry.path}#practice`);
+    const topicNav = page.locator(".page-nav, .se-page-nav");
+    const practice = topicNav.locator('a[href="#practice"]');
+    await expect(practice).toHaveAttribute("aria-current", "location");
+    await expect.poll(() => practice.evaluate(link => {
+      const navBox = link.closest("nav").getBoundingClientRect();
+      const linkBox = link.getBoundingClientRect();
+      return linkBox.left >= navBox.left - 1 && linkBox.right <= navBox.right + 1;
+    })).toBeTruthy();
+  }
+});
+
+test("embedded interrupt and DMA flow preserves numbered direction on mobile", async ({ page }) => {
+  await page.goto(`${origin}/embedded.html#interrupts`);
+  for (const width of [320, 520, 760]) {
+    await page.setViewportSize({ width, height: 844 });
+    const flow = page.locator(".em-irq-flow");
+    await expect(flow).toHaveCSS("grid-template-columns", /.+/);
+    const sequence = await flow.locator("li").evaluateAll(items => items.map(item => ({
+      step: item.dataset.step,
+      number: getComputedStyle(item, "::before").content,
+      arrow: getComputedStyle(item, "::after").content
+    })));
+    expect(sequence.map(item => item.step)).toEqual(["01", "02", "03", "04", "05", "06"]);
+    expect(sequence.map(item => item.number)).toEqual(['"01"', '"02"', '"03"', '"04"', '"05"', '"06"']);
+    expect(sequence.slice(0, -1).every(item => item.arrow === '"↓"')).toBeTruthy();
+  }
+});
+
+test("shared interview mode times, hides coaching, tracks progress, and scores a response", async ({ page }) => {
+  await page.goto(`${origin}/backend.html#practice`);
+  const trigger = page.getByRole("button", { name: /Interview mode/ });
+  await trigger.click();
+
+  const panel = page.locator("#interview-mode-panel");
+  await expect(panel).toBeVisible();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("body")).toHaveClass(/interview-coaching-hidden/);
+  await expect(page.locator("#practice details").first()).toBeHidden();
+  await expect(panel.locator(".interview-timer strong")).toHaveText("45:00");
+
+  await panel.getByRole("button", { name: "Start timer" }).click();
+  await expect.poll(async () => panel.locator(".interview-timer strong").textContent()).not.toBe("45:00");
+  await panel.getByRole("button", { name: "Pause timer" }).click();
+
+  await panel.getByLabel("Hide coaching notes").uncheck();
+  await expect(page.locator("#practice details").first()).toBeVisible();
+  await panel.getByLabel("Clarify").check();
+  await panel.getByText("Self-score the answer").click();
+  await panel.getByLabel("Scope and requirements score").selectOption("2");
+  await panel.getByLabel("Quantitative reasoning score").selectOption("2");
+  await expect(panel.locator(".interview-rubric output")).toContainText("4/10");
+
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await panel.getByRole("button", { name: "End session" }).click();
+  await expect(page.locator("body")).not.toHaveClass(/interview-session-active/);
+});
+
+test("dense diagrams expand, zoom, and close from the keyboard", async ({ page }) => {
+  await page.goto(`${origin}/hardware.html#memory`);
+  const diagram = page.locator(".hw-roofline");
+  const expand = diagram.getByRole("button", { name: "Expand Simplified Roofline performance model" });
+  await expand.click();
+  await expect(diagram).toHaveClass(/is-expanded/);
+  await expect(page.locator("body")).toHaveClass(/diagram-expanded/);
+
+  await diagram.getByRole("button", { name: "Zoom in diagram" }).click();
+  await expect(diagram).toHaveAttribute("data-zoom-level", "1.15");
+  await page.keyboard.press("Escape");
+  await expect(diagram).not.toHaveClass(/is-expanded/);
+  await expect(expand).toBeFocused();
+});
+
+test("wide tables expose directional edge cues as users pan", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto(`${origin}/npu-acim.html#bottlenecks`);
+  const wrapper = page.locator(".acim-table-wrap");
+  await expect(wrapper).toHaveAttribute("data-horizontal-scroll", "available");
+  await expect(wrapper).toHaveClass(/can-scroll-right/);
+
+  await wrapper.evaluate(element => {
+    element.scrollLeft = element.scrollWidth;
+  });
+  await expect(wrapper).toHaveClass(/can-scroll-left/);
+  await expect(wrapper).not.toHaveClass(/can-scroll-right/);
+});
+
 test("preview server exposes only the deployable allowlist", async ({ request }) => {
   const publicResponse = await request.get(`${origin}/index.html`);
   expect(publicResponse.status()).toBe(200);
+
+  for (const { social } of pages) {
+    const socialResponse = await request.get(`${origin}/assets/${social}`);
+    expect(socialResponse.status()).toBe(200);
+    expect(socialResponse.headers()["content-type"]).toBe("image/png");
+  }
 
   const repositoryResponse = await request.get(`${origin}/package.json`);
   expect(repositoryResponse.status()).toBe(404);

@@ -2,6 +2,7 @@ import { access, lstat, readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { assertReviewedCalculations } from "./reviewed-calculations.mjs";
 import { pages, publicFiles } from "./site-files.mjs";
+import { matchesSourceRequirement } from "./source-provenance.mjs";
 
 const required = [
   ...publicFiles,
@@ -15,7 +16,9 @@ const required = [
   "scripts/build-site.mjs",
   "scripts/check-external-links.mjs",
   "scripts/external-link-core.mjs",
+  "scripts/generate-social-cards.mjs",
   "scripts/path-safety.mjs",
+  "scripts/source-provenance.mjs",
   "scripts/reviewed-calculations.mjs",
   "scripts/serve.mjs",
   ".github/workflows/pages.yml",
@@ -27,6 +30,8 @@ await Promise.all(required.map(file => access(file)));
 const entries = await Promise.all(pages.map(async file => [file, await readFile(file, "utf8")]));
 const documents = Object.fromEntries(entries);
 const css = await readFile("styles.css", "utf8");
+const hardwareCss = await readFile("hardware.css", "utf8");
+const npuAcimCss = await readFile("npu-acim.css", "utf8");
 const js = await readFile("app.js", "utf8");
 const backendJs = await readFile("backend.js", "utf8");
 const serveSource = await readFile("scripts/serve.mjs", "utf8");
@@ -34,12 +39,25 @@ const buildSource = await readFile("scripts/build-site.mjs", "utf8");
 const linkCheckSource = await readFile("scripts/check-external-links.mjs", "utf8");
 const externalLinkCoreSource = await readFile("scripts/external-link-core.mjs", "utf8");
 const pathSafetySource = await readFile("scripts/path-safety.mjs", "utf8");
+const sourceProvenanceSource = await readFile("scripts/source-provenance.mjs", "utf8");
+const socialGeneratorSource = await readFile("scripts/generate-social-cards.mjs", "utf8");
 const browserTestSource = await readFile("tests/site.spec.mjs", "utf8");
 const logicTestSource = await readFile("tests/logic.spec.mjs", "utf8");
 const workflow = await readFile(".github/workflows/pages.yml", "utf8");
 const externalLinkWorkflow = await readFile(".github/workflows/external-links.yml", "utf8");
 const readme = await readFile("README.md", "utf8");
 const socialCard = await readFile("assets/social-card.png");
+const socialPreviewByPage = Object.freeze({
+  "index.html": "social-atlas.png",
+  "backend.html": "social-backend.png",
+  "systems-engineering.html": "social-systems.png",
+  "hardware.html": "social-hardware.png",
+  "embedded.html": "social-embedded.png",
+  "npu-acim.html": "social-npu-acim.png"
+});
+const socialPreviewBuffers = Object.fromEntries(await Promise.all(
+  Object.values(socialPreviewByPage).map(async file => [file, await readFile(`assets/${file}`)])
+));
 const packageData = JSON.parse(await readFile("package.json", "utf8"));
 const canonicalAssetVersion = documents["index.html"].match(/styles\.css\?v=([^"']+)/)?.[1];
 
@@ -133,19 +151,28 @@ const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
 if (!socialCard.subarray(0, 8).equals(pngSignature) || socialCard.readUInt32BE(16) !== 1200 || socialCard.readUInt32BE(20) !== 630) {
   throw new Error("assets/social-card.png must be a valid 1200 × 630 PNG");
 }
+for (const [file, card] of Object.entries(socialPreviewBuffers)) {
+  if (!card.subarray(0, 8).equals(pngSignature) || card.readUInt32BE(16) !== 1200 || card.readUInt32BE(20) !== 630) {
+    throw new Error(`assets/${file} must be a valid 1200 × 630 PNG`);
+  }
+}
+if (new Set(Object.values(socialPreviewByPage)).size !== pages.length) {
+  throw new Error("Each route must use a distinct social-preview image");
+}
 
 for (const [file, html] of entries) {
   if (!html.startsWith("<!DOCTYPE html>")) throw new Error(`${file}: missing canonical doctype`);
   for (const token of ['id="main"', 'class="site-header"', 'id="theme-toggle"', 'styles.css', 'app.js']) {
     if (!html.includes(token)) throw new Error(`${file}: missing shared element ${token}`);
   }
+  const socialPreview = socialPreviewByPage[file];
   for (const token of [
-    'property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png"',
+    `property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/${socialPreview}"`,
     'property="og:image:type" content="image/png"',
     'property="og:image:width" content="1200"',
     'property="og:image:height" content="630"',
     'property="og:image:alt"',
-    'name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png"',
+    `name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/${socialPreview}"`,
     'name="twitter:image:alt"'
   ]) {
     if (!html.includes(token)) throw new Error(`${file}: social-preview metadata is missing ${token}`);
@@ -234,11 +261,11 @@ for (const [file, html] of entries) {
 }
 
 const pageChecks = {
-  "index.html": ["tracks", "shared-core", "selector", "practice", "track-grid", "atlas-loop"],
+  "index.html": ["tracks", "shared-core", "selector", "cross-track-case", "practice", "track-grid", "atlas-loop", "offline-first autonomous inspection drone", "Cross-track artifact handoff graph"],
   "backend.html": ["request", "scale", "decisions", "thinking-flow", "workbench", "practice", "bottleneck-catalog", "pattern-handbook", "Make correctness local", "failure contract"],
-  "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof"],
+  "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof", "statistical evidence", "Clopper–Pearson", "299 successes / 299 trials"],
   "hardware.html": ["thinking", "metrics", "constraints", "memory", "compute", "fabric", "physical", "bottlenecks", "sizing-workbench", "practice", "Edge AI", "recovery contract"],
-  "embedded.html": ["practice", "sensor", "real-time", "timing-workbench", "Hardware-in-the-loop", "task model", "transition and recovery"],
+  "embedded.html": ["practice", "sensor", "real-time", "timing-workbench", "Hardware-in-the-loop", "task model", "transition and recovery", "control-case", "500 Hz", "screening calculation, not a stability proof"],
   "npu-acim.html": ["boundary", "stack", "decision", "mapping", "artifacts", "runtime", "feedback", "bottlenecks", "compiler-workbench", "practice", "Analog Compute-in-Memory", "Technology scope", "storage type, volatility/retention", "analog signal domain", "Four IR", "health generation"]
 };
 for (const [file, checks] of Object.entries(pageChecks)) {
@@ -248,21 +275,18 @@ for (const [file, checks] of Object.entries(pageChecks)) {
 }
 
 const requiredSources = {
-  "backend.html": ["donnemartin/system-design-primer", "ashishps1/awesome-system-design-resources", "oreilly.com", "sre.google", "rfc-editor.org/rfc/rfc9110", "rfc-editor.org/rfc/rfc9111", "kafka.apache.org/43/design", "prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox", "postgresql.org/docs/current/indexes-multicolumn", "people.csail.mit.edu/karger", "research.google/pubs/the-chubby"],
-  "systems-engineering.html": ["nasa.gov", "incose.org", "sebokwiki.org", "iso.org/standard/81702", "appendix-c-how-to-write-a-good-requirement", "6-5-configuration-management", "ntrs.nasa.gov/api/citations/20170007239", "nodis3.gsfc.nasa.gov/displaydir.cfm", "nasa.gov/wp-content/uploads/2023/08/nasa-risk-mgmt-handbook"],
-  "hardware.html": ["lbl.gov", "developer.arm.com", "docs.kernel.org", "riscv.org", "doi.org/10.1145/1498765.1498785", "intel.com/content/www/us/en/docs/vtune-profiler", "docs.nvidia.com/cuda/cuda-programming-guide", "gstreamer.freedesktop.org/documentation/coreelements/tee", "docs.nvidia.com/metropolis/deepstream"],
-  "embedded.html": ["doi.org/10.1145/321738.321743", "doi.org/10.1093/comjnl/29.5.390", "link.springer.com/article/10.1007/BF01088593", "docs.zephyrproject.org", "freertos.org", "docs.kernel.org/core-api/dma-api-howto", "docs.mcuboot.com", "ti.com/lit/an/slva740a", "mipi_i3c-and-i3c-basic_app-note-system-integrator"],
+  "backend.html": ["github.com/donnemartin/system-design-primer", "github.com/ashishps1/awesome-system-design-resources", "oreilly.com", "sre.google", "rfc-editor.org/rfc/rfc9110", "rfc-editor.org/rfc/rfc9111", "kafka.apache.org/43/design", "docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox", "postgresql.org/docs/current/indexes-multicolumn", "people.csail.mit.edu/karger", "research.google/pubs/the-chubby"],
+  "systems-engineering.html": ["nasa.gov", "incose.org", "sebokwiki.org", "iso.org/standard/81702", "nasa.gov/reference/appendix-c-how-to-write-a-good-requirement", "nasa.gov/reference/6-5-configuration-management", "ntrs.nasa.gov/api/citations/20170007239", "nodis3.gsfc.nasa.gov/displaydir.cfm", "nasa.gov/wp-content/uploads/2023/08/nasa-risk-mgmt-handbook", "nist.gov/glossary-term/21621", "standards.nasa.gov/sites/default/files/standards/nasa/baseline/0/nasa-hdbk-873919-4.pdf", "itl.nist.gov/div898/handbook/prc/section2/prc241.htm", "itl.nist.gov/div898/handbook/prc/section2/prc242.htm", "itl.nist.gov/div898/handbook/apr/section1/apr13.htm"],
+  "hardware.html": ["lbl.gov", "developer.arm.com", "docs.kernel.org", "riscv.org", "doi.org/10.1145/1498765.1498785", "intel.com/content/www/us/en/docs/vtune-profiler", "docs.nvidia.com/cuda/cuda-programming-guide", "gstreamer.freedesktop.org/documentation/coreelements/tee", "docs.nvidia.com/metropolis/deepstream", "infineon.com/assets/row/public/documents/24/42/infineon-ds-explanation-update-applicationnotes-en.pdf"],
+  "embedded.html": ["doi.org/10.1145/321738.321743", "doi.org/10.1093/comjnl/29.5.390", "link.springer.com/article/10.1007/BF01088593", "ctms.engin.umich.edu/CTMS", "mathworks.com/help/control/ug/analyzing-control-systems-with-delays.html", "docs.zephyrproject.org", "freertos.org", "docs.kernel.org/core-api/dma-api-howto", "docs.mcuboot.com", "ti.com/lit/an/slva740a", "mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator", "can-cia.org/can-knowledge/can-cc"],
   "npu-acim.html": ["onnx.ai/onnx/repo-docs/IR", "mlir.llvm.org/docs/DialectConversion", "iree.dev", "github.com/IBM/aihwkit", "arxiv.org/abs/2003.04293", "arxiv.org/abs/2205.10042", "github.com/sandialabs/cross-sim", "github.com/Accelergy-Project/accelergy", "github.com/mit-emze/cimloop", "doi.org/10.1109/JSSC.2022.3232601", "doi.org/10.1109/ICTA56932.2022.9963070", "doi.org/10.1109/TCSI.2021.3083275", "doi.org/10.1109/TCSII.2021.3049844"]
 };
 for (const [file, sources] of Object.entries(requiredSources)) {
-  const normalizedTargets = hrefsByPage[file]
-    .filter(href => /^https:/i.test(href))
-    .map(href => {
-      const url = new URL(href);
-      return `${url.hostname}${url.pathname}`.toLowerCase();
-    });
+  const externalTargets = hrefsByPage[file].filter(href => /^https:/i.test(href));
   for (const source of sources) {
-    if (!normalizedTargets.some(target => target.includes(source.toLowerCase()))) throw new Error(`${file}: missing linked source ${source}`);
+    if (!externalTargets.some(target => matchesSourceRequirement(target, source))) {
+      throw new Error(`${file}: missing linked source ${source}`);
+    }
   }
 }
 
@@ -292,10 +316,10 @@ for (const file of pages) {
 
 const forbiddenClaims = {
   "backend.html": ["Ordered event history", "replicate clockwise to multiple owners", "stop work immediately when ownership is lost", "every request eventually gets a non-error response", "writes/sec × logical bytes/write × 31.5M", "index columns in the order used by filters, sorting, and joins", "(1 − availability target) × 43,200 minutes", "One business effect per payment request", "one charge per idempotency key", "Alex Xu’s framework uses four repeatable passes"],
-  "systems-engineering.html": ["Artifact: qualified system", "Most system failures happen between components", "No single identified failure", "Allocation + growth + margin ≤ limit", "closed requirements (pass or approved waiver/deviation)", "10 km reference mission, 2 kg payload, declared weather envelope", "80 Wh required landing reserve", "Door-to-door medical delivery", "10 km round trip", "resource limit − current best estimate", "<b>Absolute margin</b><code>resource limit − predicted value</code>", "SYS-RELEASE-024", "NASA02_NPR_7123_1D.pdf"],
-  "hardware.html": ["L1 / local scratchpad", "L2 / shared SRAM", "HBM / DRAM", "Compute issue rate", "Deterministic I/O", "decode · resize · normalize", "while measured &lt; required", "prevent bulk traffic from blocking control", "Memory hierarchy from closest to farthest", "Edge AI computer main data flow", "<b>Sensor payload</b>", "drop/backpressure rules keep", "start near 7.2 peak TOPS", "advance the logical generation"],
-  "embedded.html": ["<b>Peripheral event</b>", "conversion and battery margin", "<span>Restore order</span>", "Independent supervisor lane", "Catches: buses, clocks, electrical/timing faults", "E_load ÷ η_conversion", "Illustrative measured WCET values", "<span>Dynamic deadlines</span>"],
-  "npu-acim.html": ["control + deterministic digital", "DAC → crossbar → ADC", "Tile 3<br>partial sum", "Tile/cell corrections", "Bounded idempotent retry", "when evaluation is bit-serial", "<th scope=\"col\">SRAM / charge-domain ACiM</th>", "E_region = E_nominal + Σ(E_load,wave", "warm batch-1 inference at the stated arrival rate", "Require p95 &lt; 20 ms at the 80-request/s steady mix", "data-matrix-rows=", "fences new pins, waits for the old residency reference count to reach zero, acquires", "stop/drain, revoke descriptors"]
+  "systems-engineering.html": ["Artifact: qualified system", "Most system failures happen between components", "No single identified failure", "Allocation + growth + margin ≤ limit", "closed requirements (pass or approved waiver/deviation)", "10 km reference mission, 2 kg payload, declared weather envelope", "80 Wh required landing reserve", "Door-to-door medical delivery", "10 km round trip", "resource limit − current best estimate", "<b>Absolute margin</b><code>resource limit − predicted value</code>", "SYS-RELEASE-024", "NASA02_NPR_7123_1D.pdf", "R = estimated remaining usable energy", "E<sub>remaining,ref</sub> = C<sub>u,ref</sub> − E<sub>discharged,ref</sub>", "design to an indicated 22% reserve"],
+  "hardware.html": ["L1 / local scratchpad", "L2 / shared SRAM", "HBM / DRAM", "Compute issue rate", "Deterministic I/O", "decode · resize · normalize", "while measured &lt; required", "prevent bulk traffic from blocking control", "Memory hierarchy from closest to farthest", "Edge AI computer main data flow", "<b>Sensor payload</b>", "drop/backpressure rules keep", "start near 7.2 peak TOPS", "advance the logical generation", "Model sustained—not burst—load"],
+  "embedded.html": ["<b>Peripheral event</b>", "conversion and battery margin", "<span>Restore order</span>", "Independent supervisor lane", "Catches: buses, clocks, electrical/timing faults", "E_load ÷ η_conversion", "Illustrative measured WCET values", "<span>Dynamic deadlines</span>", "lower numeric identifiers win arbitration"],
+  "npu-acim.html": ["control + deterministic digital", "DAC → crossbar → ADC", "Tile 3<br>partial sum", "Tile/cell corrections", "Bounded idempotent retry", "when evaluation is bit-serial", "<th scope=\"col\">SRAM / charge-domain ACiM</th>", "E_region = E_nominal + Σ(E_load,wave", "warm batch-1 inference at the stated arrival rate", "Require p95 &lt; 20 ms at the 80-request/s steady mix", "data-matrix-rows=", "fences new pins, waits for the old residency reference count to reach zero, acquires", "stop/drain, revoke descriptors", "so the 20 ms objective fails even though the queue eventually drains"]
 };
 for (const [file, claims] of Object.entries(forbiddenClaims)) {
   for (const claim of claims) {
@@ -329,10 +353,10 @@ for (const staleScenarioClaim of ["The read-heavy ratio strongly favors caching"
 
 const semanticContentChecks = {
   "backend.html": ["transactional outbox", "Acknowledge after durable acceptance", "Write ingress", "Live logical data", "Append-log storage", "Time-based error budget", "Request-based error budget", "non-failing node", "no finite latency bound", "provider idempotency plus uncertain-outcome reconciliation", "Atomically claim stock", "This Atlas loop adapts"],
-  "systems-engineering.html": ["Keep two ledgers distinct", "Power + energy", "Never add unlike units", "Upper-bound margin", "Lower-bound margin", "Verification compliance", "Administrative disposition", "authorized relief—not proof of compliance", "Which quantitative fielded-system measures enable it?", "Parent safety objective—derive", "20% acceptance lower bound", "one-sided acceptance guard band", "C<sub>u</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh", "subtracting the 2-point tolerance leaves the required 20% lower bound", "E<sub>remaining,ref</sub>", "REF-MISSION-01", "SYS-LAND-024", "Evaluate the entry condition once at declaration", "CMP-ENV-022", "ALLOC-LAT-023", "HMI-OPS-032", "SYS-OPS-033"],
-  "hardware.html": ["while not all_satisfied", "not one universal ladder", "QoS tag alone is not isolation", "Bounded inference queue", "Bounded recording queue", "Independent bounded processing branches", "Post-ISP surface rate", "backpressure is not isolation", "arithmetic minimum implied by that measurement", "advance the request/completion epoch"],
-  "embedded.html": ["load-profile-weighted effective value", "converter quiescent loss exactly once", "observed maxima as provisional—not automatic WCET", "E_quiescent,not-yet-counted", "Job-level absolute deadlines", "fixed-priority iteration gives response times"],
-  "npu-acim.html": ["Storage technology and analog signal domain are separate axes", "W × P_a = 2 × 4 = 8", "K = 768, M = 384 → N_K = 3, N_M = 6", "E_complete_path(p)", "80-request/s steady", "110-request/s burst", "B₀ = 0", "B_end = max(0, B₀ + (λ_burst − μ)T)", "separately for vision and audio", "steady arrival to remain below sustained thermally limited service", "device_uid_match", "Four-context residency protocol", "atomically claims the lease", "Keep DMA-accessible memory and residency references pinned"]
+  "systems-engineering.html": ["Keep two ledgers distinct", "Power + energy", "Never add unlike units", "Upper-bound margin", "Lower-bound margin", "Verification compliance", "Administrative disposition", "authorized relief—not proof of compliance", "Which quantitative fielded-system measures enable it?", "Parent safety objective—derive", "R<sub>ref</sub>", "R<sub>indicated</sub>", "R_result − 2 percentage points ≥ 20%", "C<sub>u,ref</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh", "E<sub>remaining,ref</sub> = E<sub>initial,ref</sub> − E<sub>discharged,ref</sub>", "full-charge entry condition", "deterministic reference test demonstrates capability", "REF-MISSION-01", "SYS-LAND-024", "Evaluate the entry condition once at declaration", "CMP-ENV-022", "ALLOC-LAT-023", "HMI-OPS-032", "SYS-OPS-033"],
+  "hardware.html": ["while not all_satisfied", "not one universal ladder", "QoS tag alone is not isolation", "Bounded inference queue", "Bounded recording queue", "Independent bounded processing branches", "Post-ISP surface rate", "backpressure is not isolation", "arithmetic minimum implied by that measurement", "advance the request/completion epoch", "Model sustained and transient load", "time-dependent thermal impedance"],
+  "embedded.html": ["load-profile-weighted effective value", "converter quiescent loss exactly once", "observed maxima as provisional—not automatic WCET", "E_quiescent,not-yet-counted", "Job-level absolute deadlines", "fixed-priority iteration gives response times", "same first 11 identifier bits", "11-bit base frame wins"],
+  "npu-acim.html": ["Storage technology and analog signal domain are separate axes", "W × P_a = 2 × 4 = 8", "K = 768, M = 384 → N_K = 3, N_M = 6", "E_complete_path(p)", "80-request/s steady", "110-request/s burst", "B₀ = 0", "B_end = max(0, B₀ + (λ_burst − μ)T)", "separately for vision and audio", "steady arrival to remain below sustained thermally limited service", "if the 20 ms SLO is extended to the burst window", "requires p95 below 20 ms at the steady mix, not during the burst", "device_uid_match", "Four-context residency protocol", "atomically claims the lease", "Keep DMA-accessible memory and residency references pinned"]
 };
 for (const [file, checks] of Object.entries(semanticContentChecks)) {
   for (const check of checks) {
@@ -356,7 +380,7 @@ if (!documents["backend.html"].includes('role="group"') || !documents["backend.h
 
 assertReviewedCalculations(documents, backendJs);
 if (documents["embedded.html"].includes("Wh-millihours")) throw new Error("embedded.html: invalid energy unit returned");
-if (!documents["index.html"].includes("7</strong><span>interview prompts") || !documents["index.html"].includes("45–55 minute")) {
+if (!documents["index.html"].includes("8</strong><span>interview prompts") || !documents["index.html"].includes("45–55 minute")) {
   throw new Error("index.html: practice counts or duration are stale");
 }
 const pageReferenceAuditDate = documents["index.html"].match(/Reference rule · audited (\d{4}-\d{2}-\d{2})/)?.[1];
@@ -392,11 +416,29 @@ for (const [background, label] of [[lightBackground, "background"], [lightSurfac
 if (!css.includes("color: var(--on-accent)") || !css.includes('nav a[aria-current="page"]')) {
   throw new Error("styles.css: shared accent foreground or current-page navigation styling is missing");
 }
-if (!css.includes("--site-header-height") || !css.includes("top: var(--site-header-height)") || !js.includes("ResizeObserver") || !js.includes('window.addEventListener("resize", scheduleLayoutSync')) {
+if (!css.includes("--site-header-height") || !css.includes("--page-nav-stack-height") || !css.includes("top: var(--site-header-height)") || !js.includes("ResizeObserver") || !js.includes('window.addEventListener("resize", scheduleLayoutSync')) {
   throw new Error("Shared navigation: sticky offset or resize-aware current-track reveal is incomplete");
+}
+if (!npuAcimCss.includes("top: calc(var(--site-header-height) + var(--page-nav-stack-height))")) {
+  throw new Error("npu-acim.css: sticky feedback rail must clear both navigation layers");
+}
+if (!hardwareCss.includes("left: 48%") || !hardwareCss.includes("linear-gradient(to bottom right")) {
+  throw new Error("hardware.css: Roofline segments must share a continuous knee");
 }
 if (!js.includes("linkCenterInContent") || js.includes("current.offsetLeft")) {
   throw new Error("Shared navigation: current-track centering must use the scroller's coordinate space");
+}
+for (const token of ["initializeInterviewMode", "45 * 60", "interview-coaching-hidden", "updateRubric", "initializeDiagramControls", "--diagram-zoom", "initializeTableScrollCues", "can-scroll-right"]) {
+  if (!js.includes(token)) throw new Error(`app.js: shared practice or visual control is missing ${token}`);
+}
+for (const token of [".interview-mode-panel", ".interview-checkpoints", ".interview-rubric", ".atlas-zoomable.is-expanded", "body.diagram-expanded", ".can-scroll-right"]) {
+  if (!css.includes(token)) throw new Error(`styles.css: shared practice or visual styling is missing ${token}`);
+}
+for (const token of ["social-atlas.png", "social-backend.png", "social-systems.png", "social-hardware.png", "social-embedded.png", "social-npu-acim.png", "page.screenshot", "document.fonts.ready"]) {
+  if (!socialGeneratorSource.includes(token)) throw new Error(`scripts/generate-social-cards.mjs: deterministic route-card generation is missing ${token}`);
+}
+if (packageData.scripts?.["generate:social"] !== "node scripts/generate-social-cards.mjs") {
+  throw new Error("package.json: route-specific social-card generator script is missing");
 }
 
 for (const token of ["publicFiles", "allowedHost", 'request.method !== "GET"', "isSymbolicLink()", "X-Content-Type-Options"]) {
@@ -408,16 +450,19 @@ for (const token of ["fileURLToPath(import.meta.url)", "resolveContainedPath", "
 for (const token of ["assertInside", "resolveContainedPath", "assertNotSymbolicLink", "assertRegularNonSymlinkFile"]) {
   if (!pathSafetySource.includes(token)) throw new Error(`scripts/path-safety.mjs: path boundary is missing ${token}`);
 }
+for (const token of ["parseSourceRequirement", "matchesSourceRequirement", "actualHostname.endsWith", "actualPath.startsWith"]) {
+  if (!sourceProvenanceSource.includes(token)) throw new Error(`scripts/source-provenance.mjs: authoritative-source boundary is missing ${token}`);
+}
 for (const token of ["transientStatuses", "transientNetworkCodes", 'result: transient ? "inconclusive" : "failed"', "persistent HTTP or network failure", "requestExternalLink", "maximumRedirects"]) {
   if (!linkCheckSource.includes(token)) throw new Error(`scripts/check-external-links.mjs: failure classification or hardened request integration is missing ${token}`);
 }
 for (const token of ["httpsRequest", "agent: false", "createPinnedLookup", "assertPublicHttps", "AbortSignal.timeout", "maximumRedirects", "privateAddress"]) {
   if (!externalLinkCoreSource.includes(token)) throw new Error(`scripts/external-link-core.mjs: pinned redirect boundary is missing ${token}`);
 }
-for (const token of ["reject HTTPS downgrade", "newly resolved private destination", "redirect count is bounded", "one deadline covers", "freshly resolved", "refuses another hostname", "path containment rejects", "path guards reject symbolic links"]) {
+for (const token of ["reject HTTPS downgrade", "newly resolved private destination", "redirect count is bounded", "one deadline covers", "freshly resolved", "refuses another hostname", "special IPv6 routes", "path containment rejects", "path guards reject symbolic links", "source provenance requires the authoritative host"]) {
   if (!logicTestSource.includes(token)) throw new Error(`tests/logic.spec.mjs: behavioral security regression is missing ${token}`);
 }
-for (const token of ["port: 0", "reducedMotion", "width: 320", "linkRect.left >= navRect.left", "centerError", 'behavior: "instant"', "Math.abs(topics.getBoundingClientRect().top - header.getBoundingClientRect().bottom) <= 1", "/package.json", 'Host: \"untrusted.example\"']) {
+for (const token of ["port: 0", "reducedMotion", "[390, 320, 760, 761, 900, 901]", "target.height >= 24", "linkRect.left >= navRect.left", "centerError", 'behavior: "instant"', "Math.abs(topics.getBoundingClientRect().top - header.getBoundingClientRect().bottom) <= 1", "sticky feedback rail clears both navigation layers", "bandwidth.right - ceiling.left", "shared interview mode times", "dense diagrams expand", "wide tables expose directional edge cues", "data-horizontal-scroll", "social-atlas.png", "/package.json", 'Host: \"untrusted.example\"']) {
   if (!browserTestSource.includes(token)) throw new Error(`tests/site.spec.mjs: responsive or preview-boundary regression is missing ${token}`);
 }
 
@@ -449,7 +494,7 @@ const scripts = packageData.scripts || {};
 for (const entry of ["node --check theme-init.js", "node --check app.js", "node --check backend.js"]) {
   if (!scripts["check:syntax"]?.includes(entry)) throw new Error(`package.json: check:syntax is missing ${entry}`);
 }
-for (const entry of ["tests/logic.spec.mjs", "scripts/external-link-core.mjs", "scripts/path-safety.mjs"]) {
+for (const entry of ["tests/logic.spec.mjs", "scripts/external-link-core.mjs", "scripts/path-safety.mjs", "scripts/source-provenance.mjs"]) {
   if (!scripts["check:syntax"]?.includes(entry)) throw new Error(`package.json: check:syntax is missing ${entry}`);
 }
 if (!scripts.build?.includes("scripts/build-site.mjs") || !scripts.check?.includes("--artifact _site")) {

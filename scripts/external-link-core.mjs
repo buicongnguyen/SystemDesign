@@ -23,18 +23,58 @@ export function privateIpv4(address) {
     || a >= 224;
 }
 
+function ipv6Words(address) {
+  let normalized = address;
+  if (normalized.includes(".")) {
+    const separator = normalized.lastIndexOf(":");
+    const octets = normalized.slice(separator + 1).split(".").map(Number);
+    if (separator < 0 || octets.length !== 4 || octets.some(octet => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+      return null;
+    }
+    const high = ((octets[0] << 8) | octets[1]).toString(16);
+    const low = ((octets[2] << 8) | octets[3]).toString(16);
+    normalized = `${normalized.slice(0, separator)}:${high}:${low}`;
+  }
+
+  const halves = normalized.split("::");
+  if (halves.length > 2) return null;
+  const left = halves[0] ? halves[0].split(":") : [];
+  const right = halves.length === 2 && halves[1] ? halves[1].split(":") : [];
+  const missing = 8 - left.length - right.length;
+  if ((halves.length === 1 && missing !== 0) || (halves.length === 2 && missing < 1)) return null;
+
+  const words = [
+    ...left,
+    ...Array(missing).fill("0"),
+    ...right
+  ].map(word => Number.parseInt(word, 16));
+  return words.length === 8 && words.every(word => Number.isInteger(word) && word >= 0 && word <= 0xffff)
+    ? words
+    : null;
+}
+
+function nonPublicIpv6(address) {
+  const words = ipv6Words(address);
+  if (!words) return true;
+  const [first, second] = words;
+
+  // Public DNS destinations must be native global-unicast addresses. Reject
+  // translation, compatibility, local, multicast, documentation, benchmarking,
+  // tunnelling, and other IETF special-purpose ranges.
+  if (first < 0x2000 || first > 0x3fff) return true;
+  if (first === 0x2001 && second <= 0x01ff) return true; // 2001::/23
+  if (first === 0x2001 && second === 0x0db8) return true; // documentation
+  if (first === 0x2002) return true; // 6to4 embeds an IPv4 destination
+  if (first === 0x3fff && (second & 0xf000) === 0) return true; // documentation
+  return false;
+}
+
 export function privateAddress(address) {
   const normalized = address.toLowerCase().replace(/^\[|\]$/g, "");
   const family = isIP(normalized);
   if (family === 4) return privateIpv4(normalized);
   if (family !== 6) return true;
-  return normalized === "::"
-    || normalized === "::1"
-    || normalized.startsWith("::ffff:")
-    || /^f[cd]/.test(normalized)
-    || /^fe[89a-f]/.test(normalized)
-    || normalized.startsWith("ff")
-    || normalized.startsWith("2001:db8:");
+  return nonPublicIpv6(normalized);
 }
 
 function abortError(signal) {

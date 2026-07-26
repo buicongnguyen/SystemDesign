@@ -7,7 +7,8 @@
     "check": "npm run check:syntax && npm run check:html && npm run test:logic && npm run build && node scripts/check-site.mjs --artifact _site",
     "check:html": "html-validate \"*.html\"",
     "check:links": "node scripts/check-external-links.mjs",
-    "check:syntax": "node --check theme-init.js && node --check app.js && node --check backend.js && node --check playwright.config.mjs && node --check tests/site.spec.mjs && node --check tests/logic.spec.mjs && node --check scripts/build-site.mjs && node --check scripts/check-external-links.mjs && node --check scripts/external-link-core.mjs && node --check scripts/path-safety.mjs && node --check scripts/reviewed-calculations.mjs && node --check scripts/check-site.mjs && node --check scripts/serve.mjs && node --check scripts/site-files.mjs",
+    "check:syntax": "node --check theme-init.js && node --check app.js && node --check backend.js && node --check playwright.config.mjs && node --check tests/site.spec.mjs && node --check tests/logic.spec.mjs && node --check scripts/build-site.mjs && node --check scripts/check-external-links.mjs && node --check scripts/external-link-core.mjs && node --check scripts/generate-social-cards.mjs && node --check scripts/path-safety.mjs && node --check scripts/source-provenance.mjs && node --check scripts/reviewed-calculations.mjs && node --check scripts/check-site.mjs && node --check scripts/serve.mjs && node --check scripts/site-files.mjs",
+    "generate:social": "node scripts/generate-social-cards.mjs",
     "serve": "node scripts/serve.mjs",
     "test:logic": "node --test tests/logic.spec.mjs",
     "test:ui": "playwright test"

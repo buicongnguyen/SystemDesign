@@ -11,20 +11,20 @@
   <meta property="og:title" content="Systems Engineering — System Design Atlas">
   <meta property="og:description" content="A visual interview guide to stakeholder needs, ConOps, requirements, architecture, interfaces, risk, integration, verification, and validation.">
   <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
-  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-systems.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="System Design Atlas with five visual interview tracks">
+  <meta property="og:image:alt" content="Systems Engineering: trace the mission and build the evidence">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
-  <meta name="twitter:image:alt" content="System Design Atlas with five visual interview tracks">
+  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-systems.png">
+  <meta name="twitter:image:alt" content="Systems Engineering: trace the mission and build the evidence">
   <title>Systems Engineering · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260725a"></script>
-  <link rel="stylesheet" href="styles.css?v=20260725a">
-  <script src="app.js?v=20260725a" defer></script>
+  <script src="theme-init.js?v=20260726b"></script>
+  <link rel="stylesheet" href="styles.css?v=20260726b">
+  <script src="app.js?v=20260726b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -478,13 +478,14 @@ validate(<b>solves the mission</b>)</code></pre>
           <ol class="evidence-chain">
             <li><div><b>Need + operational scenario</b><span>N-01: deliver the declared payload safely within the service area. Scenario records route, wind, temperature, precipitation, communications, operator role, alternates, and emergency landing behavior.</span></div></li>
             <li><div><b>Measure of effectiveness</b><span>MOE-01: at least 99% of eligible REF-MISSION-01 missions complete within 25 minutes over the declared operating envelope. REF-MISSION-01 starts at launch authorization, flies from the clinic to an approved delivery pad, releases the package, returns to the clinic, and ends in the named landed safe state; its total ground track is 10 km. Report outbound delivery time, package condition, and safety outcomes separately, define the evaluation window, and control every exclusion.</span></div></li>
-            <li><div><b>System requirement</b><span>SYS-ENERGY-014: with a 2.0 kg payload on REF-MISSION-01 and its declared environment, the vehicle shall land with reserve fraction R = estimated remaining usable energy ÷ verified usable-at-condition capacity ≥ 20%. The denominator is deliverable energy from full charge to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile. Use the configuration-controlled BMS remaining-energy estimator and cross-check it against calibrated energy integration. Treat the illustrative 2-percentage-point combined BMS-estimator/test tolerance as a one-sided acceptance guard band justified by a combined uncertainty and maximum-permitted-error budget at the declared coverage probability—not as an unexplained nominal tolerance—and require an indicated R ≥ 22% so the 20% acceptance lower bound remains protected.</span></div></li>
+            <li><div><b>System requirement</b><span>SYS-ENERGY-014: with a 2.0 kg payload on REF-MISSION-01, its declared environment, and the configuration-controlled full-charge test-entry condition, the vehicle shall enter <code>LANDED_SAFE</code> with reference reserve fraction R<sub>ref</sub> = E<sub>remaining,ref</sub> ÷ C<sub>u,ref</sub> ≥ 20%. C<sub>u,ref</sub> is deliverable energy from the verified full-charge condition to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile.</span></div></li>
+            <li><div><b>Estimator + decision rule</b><span>Specify the operational BMS result R<sub>indicated</sub> and its allowable estimation error separately from the physical requirement. For an illustrative one-sided two-percentage-point guard band <code>g</code>, accept only when <code>R_indicated − g ≥ 20%</code>, so the indicated threshold is 22%. Derive <code>g</code> from the uncertainty, maximum-permitted-error, coverage, and false-accept-risk policy; the decision rule protects the 20% requirement but does not redefine it.</span></div></li>
             <li><div><b>Allocation + interfaces</b><span>Allocate mass, energy, thermal, navigation, propulsion, and reserve budgets to elements; record voltage, current, update rate, units, timing, ownership, and degraded behavior at every crossing.</span></div></li>
             <li><div><b>Verification + validation</b><span>Verify the requirement with calibrated energy instrumentation and environmental test evidence; validate the route, operator workflow, contingency behavior, turnaround, and customer outcome in representative missions.</span></div></li>
           </ol>
         </article>
 
-        <aside class="formula-board">
+        <aside class="formula-board" aria-label="Budget, margin, and closure formulas">
           <span>Control the numbers</span>
           <h3>Budget, margin, and closure</h3>
           <div class="formula-stack">
@@ -510,6 +511,62 @@ validate(<b>solves the mission</b>)</code></pre>
           </tbody>
         </table>
       </div>
+
+      <div class="reasoning-workbench" role="group" aria-labelledby="statistical-evidence-heading" data-calculation="statistical-evidence" data-alpha="0.05" data-target-success="0.99" data-planning-proportion="0.99" data-half-width="0.01" data-zero-failure-sample="299">
+        <article class="workbench-main">
+          <span>Interview module · statistical evidence</span>
+          <h3 id="statistical-evidence-heading">A success percentage is an estimate—not proof by itself</h3>
+          <p>The calculations in this module are illustrative, frequentist binomial examples. They apply only when every trial has a predeclared binary outcome, the fixed sample is representative, and trials can reasonably be treated as independent with the same success probability. Shared vehicles, software versions, routes, operators, weather, or repeated faults can create dependence; in that case, use a design and model that account for clusters, strata, time, and exposure.</p>
+          <ol class="evidence-chain">
+            <li><div><b>Define the claim</b><span>Name the unit of trial, success event, mission and operating envelope, target success probability R<sub>0</sub>, confidence level 1 − &alpha;, evaluation window, and decision rule. “99% reliable” is incomplete without these qualifiers.</span></div></li>
+            <li><div><b>Freeze eligibility before observing outcomes</b><span>Predeclare valid starts, exclusions, abort treatment, retries, software and hardware configuration, environmental strata, and whether multiple missions from one vehicle are independent. A failed eligible mission remains in the denominator.</span></div></li>
+            <li><div><b>Plan for the decision</b><span>Choose whether the goal is estimation, comparison, or conformance. For estimation, select sample size for desired interval precision. For conformance, predeclare the minimum acceptable lower bound or a binomial acceptance number, together with consumer and producer risks.</span></div></li>
+            <li><div><b>Report estimate and uncertainty</b><span>Show successes x, eligible trials n, point estimate x/n, the interval method, one- or two-sided confidence, and the resulting bounds. For a minimum-success requirement, compare a predeclared one-sided lower bound with R<sub>0</sub>; do not compare only x/n.</span></div></li>
+            <li><div><b>Check validity and coverage</b><span>Break results out across critical route, weather, payload, operator, vehicle, and configuration strata. Record missing data, repeat attempts, stopping rules, anomalies, and model diagnostics. Statistical evidence cannot compensate for an unrepresentative test.</span></div></li>
+          </ol>
+        </article>
+
+        <aside class="formula-board" aria-label="Illustrative binomial evidence formulas">
+          <span>Control the statistical claim</span>
+          <h3>Plan → observe → bound → decide</h3>
+          <div class="formula-stack">
+            <div class="formula-line"><b>Point estimate</b><code>R̂ = x ÷ n</code><small>x is the number of predeclared successes among n eligible trials. Report the counts as well as the percentage.</small></div>
+            <div class="formula-line"><b>Precision planning</b><code>n ≈ z² × p* × (1 − p*) ÷ E²</code><small>Approximate two-sided proportion-estimation plan: choose confidence critical value z, planning value p*, and desired half-width E. At 95% confidence, p* = 0.99, and E = 0.01, n ≈ 381. Confirm the final plan with an exact or well-justified interval method, especially for rare failures.</small></div>
+            <div class="formula-line"><b>Exact one-sided lower bound</b><code>L = Beta⁻¹(&alpha;; x, n − x + 1)</code><small>For x &gt; 0, this is the Clopper–Pearson lower 100(1 − &alpha;)% confidence bound for a binomial success probability. Use &alpha;/2 tails for its two-sided counterpart.</small></div>
+            <div class="formula-line"><b>Zero-failure lower bound</b><code>L = &alpha;^(1/n)</code><small>When x = n, the exact one-sided lower bound simplifies to this expression. No observed failure does not imply zero failure probability.</small></div>
+            <div class="formula-line"><b>Zero-failure sample</b><code>n = ceil[ln(&alpha;) ÷ ln(R₀)]</code><small>To make L ≥ R<sub>0</sub> after zero failures: for R<sub>0</sub> = 0.99 and 95% confidence, n = 299 independent successes are required.</small></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="detail-table-wrap" role="region" aria-label="Illustrative success-rate evidence calculations" tabindex="0">
+        <table class="detail-table">
+          <caption>Worked binomial evidence — all results are illustrative and use exact Clopper–Pearson bounds with a fixed sample and no optional stopping.</caption>
+          <thead><tr><th scope="col">Observed result</th><th scope="col">Point estimate</th><th scope="col">95% evidence statement</th><th scope="col">Decision against R<sub>0</sub> = 99%</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">99 successes / 100 trials</th><td>99.00%</td><td>One-sided exact lower bound = 95.34%.</td><td><b>Does not demonstrate 99%.</b> The observed percentage equals the target, but uncertainty remains too large.</td></tr>
+            <tr><th scope="row">990 successes / 1,000 trials</th><td>99.00%</td><td>One-sided exact lower bound = 98.31%; two-sided exact interval = 98.17% to 99.52%.</td><td><b>Does not demonstrate 99%.</b> A larger denominator alone does not make the point estimate a lower-bound claim.</td></tr>
+            <tr><th scope="row">999 successes / 1,000 trials</th><td>99.90%</td><td>One-sided exact lower bound = 99.53%.</td><td><b>Meets the statistical threshold</b> under the declared binomial assumptions; system acceptance still requires representative coverage and closure of anomalies.</td></tr>
+            <tr><th scope="row">299 successes / 299 trials</th><td>100.00%</td><td>One-sided exact lower bound = 99.003%.</td><td><b>Meets the statistical threshold</b> for a zero-failure demonstration; it does not prove perfection or reveal failure modes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="dual-flow se-vv-compare">
+        <article>
+          <header><span>Common interview trap</span><h3>“We passed 99 of 100, so reliability is 99%.”</h3></header>
+          <p><b>Correct response:</b> 99% is the point estimate. Under the illustrative independent-binomial model, its one-sided 95% exact lower bound is only 95.34%, so this evidence does not support a claim that the underlying mission success probability is at least 99%.</p>
+          <p><b>Next question:</b> were the 100 trials representative, independent, configuration-matched, and selected without outcome-based exclusions?</p>
+        </article>
+        <article>
+          <header><span>Planning trap</span><h3>Confidence alone is not test power</h3></header>
+          <p>A 299-of-299 plan gives a 95% lower bound just above 99% if it passes. But if the true success probability is exactly 99%, its probability of passing with zero failures is 0.99<sup>299</sup> ≈ 4.95%.</p>
+          <p><b>Better plan:</b> define an unacceptable reliability, a desirable reliability, consumer risk, producer risk, sample size, and allowable failures; then evaluate the binomial operating characteristic before testing.</p>
+        </article>
+      </div>
+
+      <div class="memory-strip"><b>Statistical evidence hook</b><span><i>Claim → population → trial → success rule → sample plan → uncertainty bound → decision → coverage.</i> Never turn “no observed failure” into “no failure risk.”</span></div>
+      <p class="section-source">Method references: <a href="https://itl.nist.gov/div898/handbook/prc/section2/prc241.htm">NIST exact binomial confidence intervals ↗</a>, <a href="https://itl.nist.gov/div898/handbook/prc/section2/prc242.htm">NIST sample-size planning for proportions ↗</a>, and <a href="https://www.itl.nist.gov/div898/handbook/apr/section1/apr13.htm">NIST reliability-data limitations ↗</a>.</p>
 
       <div class="detail-table-wrap" role="region" aria-label="Requirement quality examples" tabindex="0">
         <table class="detail-table">
@@ -570,7 +627,7 @@ validate(<b>solves the mission</b>)</code></pre>
       </article>
 
       <div class="se-case-assumptions">
-        <p><b>Illustrative baseline · REF-MISSION-01:</b> carry a 2 kg protected payload over a 10 km clinic-to-pad-to-clinic ground track, starting at launch authorization, releasing the package at the assigned approved pad, returning to the clinic, and entering the named landed safe state within 25 minutes. Assume 1,000 missions/day across 10 sites, controlled delivery pads, supervised autonomy, and no dependence on the command link for immediate flight safety. Measure outbound delivery time separately from full-mission completion time.</p>
+        <p><b>Illustrative baseline · REF-MISSION-01:</b> carry a 2 kg protected payload over a 10 km clinic-to-pad-to-clinic ground track, starting at launch authorization after the configuration-controlled full-charge entry check establishes E<sub>initial,ref</sub> = C<sub>u,ref</sub>, releasing the package at the assigned approved pad, returning to the clinic, and entering the named landed safe state within 25 minutes. Assume 1,000 missions/day across 10 sites, controlled delivery pads, supervised autonomy, and no dependence on the command link for immediate flight safety. Measure outbound delivery time separately from full-mission completion time.</p>
         <p>In an interview, confirm or replace these assumptions before designing. Regulation, acceptable risk, operating airspace, population exposure, weather, and medical handling rules can change the architecture.</p>
       </div>
 
@@ -599,7 +656,7 @@ validate(<b>solves the mission</b>)</code></pre>
             <p><b>Your turn:</b> propose functional and quality requirements, each with an acceptance criterion.</p>
             <p><b>Coaching examples:</b></p>
             <ul>
-              <li><b>SYS-MISSION-010:</b> with a 2.0 kg payload and under the declared environmental envelope, the system shall complete REF-MISSION-01 within 25 minutes.</li>
+              <li><b>SYS-MISSION-010:</b> in each controlled acceptance execution that satisfies the configuration-controlled <code>REF-TEST-01</code> entry conditions, the system shall carry a 2.0 kg payload through REF-MISSION-01 and enter <code>LANDED_SAFE</code> within 25 minutes. This deterministic reference test demonstrates capability; derive a separate statistical service-success requirement from MOE-01 with an evaluation window, eligibility/exclusion rules, minimum sample, and confidence rule.</li>
               <li><b>SYS-PAYLOAD-011:</b> under the declared environmental and door-open profile, the calibrated payload-chamber reference temperature shall remain from 2.0 °C through 8.0 °C throughout REF-MISSION-01 and the following 30-minute recovery interval.</li>
               <li><b>SYS-LINK-021:</b> in an airborne mode, after 0.5 s without an authenticated command heartbeat, the vehicle shall declare <code>COMMAND_LINK_LOST</code> within 0.1 s.</li>
               <li><b>SYS-LINK-022:</b> upon declaration of <code>COMMAND_LINK_LOST</code>, the vehicle shall enter the preflight-selected <code>LINK_LOSS_CONTINGENCY</code> mode within 0.4 s.</li>
@@ -636,7 +693,8 @@ validate(<b>solves the mission</b>)</code></pre>
           <div>
             <p><b>Your turn:</b> identify five critical interfaces and sketch mass, energy, latency, and communication budgets.</p>
             <p><b>Coaching:</b> critical interfaces include battery–power distribution, flight computer–motor controllers, sensors–estimator, primary controller–safety monitor, vehicle–operator, vehicle–pad, container–vehicle, fleet service–airspace service, and maintainer–configuration system. Specify units, update rates, freshness, authority, timeout, degraded behavior, integrity, and versioning.</p>
-            <p data-calculation="drone-energy" data-cruise-wh="440" data-takeoff-landing-wh="90" data-avionics-payload-wh="40" data-contingency-wh="70" data-analysis-growth-wh="80" data-acceptance-reserve-fraction="0.2" data-one-sided-guard-band-fraction="0.02"><b>Illustrative energy budget for REF-MISSION-01:</b> expected use is 570 Wh = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload. Add 70 Wh contingency consumption and 80 Wh analysis/growth allowance, giving a full consumption allowance of 720 Wh. Define C<sub>u</sub> as deliverable energy from full charge to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile; the reserve denominator is C<sub>u</sub>, not beginning-of-life nameplate capacity. For a 20% acceptance lower bound and an illustrative 2-percentage-point combined BMS-estimator/test tolerance used as a one-sided acceptance guard band justified by a combined uncertainty and maximum-permitted-error budget at the declared coverage probability, design to an indicated 22% reserve: C<sub>u</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh. At that minimum, 203.1 Wh remains, or 22% of C<sub>u</sub>; subtracting the 2-point tolerance leaves the required 20% lower bound. Verify the configuration-controlled BMS remaining-energy estimate against calibrated battery-terminal measurements over explicit limits: E<sub>discharged,ref</sub> [Wh] = ∫<sub>t₀</sub><sup>t_land</sup> V(t) × I<sub>discharge</sub>(t) dt ÷ 3600, then E<sub>remaining,ref</sub> = C<sub>u,ref</sub> − E<sub>discharged,ref</sub>. If charging or regeneration is possible, integrate signed net battery power instead and declare the sign convention. Establish C<sub>u,ref</sub> for the tested battery condition and include capacity characterization, sensor calibration, timing, integration, estimator, environmental, and repeatability contributions in the guard band. Select installed nameplate capacity so qualification evidence still provides at least 923.1 Wh usable at the declared age and temperature; do not apply the same ageing or temperature loss again as margin. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
+            <p data-calculation="drone-energy" data-cruise-wh="440" data-takeoff-landing-wh="90" data-avionics-payload-wh="40" data-contingency-wh="70" data-analysis-growth-wh="80" data-acceptance-reserve-fraction="0.2" data-one-sided-guard-band-fraction="0.02"><b>Illustrative energy budget for REF-MISSION-01:</b> expected use is 570 Wh = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload. Add 70 Wh contingency consumption and 80 Wh analysis/growth allowance, giving a full consumption allowance of 720 Wh. Define C<sub>u,ref</sub> as deliverable energy from the verified full-charge condition to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile; it is the reserve denominator, not beginning-of-life nameplate capacity. The physical requirement is R<sub>ref</sub> = E<sub>remaining,ref</sub> ÷ C<sub>u,ref</sub> ≥ 20%. Keep the illustrative two-percentage-point one-sided guard band in a separate decision rule: <code>R_result − 2 percentage points ≥ 20%</code>, so the corresponding result/design threshold is 22%. Using that conservative 22% threshold gives C<sub>u,ref</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh. At that minimum, 203.1 Wh physically remains, or 22% of C<sub>u,ref</sub>, leaving the two-point guard band above the 20% requirement. Over explicit integration limits, compute E<sub>discharged,ref</sub> [Wh] = ∫<sub>t₀</sub><sup>t_land</sup> V(t) × I<sub>discharge</sub>(t) dt ÷ 3600 and E<sub>remaining,ref</sub> = E<sub>initial,ref</sub> − E<sub>discharged,ref</sub>. Only for the verified full-charge entry condition may the worked test substitute E<sub>initial,ref</sub> = C<sub>u,ref</sub>. If charging or regeneration is possible, integrate signed net battery power instead and declare the sign convention. Validate the separately specified BMS R<sub>indicated</sub> result against R<sub>ref</sub> across the declared operating domain. Derive the guard band from capacity characterization, sensor calibration, timing, integration, estimator, environmental, repeatability, coverage, and false-accept-risk evidence. Select installed nameplate capacity so qualification still provides at least 923.1 Wh usable at the declared age and temperature; do not apply the same ageing or temperature loss again as margin. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
+            <p class="section-source">Decision-rule context: <a href="https://www.nist.gov/glossary-term/21621">NIST decision-rule definition ↗</a> and <a href="https://standards.nasa.gov/sites/default/files/standards/NASA/Baseline/0/nasa-hdbk-873919-4.pdf">NASA measurement decision risk and guard-band guidance ↗</a>.</p>
           </div>
         </details>
 

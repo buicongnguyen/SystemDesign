@@ -11,24 +11,25 @@ A visual, interview-oriented guide to five related design disciplines:
 - Embedded and cyber-physical systems
 - NPU software stacks for Analog Compute-in-Memory (ACiM)
 
-The Atlas uses flowcharts, decision maps, trade-off matrices, bottleneck catalogs, and revealable interview coaching. Its visual language matches the companion [DSA Atlas](https://buicongnguyen.github.io/Leetcode/).
+The Atlas uses flowcharts, decision maps, trade-off matrices, bottleneck catalogs, worked calculations, and revealable interview coaching. Its visual language matches the companion [DSA Atlas](https://buicongnguyen.github.io/Leetcode/).
 
 ## Use it for an interview
 
 1. Choose the page that matches the system boundary—not merely the job title.
 2. Follow the page’s reasoning flow: clarify outcomes, make assumptions visible, estimate the first-order budgets, draw the critical path, choose a design, and close with failure handling and evidence.
-3. Work the quantitative example before opening the coaching notes.
-4. Use the bottleneck matrix to pressure-test the proposal and the evidence table to turn claims into measurable pass/fail criteria.
+3. Open **Interview mode** for a 45-minute timer, six thinking checkpoints, hidden coaching, and a five-part self-score.
+4. Work the quantitative example before opening the coaching notes.
+5. Use the bottleneck matrix to pressure-test the proposal and the evidence table to turn claims into measurable pass/fail criteria.
 
 The worked numbers are deliberately labeled as illustrative assumptions. Recalculate them for the prompt, state the unit and measurement boundary, and distinguish average values from tail targets.
 
 ## Pages
 
-- `index.html` — track selector and shared reasoning loop
+- `index.html` — track selector, shared reasoning loop, and an integrated autonomous-drone case spanning all five tracks
 - `backend.html` — scalable software and distributed systems
-- `systems-engineering.html` — lifecycle, requirements, allocation, interfaces, risk, integration, verification and validation
+- `systems-engineering.html` — lifecycle, requirements, allocation, interfaces, risk, integration, statistical evidence, verification and validation
 - `hardware.html` — workload-driven computer and hardware architecture
-- `embedded.html` — real-time embedded and cyber-physical design
+- `embedded.html` — real-time embedded and cyber-physical design, including a numerical sampled-control case
 - `npu-acim.html` — analog compute-in-memory NPU compiler/runtime stack
 
 ## Local development
@@ -53,6 +54,12 @@ npm run build
 
 This recreates `_site/` from an explicit allowlist. Repository metadata, scripts, and workflow files are not published.
 
+Regenerate the six route-specific 1200 × 630 social-preview cards after changing their copy or visual model:
+
+```sh
+npm run generate:social
+```
+
 Run the fast static checks:
 
 ```sh
@@ -68,7 +75,7 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-The site validator checks all six pages, internal files and fragments, shared navigation, encoded attributes, source anchors, core calculation sentinels, accessible table contracts, responsive CSS tokens, contrast, the packaged artifact, and pinned Pages workflows. A separate scheduled workflow checks external references weekly. Access-controlled, rate-limited, timeout, and transient gateway/service responses are reported as inconclusive; persistent HTTP 500, DNS, TLS, and other deterministic connection failures fail the check.
+The site validator checks all six pages, internal files and fragments, shared navigation, interview controls, diagram expansion, table scroll cues, route-specific preview metadata, encoded attributes, source anchors, core calculation sentinels, accessible table contracts, responsive CSS tokens, contrast, the packaged artifact, and pinned Pages workflows. A separate scheduled workflow checks external references weekly. Access-controlled, rate-limited, timeout, and transient gateway/service responses are reported as inconclusive; persistent HTTP 500, DNS, TLS, and other deterministic connection failures fail the check.
 
 ## Reference policy
 
@@ -82,7 +89,7 @@ Detailed sections link sources beside the decision they support. The Atlas favor
 
 Sources explain a model or contract; they do not prove a particular design meets its requirements. A real project still needs configuration-controlled assumptions, current product specifications, representative load/fault tests, calibrated measurements, and explicit acceptance criteria.
 
-Reference availability was reviewed on 2026-07-25. Links containing `current` or `latest` intentionally follow living documentation; record the exact applicable revision and access date when using one in a design decision.
+Reference availability was reviewed on 2026-07-26. Links containing `current` or `latest` intentionally follow living documentation; record the exact applicable revision and access date when using one in a design decision.
 
 ## Deployment
 

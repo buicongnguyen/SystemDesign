@@ -11,21 +11,21 @@
   <meta property="og:title" content="NPU + ACiM Software Stack — System Design Atlas">
   <meta property="og:description" content="A visual interview guide to hybrid NPU compilers, analog-aware mapping, runtime, firmware, calibration, recovery, and digital fallback.">
   <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/npu-acim.html">
-  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-npu-acim.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="System Design Atlas with five visual interview tracks">
+  <meta property="og:image:alt" content="NPU and ACiM software stack: compile the model and close the silicon loop">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
-  <meta name="twitter:image:alt" content="System Design Atlas with five visual interview tracks">
+  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-npu-acim.png">
+  <meta name="twitter:image:alt" content="NPU and ACiM software stack: compile the model and close the silicon loop">
   <title>NPU + ACiM Software Stack · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/npu-acim.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260725a"></script>
-  <link rel="stylesheet" href="styles.css?v=20260725a">
-  <script src="app.js?v=20260725a" defer></script>
-  <link rel="stylesheet" href="npu-acim.css?v=20260725a">
+  <script src="theme-init.js?v=20260726b"></script>
+  <link rel="stylesheet" href="styles.css?v=20260726b">
+  <script src="app.js?v=20260726b" defer></script>
+  <link rel="stylesheet" href="npu-acim.css?v=20260726b">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -504,14 +504,14 @@
           <thead><tr><th scope="col">Thermally sustainable service μ</th><th scope="col">Peak backlog after 2 s at 110/s</th><th scope="col">Drain after return to 80/s</th><th scope="col">Interview conclusion</th></tr></thead>
           <tbody>
             <tr><th scope="row">80 requests/s</th><td><code>B_peak = (110 − 80) × 2 = 60</code> requests.</td><td>No drain: <code>μ − λ_steady = 0</code>. The 60-request queue remains.</td><td>Invalid no-drop design. A finite burst bounds memory, but not recovery time or latency; add capacity or reject/drop/coalesce work.</td></tr>
-            <tr><th scope="row">100 requests/s</th><td><code>B_peak = (110 − 100) × 2 = 20</code> requests.</td><td><code>T_drain = 20 ÷ (100 − 80) = 1 s</code>.</td><td>The last queued work sees roughly <code>20 ÷ 100 = 200 ms</code> of fluid queueing before service, so the 20 ms objective fails even though the queue eventually drains.</td></tr>
-            <tr><th scope="row">110 requests/s</th><td>Zero deterministic fluid backlog during the specified burst.</td><td>Nothing to drain.</td><td>This is only the arithmetic floor. At 100% utilization there is no margin for service variance, retries, calibration, or class interference, so it does not prove p95.</td></tr>
-            <tr><th scope="row">120 requests/s</th><td>Zero deterministic fluid backlog with 10 requests/s burst headroom.</td><td>Nothing to drain in the fluid model.</td><td>A plausible no-drop candidate only after measured per-class queueing + service p95 stays below 20 ms at thermal equilibrium and complete-SoC power remains within 5 W.</td></tr>
+            <tr><th scope="row">100 requests/s</th><td><code>B_peak = (110 − 100) × 2 = 20</code> requests.</td><td><code>T_drain = 20 ÷ (100 − 80) = 1 s</code>.</td><td>The last queued burst work sees roughly <code>20 ÷ 100 = 200 ms</code> of fluid queueing before service. This can satisfy the stated prompt only when the declared burst policy permits that delay or drops/coalesces earlier; if the 20 ms SLO is extended to the burst window, this candidate fails.</td></tr>
+            <tr><th scope="row">110 requests/s</th><td>Zero deterministic fluid backlog during the specified burst.</td><td>Nothing to drain.</td><td>At the 80/s steady mix this leaves 30/s arithmetic headroom, but measured per-class steady p95 is still required. During the 110/s burst it reaches 100% fluid utilization, so service variance, retries, or calibration need an explicit burst degradation policy.</td></tr>
+            <tr><th scope="row">120 requests/s</th><td>Zero deterministic fluid backlog with 10 requests/s burst headroom.</td><td>Nothing to drain in the fluid model.</td><td>A plausible no-drop candidate after measured per-class p95 satisfies the 20 ms steady-mix SLO at thermal equilibrium, the declared burst policy is met, and complete-SoC power remains within 5 W.</td></tr>
           </tbody>
         </table>
       </div>
       <p class="evidence-note"><b>Backlog boundary:</b> with a nonzero initial queue, distinguish end-of-burst backlog <code>B_end = max(0, B₀ + (λ_burst − μ)T)</code> from peak backlog during a constant-rate interval, <code>B_peak = B₀ + max(0, (λ_burst − μ)T)</code>. The table uses <code>B₀ = 0</code>, so the two coincide when the burst adds work.</p>
-      <div class="acim-callout"><b>One defensible overload policy at μ = 100/s</b><span>Reserve service for all 50 audio windows/s, then cap accepted vision at no more than 50/s. During the two-second 60/s vision burst, accept at most 100 of 120 frames and drop or coalesce at least 20 according to a declared freshness policy. That stops deterministic growth, but 100/s is still a saturation ceiling—not p95 proof—so lower the admission cap or provision more capacity for queueing and service-time headroom. Measure each class’s total queueing-plus-service latency, not a mixed average. If neither class may drop, the design must sustain the 110/s mix with additional margin.</span></div>
+      <div class="acim-callout"><b>One defensible burst policy at μ = 100/s</b><span>Reserve service for all 50 audio windows/s, then cap accepted vision at no more than 50/s. During the two-second 60/s vision burst, accept at most 100 of 120 frames and drop or coalesce at least 20 according to a declared freshness policy. That prevents deterministic growth while preserving 20/s arithmetic headroom at the 80/s steady mix; measured steady per-class p95 is still required. The accepted burst lane reaches its 100/s ceiling, so define its queueing/drop behavior explicitly and lower the cap or add capacity if the product also imposes a burst latency SLO. Measure each class’s total queueing-plus-service latency, not a mixed average. If neither class may drop, the design must sustain the 110/s mix with additional margin.</span></div>
 
       <div class="acim-interview-flow" role="group" aria-label="Proposed interview architecture">
         <div>Model + calibration data</div><div>Graph compiler + analog optimizer</div><div>Partition + mapper + scheduler</div><div>Signed model bundle</div><div>Runtime + driver + firmware</div><div>Hybrid NPU + telemetry</div>
@@ -522,7 +522,7 @@
           <header><span>00–05 min</span><strong>Clarify workload and success</strong></header>
           <p>Separate model, product, silicon, lifecycle, and safety constraints.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>Which questions decide the architecture before you draw the stack?</span></div>
-          <details><summary>Reveal coaching</summary><div><p>Confirm whether the supplied vision/audio rates, four-context concurrency, two-second burst, percentile boundary, and drop policy reflect product intent; then state the queue boundary and require steady arrival to remain below sustained thermally limited service. Ask whether contexts share one resident model or switch models, which tile sets they may share, and whether a model switch may wait for in-flight references. Also ask about model families/operators and shapes; per-model deadlines and priority; energy and accuracy-loss budgets; determinism and cold start; model size/update frequency; ACiM array geometry/device precision and fault rate; converter/SRAM/NoC limits; target temperatures and lifetime; security/isolation; and whether the stack owns training. State exclusions, such as not designing the memory device itself.</p><p><b>Close the stated load:</b> the worked table declares <code>B₀ = 0</code>, so use <code>B_peak = max(0, λ_burst − μ) × 2 s</code> and, only when <code>μ &gt; 80/s</code>, <code>T_drain = B_peak ÷ (μ − 80/s)</code>. With residual backlog, carry B₀ explicitly and distinguish end backlog from the peak during the interval. At μ = 80/s the worked backlog is 60 and never drains; at μ = 100/s it is 20, drains in one second, and can impose about 200 ms of queueing. Therefore define per-class admission/reservation and deadline behavior before claiming p95.</p></div></details>
+          <details><summary>Reveal coaching</summary><div><p>Confirm whether the supplied vision/audio rates, four-context concurrency, two-second burst, percentile boundary, and drop policy reflect product intent; then state the queue boundary and require steady arrival to remain below sustained thermally limited service. Ask whether contexts share one resident model or switch models, which tile sets they may share, and whether a model switch may wait for in-flight references. Also ask about model families/operators and shapes; per-model deadlines and priority; energy and accuracy-loss budgets; determinism and cold start; model size/update frequency; ACiM array geometry/device precision and fault rate; converter/SRAM/NoC limits; target temperatures and lifetime; security/isolation; and whether the stack owns training. State exclusions, such as not designing the memory device itself.</p><p><b>Close the stated load:</b> the worked table declares <code>B₀ = 0</code>, so use <code>B_peak = max(0, λ_burst − μ) × 2 s</code> and, only when <code>μ &gt; 80/s</code>, <code>T_drain = B_peak ÷ (μ − 80/s)</code>. With residual backlog, carry B₀ explicitly and distinguish end backlog from the peak during the interval. At μ = 80/s the worked backlog is 60 and never drains; at μ = 100/s it is 20, drains in one second, and can impose about 200 ms of burst queueing. The prompt requires p95 below 20 ms at the steady mix, not during the burst, so judge the 200 ms value against the separately declared burst latency/drop policy unless the interviewer extends the SLO. Define per-class admission, reservation, and deadline behavior before claiming either contract is met.</p></div></details>
         </li>
         <li>
           <header><span>05–10 min</span><strong>Define the hardware/software contract</strong></header>

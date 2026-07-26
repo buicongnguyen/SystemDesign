@@ -19,5 +19,11 @@ export const publicFiles = Object.freeze([
   "assets/favicon.svg",
   "assets/social-card.svg",
   "assets/social-card.png",
+  "assets/social-atlas.png",
+  "assets/social-backend.png",
+  "assets/social-systems.png",
+  "assets/social-hardware.png",
+  "assets/social-embedded.png",
+  "assets/social-npu-acim.png",
   ".nojekyll"
 ]);
