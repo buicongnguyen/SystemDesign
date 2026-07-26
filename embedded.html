@@ -22,10 +22,10 @@
   <title>Embedded &amp; Cyber-Physical Systems · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/embedded.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726b"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726b">
-  <script src="app.js?v=20260726b" defer></script>
-  <link rel="stylesheet" href="embedded.css?v=20260726b">
+  <script src="theme-init.js?v=20260726c"></script>
+  <link rel="stylesheet" href="styles.css?v=20260726c">
+  <script src="app.js?v=20260726c" defer></script>
+  <link rel="stylesheet" href="embedded.css?v=20260726c">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -57,7 +57,7 @@
           <a class="button secondary" href="index.html">Choose another track</a>
         </div>
         <ul class="hero-stats" aria-label="Page summary">
-          <li><strong>7</strong><span>thinking steps</span></li>
+          <li><strong>11</strong><span>thinking steps</span></li>
           <li><strong>6</strong><span>verification levels</span></li>
           <li><strong>2</strong><span>worked cases</span></li>
         </ul>
@@ -96,16 +96,20 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <h2>Trace information and energy around the loop</h2>
         <p>Correct computation delivered too late can be incorrect system behavior. Design timing, uncertainty, and failure into the main path.</p>
       </div>
-      <ol class="em-thinking-flow" aria-label="Embedded design thinking flow">
+      <ol class="em-thinking-flow" data-phase-model="embedded-lifecycle" data-phase-count="11" aria-label="Embedded design thinking flow">
         <li><span>01</span><strong>Define mission + environment</strong><p>Users, operating modes, physical range, hazards, lifetime, maintenance, and misuse.</p><small>Output: scenarios + boundaries</small></li>
         <li><span>02</span><strong>Set timing + quality</strong><p>Sample rate, deadline, jitter, accuracy, response, availability, and safe state.</p><small>Output: measurable requirements</small></li>
         <li><span>03</span><strong>Model the plant</strong><p>Dynamics, disturbances, sensor/actuator limits, latency, uncertainty, and observability.</p><small>Output: control assumptions</small></li>
-        <li><span>04</span><strong>Partition functions</strong><p>Allocate sensing, control, acceleration, communications, safety, and UI to hardware or software.</p><small>Output: HW/SW boundary</small></li>
-        <li><span>05</span><strong>Schedule + communicate</strong><p>Tasks, interrupts, DMA, buffers, buses, priorities, clocks, and synchronization.</p><small>Output: timing architecture</small></li>
-        <li><span>06</span><strong>Design modes + faults</strong><p>Startup, active, sleep, update, degraded, emergency, recovery, and shutdown.</p><small>Output: state machines</small></li>
-        <li><span>07</span><strong>Verify across levels</strong><p>Models, code, processor timing, electrical interfaces, plant behavior, corners, and field evidence.</p><small>Output: traced proof</small></li>
+        <li><span>04</span><strong>Characterize plant + I/O</strong><p>Measure response, noise, bandwidth, delay, saturation, dead zones, power, and environmental corners; fit uncertainty and a validity domain.</p><small>Output: measured profiles + model bounds</small></li>
+        <li><span>05</span><strong>Partition functions</strong><p>Allocate sensing, control, acceleration, communications, safety, and UI to hardware or software.</p><small>Output: HW/SW boundary</small></li>
+        <li><span>06</span><strong>Schedule + communicate</strong><p>Tasks, interrupts, DMA, buffers, buses, priorities, clocks, and synchronization.</p><small>Output: timing architecture</small></li>
+        <li><span>07</span><strong>Design modes + faults</strong><p>Startup, active, sleep, update, degraded, emergency, recovery, and shutdown.</p><small>Output: state machines</small></li>
+        <li><span>08</span><strong>Implement + integrate</strong><p>Bring up power, clocks, reset, drivers, subsystems, the critical loop, and external interfaces in controlled gates.</p><small>Output: integrated baseline + traces</small></li>
+        <li><span>09</span><strong>Verify + validate</strong><p>Prove requirements, then demonstrate the complete mission with representative users, environments, faults, and units.</p><small>Output: traced acceptance evidence</small></li>
+        <li><span>10</span><strong>Transition + sustain</strong><p>Provision, calibrate, acceptance-test, commission, monitor, service, and update through a recoverable release path.</p><small>Output: supportable fielded system</small></li>
+        <li><span>11</span><strong>Retire safely</strong><p>Make outputs safe, revoke identity, erase protected data and keys, preserve required records, and dispose or recycle responsibly.</p><small>Output: verified decommission</small></li>
       </ol>
-      <div class="memory-strip"><b>Memory hook</b><span>Mission → deadline → plant → partition → schedule → modes/faults → evidence.</span></div>
+      <div class="memory-strip"><b>Memory hook</b><span>Mission → requirements → model → characterize → partition → schedule → modes → integrate → V&amp;V → sustain → retire.</span></div>
 
       <div class="em-control-board" role="group" aria-label="Sensor estimator controller actuator feedback loop">
         <div class="em-control-loop">
@@ -276,6 +280,24 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <h2>Add realism without losing observability</h2>
         <p>Move from fast models to the real plant in stages. Keep requirement IDs, acceptance limits, seeds, inputs, traces, and versions so failures are reproducible.</p>
       </div>
+
+      <div class="em-integration-board" role="group" aria-labelledby="embedded-integration-title">
+        <div class="em-integration-heading">
+          <span>Implementation + integration gate</span>
+          <h3 id="embedded-integration-title">Assemble one observable thread at a time</h3>
+          <p>Integration order is different from verification fidelity: each gate establishes a controlled baseline before the next interface can hide its failure.</p>
+        </div>
+        <ol class="em-integration-staircase" aria-label="Embedded implementation and integration sequence">
+          <li><span>01</span><b>Power · clock · reset · safety</b><small>rails, sequencing, brownout, monitor and safe-output smoke tests</small></li>
+          <li><span>02</span><b>BSP + drivers</b><small>register, interrupt, DMA, timing and error-path contracts</small></li>
+          <li><span>03</span><b>Subsystem thread</b><small>one sensor, processor, buffer and actuator or sink</small></li>
+          <li><span>04</span><b>Critical loop</b><small>physical event through timestamped command and feedback</small></li>
+          <li><span>05</span><b>External interfaces</b><small>network, storage, charger, service and dependent systems</small></li>
+          <li><span>06</span><b>Mission thread</b><small>complete scenarios, transitions, overload, recovery and support path</small></li>
+        </ol>
+        <p class="em-integration-evidence"><b>Gate evidence:</b> pin board revision, firmware, bootloader, configuration, calibration, tools and test fixture; name the owner, stimulus, expected trace, entry/exit criterion, anomaly disposition and rollback point.</p>
+      </div>
+
       <ol class="em-verification-ladder">
         <li><span>MIL</span><strong>Model-in-the-loop</strong><p>Controller and plant are models.</p><small>Catches: algorithm, stability, scenario logic</small></li>
         <li><span>SIL</span><strong>Software-in-the-loop</strong><p>Production-like code against a simulated plant.</p><small>Catches: numeric, generated code, state logic</small></li>
@@ -291,6 +313,20 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <article><span>Transition</span><p>Boot, wake, sleep, update, rollback, degraded entry/exit, and repeated recovery.</p></article>
       </div>
       <div class="memory-strip"><b>Verification asks</b><span>Did we build it to the requirements?</span><i>→</i><b>Validation asks</b><span>Does it solve the real operational need?</span></div>
+
+      <div class="em-field-lifecycle" role="group" aria-label="Embedded transition sustain update and retirement lifecycle">
+        <article><span>Transition</span><strong>Make each delivered unit ready</strong><p>Provision identity and keys, calibrate and acceptance-test the production configuration, record unit pedigree, commission site interfaces and safe defaults, and deliver operator/service instructions.</p></article>
+        <article><span>Operate + service</span><strong>Turn evidence into action</strong><p>Monitor safety, energy, timing, sensor/actuator health and reset causes. Define alert, degraded-mode, inspection, repair, recalibration, spare and end-of-support ownership.</p></article>
+        <article><span>Update + recover</span><strong>Protect, detect, recover</strong><p>Authenticate releases; check bootloader, firmware, configuration and calibration compatibility; stage rollout; confirm health before commitment; and retain a tested recovery path without promising unsupported downgrade behavior.</p></article>
+        <article><span>Retire</span><strong>End authority and energy safely</strong><p>Fence commands and make outputs safe, revoke cloud/device identity, erase protected data and keys, export or retain required records, isolate the battery, and follow the applicable reuse, recycling and disposal process.</p></article>
+      </div>
+      <nav class="em-lifecycle-sources" aria-label="Embedded lifecycle primary sources">
+        <strong>Lifecycle trail</strong>
+        <a href="https://www.nasa.gov/reference/5-0-product-realization/">NASA implementation, integration, V&amp;V and transition ↗</a>
+        <a href="https://csrc.nist.gov/pubs/sp/800/193/final">NIST platform firmware resiliency ↗</a>
+        <a href="https://docs.zephyrproject.org/latest/services/device_mgmt/dfu.html">Zephyr device firmware upgrade ↗</a>
+        <a href="https://docs.mcuboot.com/design.html">MCUboot image, test and revert design ↗</a>
+      </nav>
     </section>
 
     <section class="section deep-dive-section" id="timing-workbench">
@@ -476,7 +512,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
       <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1145/321738.321743">Liu–Layland scheduling ↗</a><a href="https://doi.org/10.1093/comjnl/29.5.390">Joseph–Pandya response time ↗</a><a href="https://link.springer.com/article/10.1007/BF01088593">Jitter-aware response time ↗</a><a href="https://ctms.engin.umich.edu/CTMS/?example=Introduction&amp;section=ControlDigital">University of Michigan digital control + ZOH ↗</a><a href="https://www.mathworks.com/help/control/ug/analyzing-control-systems-with-delays.html">MathWorks delay analysis ↗</a><a href="https://docs.zephyrproject.org/latest/kernel/services/scheduling/index.html">Zephyr scheduling ↗</a><a href="https://docs.zephyrproject.org/latest/services/pm/index.html">Zephyr power management ↗</a><a href="https://freertos.org/Documentation/02-Kernel/02-Kernel-features/01-Tasks-and-co-routines/04-Task-scheduling">FreeRTOS scheduling ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA ownership ↗</a><a href="https://www.ti.com/lit/an/slva740a/slva740a.pdf">TI pulsed-load battery budgeting ↗</a><a href="https://www.mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator_v1-0p.pdf">MIPI I3C integration ↗</a><a href="https://www.can-cia.org/can-knowledge/can-cc">CiA CAN arbitration and frame formats ↗</a><a href="https://docs.mcuboot.com/design.html">MCUboot image + recovery design ↗</a><a href="https://docs.kernel.org/watchdog/watchdog-api.html">Linux watchdog contract ↗</a></div>
     </section>
 
-    <section class="section" id="practice">
+    <section class="section" id="practice" data-interview-minutes="45">
       <div class="section-heading centered-heading">
         <p class="eyebrow">10 · Embedded interview practice</p>
         <h2>Design a battery smart camera</h2>
@@ -501,7 +537,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <li><header><span>15–25 min</span><strong>Partition hardware and tasks</strong></header><p>Choose wake sensing, MCU/RTOS, image/ISP path, accelerator, memory, storage, radios, security element, and power domains.</p><details><summary>Reveal coaching notes</summary><div>Keep a tiny always-on controller or wake sensor. Power the main image/AI/radio islands only when needed. Use DMA for frames, fixed function for ISP, an accelerator for supported inference, and software for policy and recovery. Avoid waking Wi-Fi for rejected events.</div></details></li>
         <li><header><span>25–33 min</span><strong>Schedule the event path</strong></header><p>Trace wake interrupt, rail/clock sequencing, sensor readiness, capture DMA, inference deadline, storage, radio association, upload, and return to sleep.</p><details><summary>Reveal coaching notes</summary><div>Assign deadlines to stages and reserve buffers before enabling capture. Keep ISR work to acknowledge/timestamp/defer. Bound every wait with a timeout and make cancellation safe if battery, thermal, or privacy policy changes mid-event.</div></details></li>
         <li><header><span>33–40 min</span><strong>Design modes and failures</strong></header><p>Cover shipping, setup, armed, capture, upload, offline, low battery, update, degraded, over-temperature, tamper, and recovery.</p><details><summary>Reveal coaching notes</summary><div>Store clips locally with a retention and wear policy when offline; upload later under an energy/data budget. Use signed A/B images with anti-rollback policy, old/new schema and bootloader compatibility, post-boot confirmation, bounded retry, a recovery image/path, unique device identity, encrypted storage, protected keys, and explicit factory reset.</div></details></li>
-        <li><header><span>40–45 min</span><strong>Verify and close</strong></header><p>Name tests for energy, timing, accuracy, transitions, radio loss, corrupt storage, brownout, temperature, update interruption, and privacy behavior.</p><details><summary>Reveal coaching notes</summary><div>Automate event-cycle energy integration across temperature and battery state. Replay labeled scenes for detection quality, inject failures during every transition, HIL-test the power and sensor interfaces, then run accelerated long-duration and controlled field trials.</div></details></li>
+        <li><header><span>40–45 min</span><strong>Verify, transition, sustain, and retire</strong></header><p>Name requirement and mission-validation evidence, then explain how each unit leaves the lab, is commissioned, monitored, serviced, updated, recovered, and safely decommissioned.</p><details><summary>Reveal coaching notes</summary><div>Automate event-cycle energy integration across temperature and battery state; replay labeled scenes; inject transition faults; HIL-test power and sensor interfaces; then run accelerated long-duration and controlled field trials. Factory-provision identity and keys, calibrate and acceptance-test the released configuration, record unit pedigree, and commission privacy and safe defaults. Roll out compatible signed firmware in stages, require post-boot health before commitment, monitor energy, false wakes, storage, resets and sensor health, and keep a tested recovery/service path. At retirement, stop capture and actuation, revoke identity, erase clips and protected keys, preserve required audit/service records, isolate the battery, and follow the applicable reuse or recycling process.</div></details></li>
       </ol>
       <div class="em-pressure-grid">
         <article><span>200 wakes/day</span><p>Protect the battery with sensor tuning, cooldown, local low-cost screening, rate budgets, and abuse detection.</p></article>
@@ -509,7 +545,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <article><span>Update loses power</span><p>Boot verified previous image, leave recoverable metadata, and never brick the secure update path.</p></article>
         <article><span>Sensor gives stale frames</span><p>Use frame counters/timestamps, freshness deadline, pipeline reset, user-visible health, and degraded state.</p></article>
       </div>
-      <div class="memory-strip"><b>Strong close</b><span>Show the event timeline, daily energy equation, state machine, safe/degraded behavior, and the staged test evidence that makes the design credible.</span></div>
+      <div class="memory-strip"><b>Strong close</b><span>Show the event timeline, daily energy equation, state machine, integration gates, V&amp;V evidence, field thresholds, recoverable update path, and safe retirement contract.</span></div>
     </section>
 
     <section class="section" id="resources">

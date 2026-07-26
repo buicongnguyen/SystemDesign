@@ -105,6 +105,11 @@ const practiceSection = document.querySelector("#practice");
 function initializeInterviewMode() {
   if (!topicNav || !practiceSection) return;
 
+  const configuredMinutes = Number.parseInt(practiceSection.dataset.interviewMinutes || "", 10);
+  const sessionMinutes = Number.isInteger(configuredMinutes) && configuredMinutes >= 10 && configuredMinutes <= 120
+    ? configuredMinutes
+    : 45;
+
   const trigger = document.createElement("button");
   trigger.type = "button";
   trigger.className = "interview-mode-trigger";
@@ -121,13 +126,13 @@ function initializeInterviewMode() {
   panel.innerHTML = `
     <header>
       <div>
-        <span>45-minute practice</span>
+        <span>${sessionMinutes}-minute practice</span>
         <h2 id="interview-mode-title">Interview mode</h2>
       </div>
       <button class="interview-panel-close" type="button" aria-label="Close interview controls">×</button>
     </header>
     <div class="interview-timer" role="timer" aria-label="Interview time remaining">
-      <strong>45:00</strong>
+      <strong>${String(sessionMinutes).padStart(2, "0")}:00</strong>
       <span>remaining</span>
     </div>
     <div class="interview-actions">
@@ -141,11 +146,14 @@ function initializeInterviewMode() {
     </label>
     <fieldset class="interview-checkpoints">
       <legend>Thinking checkpoints</legend>
-      <label><input type="checkbox"><span>Clarify</span></label>
+      <label><input type="checkbox"><span>Frame</span></label>
       <label><input type="checkbox"><span>Quantify</span></label>
       <label><input type="checkbox"><span>Model</span></label>
       <label><input type="checkbox"><span>Design</span></label>
       <label><input type="checkbox"><span>Stress</span></label>
+      <label><input type="checkbox"><span>Prove</span></label>
+      <label><input type="checkbox"><span>Transition</span></label>
+      <label><input type="checkbox"><span>Operate · evolve · retire</span></label>
       <label><input type="checkbox"><span>Close</span></label>
     </fieldset>
     <details class="interview-rubric">
@@ -155,7 +163,7 @@ function initializeInterviewMode() {
         <label><span>Quantitative reasoning</span><select aria-label="Quantitative reasoning score"><option value="0">0 · Missing</option><option value="1">1 · Partial</option><option value="2">2 · Strong</option></select></label>
         <label><span>Architecture + interfaces</span><select aria-label="Architecture and interfaces score"><option value="0">0 · Missing</option><option value="1">1 · Partial</option><option value="2">2 · Strong</option></select></label>
         <label><span>Failures + trade-offs</span><select aria-label="Failures and trade-offs score"><option value="0">0 · Missing</option><option value="1">1 · Partial</option><option value="2">2 · Strong</option></select></label>
-        <label><span>Evidence + communication</span><select aria-label="Evidence and communication score"><option value="0">0 · Missing</option><option value="1">1 · Partial</option><option value="2">2 · Strong</option></select></label>
+        <label><span>Evidence + lifecycle closure</span><select aria-label="Evidence and lifecycle closure score"><option value="0">0 · Missing</option><option value="1">1 · Partial</option><option value="2">2 · Strong</option></select></label>
         <output aria-live="polite">0/10 · Build the first complete pass.</output>
       </div>
     </details>
@@ -175,7 +183,7 @@ function initializeInterviewMode() {
   const status = panel.querySelector(".interview-status");
   const endButton = panel.querySelector(".interview-end");
   const coachingDetails = [...practiceSection.querySelectorAll("details")];
-  const sessionSeconds = 45 * 60;
+  const sessionSeconds = sessionMinutes * 60;
   let secondsRemaining = sessionSeconds;
   let timerId = null;
   let timerDeadline = 0;
@@ -295,11 +303,14 @@ const zoomableSelectors = [
   ".hw-diagnose-flow",
   ".hw-case-flow",
   ".em-control-board",
+  ".em-integration-board",
   ".em-control-analysis-grid",
   ".em-control-verdict",
   ".em-irq-board",
   ".em-safety-map",
   ".acim-hybrid-flow",
+  ".acim-lifecycle-board",
+  ".acim-integration-board",
   ".acim-tile-map",
   ".acim-runtime-flow",
   ".acim-control-loop",

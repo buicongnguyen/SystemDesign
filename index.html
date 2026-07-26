@@ -22,9 +22,9 @@
   <title>System Design Atlas — Choose Your Track</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726b"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726b">
-  <script src="app.js?v=20260726b" defer></script>
+  <script src="theme-init.js?v=20260726c"></script>
+  <link rel="stylesheet" href="styles.css?v=20260726c">
+  <script src="app.js?v=20260726c" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -82,19 +82,29 @@ state_requirements_and_tradeoffs()</code></pre>
 
     <section class="section" id="shared-core">
       <div class="section-heading"><p class="eyebrow">02 · Shared reasoning engine</p><h2>Every track follows the same evidence loop</h2><p>The artifacts change, but good designs always connect stakeholder need to a verified and operable solution.</p></div>
-      <ol class="atlas-loop">
+      <ol class="atlas-loop" data-phase-model="shared-lifecycle" data-phase-count="12">
         <li><span>01</span><strong>Need</strong><p>Who succeeds, under what operating scenario?</p></li>
         <li><span>02</span><strong>Requirements</strong><p>Make functions and quality constraints measurable.</p></li>
         <li><span>03</span><strong>Estimate</strong><p>Size load, data, timing, energy and environment.</p></li>
         <li><span>04</span><strong>Decompose</strong><p>Break behavior into functions and interfaces.</p></li>
         <li><span>05</span><strong>Allocate</strong><p>Assign functions to services, hardware, software or people.</p></li>
         <li><span>06</span><strong>Trade</strong><p>Compare alternatives with explicit criteria.</p></li>
-        <li><span>07</span><strong>Realize</strong><p>Implement and integrate from components upward.</p></li>
-        <li><span>08</span><strong>Verify</strong><p>Prove the design meets its requirements.</p></li>
-        <li><span>09</span><strong>Validate</strong><p>Prove the system solves the intended need.</p></li>
-        <li><span>10</span><strong>Operate</strong><p>Observe, recover, evolve and eventually retire.</p></li>
+        <li><span>07</span><strong>Realize</strong><p>Build, buy, configure or reuse each planned element.</p></li>
+        <li><span>08</span><strong>Integrate</strong><p>Combine elements in a planned order and close their interfaces.</p></li>
+        <li><span>09</span><strong>Verify</strong><p>Prove the realized system meets its specified requirements.</p></li>
+        <li><span>10</span><strong>Validate</strong><p>Prove it solves the stakeholder need in its intended environment.</p></li>
+        <li><span>11</span><strong>Transition</strong><p>Establish acceptance, readiness, training, support and controlled handoff.</p></li>
+        <li><span>12</span><strong>Operate, evolve &amp; retire</strong><p>Observe outcomes, recover, improve safely and close the lifecycle responsibly.</p></li>
       </ol>
       <div class="atlas-formula"><b>Reasoning sentence</b><span>Because requirement <i>R</i> and estimate <i>E</i> expose constraint <i>C</i>, choose architecture <i>A</i>, accepting trade-off <i>T</i>, verified by measure <i>M</i>.</span></div>
+      <p class="evidence-note"><b>Continuous controls—not late phases:</b> risk and safety, security and privacy, configuration and interface control, evidence and traceability, cost and operability run through all 12 steps. Reassess them whenever an assumption, requirement, design, supplier, implementation, test result, release or operating condition changes.</p>
+      <nav class="reference-trail" aria-label="Primary lifecycle guidance">
+        <strong>Lifecycle anchors</strong>
+        <a href="https://www.nasa.gov/reference/2-0-fundamentals-of-systems-engineering/">NASA SE fundamentals: design through retirement ↗</a>
+        <a href="https://www.nasa.gov/reference/5-0-product-realization/">NASA product realization: implement, integrate, verify, validate, transition ↗</a>
+        <a href="https://csrc.nist.gov/pubs/sp/800/160/v1/r1/final">NIST SP 800-160: engineer trustworthiness across the lifecycle ↗</a>
+        <a href="https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html">AWS Operational Excellence: prepare, operate and evolve ↗</a>
+      </nav>
       <div class="source-map" role="group" aria-label="How the Atlas uses sources">
         <article><span>Standards + protocols</span><strong>Define the contract</strong><p>Use exact semantics and compatibility rules from sources such as <a href="https://www.rfc-editor.org/rfc/rfc9110.html">RFC 9110</a>, then state which revision and subset the design implements.</p></article>
         <article><span>Foundational research</span><strong>Know the assumptions</strong><p>Papers such as <a href="https://doi.org/10.1145/1498765.1498785">Roofline</a> explain a model and its boundary; they do not replace workload-specific measurement.</p></article>
@@ -190,8 +200,8 @@ state_requirements_and_tradeoffs()</code></pre>
         <li><header><span>12–20 min</span><strong>Sketch the architecture</strong></header><p>Separate safety control, perception, storage, synchronization, fleet services, and human operations; draw trust and network boundaries.</p><details><summary>Checkpoint</summary><div>Walk one normal mission and one disconnected mission end to end, naming state owners and durable records.</div></details></li>
         <li><header><span>20–30 min</span><strong>Close critical interfaces</strong></header><p>Trace sensor-to-actuator latency, ACiM fallback, power and thermal limits, schema versions, calibration identity, and retry semantics.</p><details><summary>Checkpoint</summary><div>For each cross-track arrow, name producer, consumer, unit, deadline, version, fault response, and observable signal.</div></details></li>
         <li><header><span>30–39 min</span><strong>Expose bottlenecks and trades</strong></header><p>Test compute, memory bandwidth, bus contention, thermal throttling, battery reserve, storage pressure, and uplink backlog.</p><details><summary>Checkpoint</summary><div>Choose one alternative, quantify why it helps, and state the cost or new failure mode it introduces.</div></details></li>
-        <li><header><span>39–46 min</span><strong>Plan verification and operations</strong></header><p>Build component, interface, hardware-in-loop, fault-injection, drift, security, and representative mission evidence upward.</p><details><summary>Checkpoint</summary><div>Connect each critical requirement to a method, configuration, acceptance rule, telemetry signal, and accountable owner.</div></details></li>
-        <li><header><span>46–50 min</span><strong>Close with the decision record</strong></header><p>Summarize the architecture, dominant risks, margins, unresolved assumptions, rollout controls, and next measurement.</p><details><summary>Checkpoint</summary><div>A strong close explains why the whole mission succeeds—not merely why each subsystem looks locally efficient.</div></details></li>
+        <li><header><span>39–46 min</span><strong>Prove readiness &amp; acceptance</strong></header><p>Build component, interface, hardware-in-loop, fault-injection, drift, security, operator and representative mission evidence upward.</p><details><summary>Checkpoint</summary><div>Connect each critical requirement to a method, configuration, acceptance rule and result; state who accepts the baseline, which risks remain open, and what must be ready before transition.</div></details></li>
+        <li><header><span>46–50 min</span><strong>Transition, operate &amp; retire</strong></header><p>Package the accepted baseline, hand off ownership and support, stage the signed rollout, define rollback or safe fallback, observe mission and fleet outcomes, and name the eventual decommissioning contract.</p><details><summary>Checkpoint</summary><div>Close with readiness owners, runbooks, rollout gates, rollback triggers, operating SLIs and alerts, the first signal that feeds the next improvement decision, and who safely ends authority, credentials, protected data and physical service.</div></details></li>
       </ol>
 
       <nav class="reference-trail" aria-label="Cross-track case study links">
@@ -204,7 +214,7 @@ state_requirements_and_tradeoffs()</code></pre>
       </nav>
     </section>
 
-    <section class="section" id="practice">
+    <section class="section" id="practice" data-interview-minutes="50">
       <div class="section-heading"><p class="eyebrow">05 · Interview practice matrix</p><h2>Practice the right conversation for each role</h2><p>Each track ends with a timed 45–55 minute practice arena, revealable coaching notes, pressure tests, and a self-score.</p></div>
       <div class="practice-matrix">
         <a href="backend.html#practice"><span>Backend</span><strong>URL shortener · feed · chat</strong><small>Scale, storage, consistency, bottlenecks</small></a>

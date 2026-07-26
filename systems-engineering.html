@@ -22,9 +22,9 @@
   <title>Systems Engineering · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726b"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726b">
-  <script src="app.js?v=20260726b" defer></script>
+  <script src="theme-init.js?v=20260726c"></script>
+  <link rel="stylesheet" href="styles.css?v=20260726c">
+  <script src="app.js?v=20260726c" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -163,14 +163,14 @@ validate(<b>solves the mission</b>)</code></pre>
     <section class="section design-thinking se-process-section" id="process">
       <div class="section-heading centered-heading">
         <p class="eyebrow">03 · Requirements and decomposition</p>
-        <h2>Move from need to testable architecture</h2>
-        <p>Systems Engineering is iterative. A discovery at any step can change earlier assumptions, requirements, interfaces, or plans.</p>
+        <h2>Move from need to a fielded, sustained system</h2>
+        <p>Systems Engineering is iterative and recursive. Definition, realization, transition, operation, and retirement inform one another; a discovery at any step can change earlier assumptions, requirements, interfaces, evidence, or plans.</p>
       </div>
 
       <div class="master-design-flow se-design-flow" role="group" aria-label="Systems Engineering reasoning flow">
         <div class="design-flow-root"><span>Start</span><strong>What mission outcome matters?</strong><small>Capture stakeholders, context, constraints, and measures of effectiveness.</small></div>
         <div class="vertical-connector" aria-hidden="true"></div>
-        <ol class="design-flow-steps">
+        <ol class="design-flow-steps" data-phase-model="systems-engineering-lifecycle" data-phase-count="14">
           <li><span>01</span><div><strong>Stakeholder needs</strong><p>Translate viewpoints, pains, policies, and mission goals into agreed expectations.</p></div><small>Artifact: need statement</small></li>
           <li><span>02</span><div><strong>ConOps</strong><p>Walk through lifecycle scenarios, users, operating modes, and environments.</p></div><small>Artifact: scenario set</small></li>
           <li><span>03</span><div><strong>Measures</strong><p>Define mission success, effectiveness, performance, suitability, and constraints.</p></div><small>Artifact: quantified targets</small></li>
@@ -179,11 +179,15 @@ validate(<b>solves the mission</b>)</code></pre>
           <li><span>06</span><div><strong>Alternatives</strong><p>Create genuinely different solution concepts and define evaluation criteria.</p></div><small>Artifact: candidate architectures</small></li>
           <li><span>07</span><div><strong>Allocate</strong><p>Assign functions and requirements to hardware, software, people, and externals.</p></div><small>Artifact: physical architecture</small></li>
           <li><span>08</span><div><strong>Balance</strong><p>Resolve interfaces, budgets, risks, cost, schedule, and technical margins.</p></div><small>Artifact: selected baseline</small></li>
-          <li><span>09</span><div><strong>Integrate</strong><p>Assemble in risk-retiring increments, exercise interfaces, and preserve the exact configuration under test.</p></div><small>Artifact: integrated configuration + interface evidence</small></li>
-          <li><span>10</span><div><strong>Verify</strong><p>Produce objective evidence that the realized and integrated system meets each allocated requirement.</p></div><small>Artifact: compliance evidence</small></li>
-          <li><span>11</span><div><strong>Validate</strong><p>Evaluate intended use with representative users, missions, and environments; show that the complete system solves the stakeholder need.</p></div><small>Artifact: mission-fit evidence</small></li>
+          <li><span>09</span><div><strong>Realize</strong><p>Build, code, buy, reuse, fabricate, train, and document configuration-controlled elements; qualify inherited evidence for this mission and environment.</p></div><small>Artifact: as-built / as-coded elements + pedigree</small></li>
+          <li><span>10</span><div><strong>Integrate</strong><p>Assemble in risk-retiring increments, exercise interfaces, and preserve the exact configuration under test.</p></div><small>Artifact: integrated configuration + interface evidence</small></li>
+          <li><span>11</span><div><strong>Verify</strong><p>Produce objective evidence that the realized and integrated system meets each allocated requirement.</p></div><small>Artifact: compliance evidence + anomaly status</small></li>
+          <li><span>12</span><div><strong>Validate</strong><p>Evaluate intended use with representative users, missions, and environments; show that the complete system solves the stakeholder need.</p></div><small>Artifact: mission-fit evidence + limitations</small></li>
+          <li><span>13</span><div><strong>Transition</strong><p>Transfer the verified and validated baseline with training, manuals, facilities, spares, support data, keys, residual risks, and acceptance authority; confirm receiver readiness.</p></div><small>Artifact: accepted operational baseline</small></li>
+          <li><span>14</span><div><strong>Operate · sustain · retire</strong><p>Monitor mission outcomes and incidents, maintain capability through controlled change, and close service with safe migration, archiving, deprovisioning, recovery, or disposal.</p></div><small>Artifact: field evidence + change record + retirement closure</small></li>
         </ol>
       </div>
+      <p class="section-source">Lifecycle anchor: NASA treats Systems Engineering as design, realization, technical management, operations, and retirement, and its product-realization sequence explicitly includes implementation, integration, verification, validation, and transition. <a href="https://www.nasa.gov/reference/2-0-fundamentals-of-systems-engineering/">NASA Systems Engineering fundamentals ↗</a> <a href="https://www.nasa.gov/reference/5-0-product-realization/">NASA Product Realization ↗</a></p>
 
       <div class="se-requirement-anatomy">
         <div class="diagram-title"><span>Requirement anatomy</span><strong>Make every “shall” statement traceable and provable.</strong></div>
@@ -607,7 +611,7 @@ validate(<b>solves the mission</b>)</code></pre>
       <div class="reference-trail"><strong>Primary trail</strong><a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">NASA SE Handbook ↗</a><a href="https://www.nasa.gov/reference/4-2-technical-requirements-definition/">NASA MOE/MOP/TPM ↗</a><a href="https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/">NASA requirement quality ↗</a><a href="https://www.nasa.gov/reference/6-3-interface-management/">NASA interface management ↗</a><a href="https://www.nasa.gov/reference/6-5-configuration-management/">NASA configuration management ↗</a><a href="https://www.nasa.gov/reference/6-8-decision-analysis/">NASA decision analysis ↗</a><a href="https://www.nasa.gov/reference/2-4-distinctions-between-product-verification-and-product-validation/">NASA V&amp;V distinction ↗</a><a href="https://www.iso.org/standard/81702.html">ISO/IEC/IEEE 15288 ↗</a><a href="https://nodis3.gsfc.nasa.gov/displayDir.cfm?Internal_ID=N_PR_7123_001D_">Current NPR 7123.1D in NODIS ↗</a></div>
     </section>
 
-    <section class="section practice-arena se-practice" id="practice">
+    <section class="section practice-arena se-practice" id="practice" data-interview-minutes="55">
       <div class="section-heading centered-heading">
         <p class="eyebrow">12 · Interview practice arena</p>
         <h2>Design an autonomous delivery drone system</h2>
@@ -637,7 +641,7 @@ validate(<b>solves the mission</b>)</code></pre>
         <li><span>25–35</span><strong>Balance</strong><small>Budgets · alternatives</small></li>
         <li><span>35–45</span><strong>Make safe</strong><small>Hazards · faults · recovery</small></li>
         <li><span>45–52</span><strong>Prove</strong><small>Integration · V&amp;V</small></li>
-        <li><span>52–55</span><strong>Close</strong><small>Trade-offs · risks · next work</small></li>
+        <li><span>52–55</span><strong>Close lifecycle</strong><small>Transition · operate/sustain · retire</small></li>
       </ol>
 
       <div class="pattern-handbook se-case-coaching">
@@ -717,9 +721,9 @@ validate(<b>solves the mission</b>)</code></pre>
         </details>
 
         <details>
-          <summary><span>08</span><strong>Close the interview like a chief engineer</strong><small>Summarize the baseline, evidence, and remaining uncertainty</small></summary>
+          <summary><span>08</span><strong>Close transition and lifecycle ownership</strong><small>Summarize acceptance, field ownership, retirement, and remaining uncertainty</small></summary>
           <div>
-            <p><b>Strong close:</b> “I chose supervised hybrid autonomy: immediate safety, stabilization, navigation fallback, geofence, and contingency landing remain onboard; ground services schedule the fleet and optimize routes. The design isolates the safety monitor and preserves safe behavior after link loss. Energy reserve, misleading navigation, common power loss, public exposure, package integrity, and operator workload drive the architecture. I would next prototype the energy profile and degraded navigation, complete the safety analysis, close external interfaces with regulators and sites, and validate assumptions with clinic operators.”</p>
+            <p><b>Strong close:</b> “I chose supervised hybrid autonomy: immediate safety, stabilization, navigation fallback, geofence, and contingency landing remain onboard; ground services schedule the fleet and optimize routes. The design isolates the safety monitor and preserves safe behavior after link loss. Energy reserve, misleading navigation, common power loss, public exposure, package integrity, and operator workload drive the architecture. Before acceptance I would close receiver readiness, training, manuals, facilities, spares, keys, support data, residual-risk authority, and the operational baseline. Field owners monitor mission outcomes, safety events, energy, availability, maintenance and configuration; controlled evidence reopens requirements and hazards. Retirement has an owner for grounding, migration, credential revocation, protected-data disposition, records, batteries, spares and disposal.”</p>
             <p><b>State residual uncertainty:</b> certified operating envelope, population and airspace exposure, detect-and-avoid performance, regulatory basis, communication coverage, battery ageing, environmental qualification, support staffing, and acceptable mission failure rate. Name what evidence resolves each one.</p>
           </div>
         </details>

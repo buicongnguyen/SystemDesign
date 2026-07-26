@@ -22,10 +22,10 @@
   <title>NPU + ACiM Software Stack · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/npu-acim.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726b"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726b">
-  <script src="app.js?v=20260726b" defer></script>
-  <link rel="stylesheet" href="npu-acim.css?v=20260726b">
+  <script src="theme-init.js?v=20260726c"></script>
+  <link rel="stylesheet" href="styles.css?v=20260726c">
+  <script src="app.js?v=20260726c" defer></script>
+  <link rel="stylesheet" href="npu-acim.css?v=20260726c">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -180,6 +180,27 @@
         </aside>
       </div>
 
+      <div class="acim-lifecycle-board" role="group" aria-labelledby="acim-lifecycle-title">
+        <div class="acim-lifecycle-heading">
+          <span>End-to-end lifecycle</span>
+          <h3 id="acim-lifecycle-title">Layers say where work lives; phases say how evidence matures</h3>
+          <p>The nine stack layers coexist in a deployed product. These eleven phases iterate over them, with measured evidence allowed to reopen requirements, mapping, qualification, or release decisions.</p>
+        </div>
+        <ol class="acim-lifecycle-flow" data-phase-model="acim-lifecycle" data-phase-count="11" aria-label="Hybrid NPU and ACiM product lifecycle">
+          <li><span>01</span><strong>Frame intended use</strong><p>Decision, users, consequences, privacy, override, forbidden use, safe fallback.</p></li>
+          <li><span>02</span><strong>Baseline requirements + reference</strong><p>Name datasets, metrics and slices; digital reference; latency, power, accuracy, safety and lifecycle acceptance before adapting to a device.</p></li>
+          <li><span>03</span><strong>Characterize target</strong><p>Measure geometry, PVT, converters, variation, faults, retention, drift, endurance and reset effects; resolve any mismatch through an explicit trade or requirements change.</p></li>
+          <li><span>04</span><strong>Compile + map</strong><p>Import, legalize, quantize, partition, place, schedule and generate an explainable bundle.</p></li>
+          <li><span>05</span><strong>Implement + integrate</strong><p>Compiler, runtime, driver, firmware, ABI, device profile, buffers, commands and recovery.</p></li>
+          <li><span>06</span><strong>Verify</strong><p>Prove semantics, legality, numeric behavior, ownership, timing and fault contracts.</p></li>
+          <li><span>07</span><strong>Validate intended use</strong><p>Demonstrate useful outcomes, safe fallback and acceptable slice behavior on representative users, data and scenarios.</p></li>
+          <li><span>08</span><strong>Qualify configuration</strong><p>Bound unit, PVT, age, endurance, drift, calibration and fault variation for the exact releasable hardware/software set.</p></li>
+          <li><span>09</span><strong>Accept + release</strong><p>Apply declared production/lot/unit screening and calibration limits, sign one compatible set, preflight it, stage rollout, gate health and retain a proven rollback set.</p></li>
+          <li><span>10</span><strong>Operate + evolve</strong><p>Monitor, respond, recalibrate, remap, recompile, update and learn from fleet evidence.</p></li>
+          <li><span>11</span><strong>Retire</strong><p>Fence work, revoke authority, erase protected artifacts, preserve required evidence and transition clients.</p></li>
+        </ol>
+      </div>
+
       <div class="detail-table-wrap" role="region" aria-label="ACiM intermediate representation levels and proof obligations" tabindex="0">
         <table class="detail-table">
           <caption>Four IR levels, four proof obligations: lowering is not merely changing syntax. Each IR preserves earlier promises while making one new class of decisions explicit.</caption>
@@ -323,6 +344,25 @@
         <article><span>06</span><strong>Run + observe</strong><p>Handle interrupts, saturation, ECC/fault events, timeouts, thermal throttling, and traces.</p></article>
         <article><span>07</span><strong>Complete or recover</strong><p>On successful completion, atomically record output validity, return the result only when both the pinned readiness identity and completion record are valid, then release the residency reference. On timeout or fault, mark output invalid immediately but retain the residency reference and DMA resources until containment/quiescence proof; only then retire them and run the versioned recovery, fallback, or scoped-reset path.</p></article>
       </div>
+
+      <div class="acim-integration-board" role="group" aria-labelledby="acim-integration-title">
+        <div class="acim-integration-heading">
+          <span>Implementation + integration staircase</span>
+          <h3 id="acim-integration-title">Cross one contract boundary per gate</h3>
+          <p>Do not debug a full mixed-signal graph before proving each producer and consumer agree on semantics, versions, ownership and expected evidence.</p>
+        </div>
+        <ol class="acim-integration-staircase" aria-label="ACiM compiler runtime firmware and silicon integration sequence">
+          <li><span>01</span><b>Importer corpus</b><small>shapes, opsets, layouts, dynamic cases and rejected forms</small></li>
+          <li><span>02</span><b>IR differential</b><small>model → quantized → device → command against references</small></li>
+          <li><span>03</span><b>Command emulator</b><small>bounds, barriers, events, resets, replay and fallback</small></li>
+          <li><span>04</span><b>Driver + firmware ABI</b><small>queues, mappings, interrupts, generations, faults and quiescence</small></li>
+          <li><span>05</span><b>One-tile silicon</b><small>golden vectors, ranges, calibration, latency and energy</small></li>
+          <li><span>06</span><b>Hybrid subgraph</b><small>DMA, ACiM, digital accumulation, fallback and source map</small></li>
+          <li><span>07</span><b>Multi-context SoC</b><small>residency, isolation, contention, PVT, faults and recovery</small></li>
+        </ol>
+        <p class="acim-integration-evidence"><b>Gate evidence:</b> pin model, compiler, runtime, driver, firmware, capability/profile schema, physical device and calibration versions; preserve the stimulus, digital/golden result, device trace, acceptance limit and anomaly disposition.</p>
+      </div>
+
       <div class="acim-callout"><b>Runtime invariant</b><span>A timeout, reset, model switch, or concurrent context must never expose unknown weights, aliased buffers, a partially published residency, or a stale ownership token to the next request.</span></div>
       <p class="evidence-note"><b>Four-context residency protocol:</b> planned model state moves through <code>EMPTY → LOADING/PROGRAMMING → VERIFYING → READY → EVICTING</code>. Only one owner may hold the tile-set mutation lease. Dispatches atomically pin one immutable <code>{bundle_hash, weight_image_hash, profile_hash, health_generation, reset_generation, residency_generation}</code> tuple and increment its reference count. Planned mutation atomically claims the lease for that observed generation; under the lease it fences new pins, drains existing references and device work, and revalidates the generation plus zero-reference condition before changing weights. A fault path instead fences and invalidates immediately, contains/quiesces device access, resets if required, and retires references only after access is impossible. Affected records move to <code>UNKNOWN</code> when reset effects invalidate them or identity cannot be re-established; proven retained residency may survive an unaffected scoped reset. Readiness proof precedes atomic <code>READY</code> publication, so four contexts may share a generation safely but can never observe a half-loaded model.</p>
 
@@ -382,6 +422,27 @@
         <article><b>Faulty cells or macros</b><p>Maintain a target-appropriate fault map; use spares, structured remapping, resource quarantine, or digital correction.</p></article>
         <article><b>Temperature/voltage</b><p>Select profiles by operating band and throttle or migrate when a bound is crossed.</p></article>
         <article><b>Model accuracy drift</b><p>Run representative golden vectors or sentinels; connect observed error to a rollback/fallback policy.</p></article>
+      </div>
+
+      <div class="acim-fleet-board" role="group" aria-labelledby="acim-fleet-title">
+        <div class="acim-fleet-heading">
+          <span>Fleet release + retirement</span>
+          <h3 id="acim-fleet-title">Ship, observe, evolve, and remove one compatible system</h3>
+          <p>A signed model alone is not a release. Treat the bundle, capability/profile schemas, runtime, driver, firmware and hardware compatibility range as one reviewed set.</p>
+        </div>
+        <ol class="acim-fleet-flow" aria-label="ACiM fleet release operation update and retirement flow">
+          <li><span>Release set</span><strong>Prove compatibility before side effects</strong><p>Generate signed artifacts and provenance; verify dependency, schema, ABI, security-counter and profile requirements; preserve a known-good compatible recovery set.</p></li>
+          <li><span>Canary + rollback</span><strong>Expand only through health gates</strong><p>Run digital shadow or sampled golden comparisons where feasible; progress through lab, internal and fleet rings only while per-model accuracy slices, latency, power, thermal, fault, fallback and reset limits pass. Pause automatically and roll back to a signed compatible set.</p></li>
+          <li><span>Operate + evolve</span><strong>Join telemetry to a decision owner</strong><p>Monitor production behavior, incidents, vulnerability exposure, profile validity and population drift. Recalibrate, remap, recompile or update under change control; document why a threshold keeps ACiM enabled, degrades it, or selects digital fallback.</p></li>
+          <li><span>Retire</span><strong>End workload and authority deliberately</strong><p>Fence admission, drain contexts and quiesce device access; revoke release and device credentials; erase protected models, profiles and user data according to policy; remove inventory and routing; preserve required audit evidence; and transition clients to a supported path.</p></li>
+        </ol>
+        <nav class="acim-lifecycle-sources" aria-label="ACiM lifecycle primary sources">
+          <strong>Lifecycle trail</strong>
+          <a href="https://theupdateframework.io/">The Update Framework ↗</a>
+          <a href="https://csrc.nist.gov/pubs/sp/800/218/final">NIST Secure Software Development Framework ↗</a>
+          <a href="https://www.nasa.gov/reference/5-0-product-realization/">NASA Product Realization ↗</a>
+          <a href="https://airc.nist.gov/airmf-resources/airmf/5-sec-core/">NIST AI RMF lifecycle, production monitoring and decommissioning ↗</a>
+        </nav>
       </div>
     </section>
 
@@ -480,7 +541,7 @@
       <div class="reference-trail"><strong>Primary trail</strong><a href="https://onnx.ai/onnx/repo-docs/IR.html">ONNX IR ↗</a><a href="https://mlir.llvm.org/docs/DialectConversion/">MLIR legality ↗</a><a href="https://mlir.llvm.org/docs/Bufferization/">MLIR bufferization ↗</a><a href="https://iree.dev/reference/bindings/c-api/">IREE HAL + C API ↗</a><a href="https://onnxruntime.ai/docs/reference/high-level-design.html">ONNX Runtime partitioning ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA ownership ↗</a><a href="https://github.com/IBM/aihwkit">IBM AIHWKit ↗</a><a href="https://github.com/sandialabs/cross-sim">Sandia CrossSim ↗</a><a href="https://github.com/Accelergy-Project/accelergy">Accelergy modeling framework ↗</a><a href="https://github.com/mit-emze/cimloop">CiMLoop repository ↗</a><a href="https://www.nature.com/articles/s41928-023-01010-1">64-core mixed-signal PCM chip ↗</a></div>
     </section>
 
-    <section class="section" id="practice">
+    <section class="section" id="practice" data-interview-minutes="45">
       <div class="section-heading centered-heading">
         <p class="eyebrow">10 · Full interview practice</p>
         <h2>Design an edge hybrid NPU software stack</h2>
@@ -520,9 +581,9 @@
       <ol class="acim-checkpoints">
         <li>
           <header><span>00–05 min</span><strong>Clarify workload and success</strong></header>
-          <p>Separate model, product, silicon, lifecycle, and safety constraints.</p>
+          <p>Define the intended decisions and consequences before separating model, product, silicon, lifecycle, and safety constraints.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>Which questions decide the architecture before you draw the stack?</span></div>
-          <details><summary>Reveal coaching</summary><div><p>Confirm whether the supplied vision/audio rates, four-context concurrency, two-second burst, percentile boundary, and drop policy reflect product intent; then state the queue boundary and require steady arrival to remain below sustained thermally limited service. Ask whether contexts share one resident model or switch models, which tile sets they may share, and whether a model switch may wait for in-flight references. Also ask about model families/operators and shapes; per-model deadlines and priority; energy and accuracy-loss budgets; determinism and cold start; model size/update frequency; ACiM array geometry/device precision and fault rate; converter/SRAM/NoC limits; target temperatures and lifetime; security/isolation; and whether the stack owns training. State exclusions, such as not designing the memory device itself.</p><p><b>Close the stated load:</b> the worked table declares <code>B₀ = 0</code>, so use <code>B_peak = max(0, λ_burst − μ) × 2 s</code> and, only when <code>μ &gt; 80/s</code>, <code>T_drain = B_peak ÷ (μ − 80/s)</code>. With residual backlog, carry B₀ explicitly and distinguish end backlog from the peak during the interval. At μ = 80/s the worked backlog is 60 and never drains; at μ = 100/s it is 20, drains in one second, and can impose about 200 ms of burst queueing. The prompt requires p95 below 20 ms at the steady mix, not during the burst, so judge the 200 ms value against the separately declared burst latency/drop policy unless the interviewer extends the SLO. Define per-class admission, reservation, and deadline behavior before claiming either contract is met.</p></div></details>
+          <details><summary>Reveal coaching</summary><div><p>First name the actual vision and audio decisions, the users or downstream control consuming them, false-positive and false-negative consequences, privacy and retention boundaries, human/system override, forbidden use and safe fallback. Name each model’s dataset, task metric, safety- or product-critical slices, preprocessing and deployment domain so “less than one percentage-point loss” becomes testable rather than abstract. Confirm whether the supplied vision/audio rates, four-context concurrency, two-second burst, percentile boundary, and drop policy reflect product intent; then state the queue boundary and require steady arrival to remain below sustained thermally limited service. Ask whether contexts share one resident model or switch models, which tile sets they may share, and whether a model switch may wait for in-flight references. Also ask about model families/operators and shapes; per-model deadlines and priority; energy and accuracy-loss budgets; determinism and cold start; model size/update frequency; ACiM array geometry/device precision and fault rate; converter/SRAM/NoC limits; target temperatures and lifetime; security/isolation; and whether the stack owns training. State exclusions, such as not designing the memory device itself.</p><p><b>Close the stated load:</b> the worked table declares <code>B₀ = 0</code>, so use <code>B_peak = max(0, λ_burst − μ) × 2 s</code> and, only when <code>μ &gt; 80/s</code>, <code>T_drain = B_peak ÷ (μ − 80/s)</code>. With residual backlog, carry B₀ explicitly and distinguish end backlog from the peak during the interval. At μ = 80/s the worked backlog is 60 and never drains; at μ = 100/s it is 20, drains in one second, and can impose about 200 ms of burst queueing. The prompt requires p95 below 20 ms at the steady mix, not during the burst, so judge the 200 ms value against the separately declared burst latency/drop policy unless the interviewer extends the SLO. Define per-class admission, reservation, and deadline behavior before claiming either contract is met.</p></div></details>
         </li>
         <li>
           <header><span>05–10 min</span><strong>Define the hardware/software contract</strong></header>
@@ -555,16 +616,22 @@
           <details><summary>Reveal coaching</summary><div><p>The runtime authenticates the bundle; checks ABI, firmware, and capability compatibility; and selects a signed profile whose physical-device UID, profile hash, health generation, and bundle requirement all match. For a planned weight change it atomically acquires the exclusive tile-set mutation lease for the observed generation; under that lease it fences new pins, waits for the old residency reference count and device work to reach zero, then revalidates both generation and drain state before asking firmware to mutate weights. Firmware may load a volatile image, run an atomic vendor program operation, or resume program/verify only when the target explicitly supports that mode and its journal/reconciliation proof. After readiness proof the runtime atomically publishes a new immutable residency generation; each of the four contexts pins its exact generation through successful completion, or until proven fault containment/quiescence permits retirement. The driver maps buffers, queues DMA/commands, and handles interrupts. On timeout it marks the output invalid and advances the request epoch, but retains the residency reference and DMA buffers until quiesce or documented reset/containment plus posted-write drain proves that late access is impossible; only then may it retire the reference, unmap, or reuse memory. Increment reset generation only when a reset occurs, and invalidate residency only when reset effects or unknown weight identity require it. On an interrupted weight mutation, use declared readback and journaling where available; otherwise publish <code>UNKNOWN</code> and run the vendor restart/reload recipe, remap/quarantine, or execute digital fallback.</p></div></details>
         </li>
         <li>
-          <header><span>37–41 min</span><strong>Close the calibration loop</strong></header>
+          <header><span>37–40 min</span><strong>Close the calibration loop</strong></header>
           <p>Make device variation observable and actionable.</p>
           <div class="acim-your-turn"><b>Your turn</b><span>How does deployed evidence reach the next compilation?</span></div>
           <details><summary>Reveal coaching</summary><div><p>Version profiles by device/tile, firmware, temperature band, age, and test method. Collect saturation, converter statistics, program retries, faults, temperature, latency/energy, and periodic golden/sentinel outputs. Policy selects an existing profile, triggers targeted recalibration, remaps around degradation, chooses fallback, or exports a profile for fleet-level cost/error model updates and model recompilation. Protect telemetry privacy and authenticate profile updates.</p></div></details>
         </li>
         <li>
-          <header><span>41–45 min</span><strong>Verify and defend trade-offs</strong></header>
-          <p>Prove correctness, performance, resilience, and maintainability.</p>
-          <div class="acim-your-turn"><b>Your turn</b><span>What test pyramid and production metrics make the stack trustworthy?</span></div>
-          <details><summary>Reveal coaching</summary><div><ul><li>Unit-test graph transforms and command encoding; differential-test IR and digital reference; simulate calibrated noise/fault distributions; test firmware on emulation/silicon; run end-to-end representative datasets across devices, temperatures, and ages.</li><li>Track task accuracy delta, output error distribution, p50/p95/p99 latency, sustained throughput, energy/inference, ACiM and converter utilization, bytes moved, fallback rate, calibration age, verify retries, and fault growth.</li><li>State the central trade-off: analog efficiency is useful only when accuracy recovery, conversion, transfer, calibration, and lifecycle cost remain inside the product budget.</li></ul></div></details>
+          <header><span>40–43 min</span><strong>Verify + validate and qualify</strong></header>
+          <p>Separate conformance evidence, intended-use evidence, and design/configuration qualification.</p>
+          <div class="acim-your-turn"><b>Your turn</b><span>What proves the stack is built right, useful in context, and qualified for release?</span></div>
+          <details><summary>Reveal coaching</summary><div><ul><li><b>Verify:</b> unit-test graph transforms and commands; differential-test every IR against the digital reference; prove ABI, buffer, dependency, residency, timeout/reset and fallback contracts; measure requirement limits for timing, power and numeric behavior.</li><li><b>Validate:</b> run the complete vision/audio decisions on named datasets, important slices and representative deployment conditions; include downstream users or control behavior, privacy boundaries and digital fallback.</li><li><b>Qualify:</b> exercise a declared sample across device variation, PVT, age, fault maps, model switches and sustained thermal load; state the qualified envelope, statistical confidence, residual risk and exact hardware/software versions. Keep production/lot/unit acceptance and screening as a separate release decision.</li></ul></div></details>
+        </li>
+        <li>
+          <header><span>43–45 min</span><strong>Accept + release + operate + retire</strong></header>
+          <p>Close the field lifecycle, not only the first successful inference.</p>
+          <div class="acim-your-turn"><b>Your turn</b><span>How does one compatible system enter, evolve in, and leave the fleet?</span></div>
+          <details><summary>Reveal coaching</summary><div><p>Define production/lot/unit screening, calibration, provisioning, traceability, sampling and acceptance limits separately from configuration qualification. Sign and inventory the accepted model bundle, capability/profile schemas, runtime, driver, firmware and supported hardware range as one compatible release set. Preflight before device side effects; compare canaries with the digital reference or golden sentinels; expand only while per-model accuracy slices, latency, power, thermal, fault, fallback and reset gates pass; pause and roll back only to a signed compatible set. In operation, join telemetry and vulnerability reports to owners and thresholds for recalibration, remap, recompile, update, digital fallback or incident response. At retirement, fence work, drain and quiesce contexts, revoke release/device credentials, erase protected models, profiles and user data according to policy, remove inventory/routing, retain required evidence and transition clients to a supported path.</p></div></details>
         </li>
       </ol>
 

@@ -22,10 +22,10 @@
   <title>Hardware &amp; Computer Systems · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/hardware.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726b"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726b">
-  <script src="app.js?v=20260726b" defer></script>
-  <link rel="stylesheet" href="hardware.css?v=20260726b">
+  <script src="theme-init.js?v=20260726c"></script>
+  <link rel="stylesheet" href="styles.css?v=20260726c">
+  <script src="app.js?v=20260726c" defer></script>
+  <link rel="stylesheet" href="hardware.css?v=20260726c">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -57,7 +57,7 @@
           <a class="button secondary" href="index.html">Choose another track</a>
         </div>
         <ul class="hero-stats" aria-label="Page summary">
-          <li><strong>8</strong><span>design steps</span></li>
+          <li><strong>15</strong><span>design steps</span></li>
           <li><strong>12</strong><span>bottlenecks</span></li>
           <li><strong>1</strong><span>worked interview</span></li>
         </ul>
@@ -87,6 +87,7 @@ while not all_satisfied(<b>measurements, limits</b>):
       <a href="#compute">Compute</a>
       <a href="#bottlenecks">Bottlenecks</a>
       <a href="#sizing-workbench">Sizing</a>
+      <a href="#lifecycle">Lifecycle</a>
       <a href="#practice">Practice</a>
       <a href="#resources">Resources</a>
     </nav>
@@ -97,7 +98,7 @@ while not all_satisfied(<b>measurements, limits</b>):
         <h2>Architecture is a chain of justified allocations</h2>
         <p>Do not begin with a favorite processor. Each step produces evidence for the next one.</p>
       </div>
-      <ol class="hw-thinking-flow" aria-label="Hardware system design thinking flow">
+      <ol class="hw-thinking-flow" data-phase-model="hardware-lifecycle" data-phase-count="15" aria-label="Hardware system design thinking flow">
         <li><span>01</span><strong>Characterize the workload</strong><p>Operators, tensor or packet shapes, control flow, reuse, sparsity, precision, working set, and concurrency.</p><small>Output: representative kernels + traces</small></li>
         <li><span>02</span><strong>Set measurable targets</strong><p>Tail latency, sustained throughput, jitter, boot time, availability, lifetime, and accepted error.</p><small>Output: pass/fail requirements</small></li>
         <li><span>03</span><strong>Count data movement</strong><p>Bytes read and written at registers, caches, SRAM, DRAM, storage, network, and device boundaries.</p><small>Output: bandwidth + capacity budgets</small></li>
@@ -105,9 +106,16 @@ while not all_satisfied(<b>measurements, limits</b>):
         <li><span>05</span><strong>Choose compute</strong><p>Allocate work across CPU, GPU/NPU, FPGA, fixed-function engines, and firmware based on regularity and change rate.</p><small>Output: compute partition</small></li>
         <li><span>06</span><strong>Build the memory + fabric</strong><p>Place data by reuse and lifetime; size buffers; choose coherency, NoC, external links, and flow control.</p><small>Output: data path + topology</small></li>
         <li><span>07</span><strong>Close physical budgets</strong><p>Estimate PPA, cost, power delivery, cooling, signal integrity, reliability, manufacturing, and serviceability.</p><small>Output: feasible implementation</small></li>
-        <li><span>08</span><strong>Prototype and measure</strong><p>Benchmark representative workloads, find saturation, compare against the model, and iterate one bottleneck at a time.</p><small>Output: evidence-backed architecture</small></li>
+        <li><span>08</span><strong>Plan proof + observability</strong><p>Trace requirements, interfaces, and faults to pre-hardware evidence, first-article checks, qualification, and production test; reserve trace, JTAG, BIST, loopback, test points, counters, and known-good signatures.</p><small>Output: verification + bring-up plan</small></li>
+        <li><span>09</span><strong>Implement + sign off</strong><p>For custom logic, close RTL, CDC/RDC, coverage, timing, power, DFT, and physical sign-off. For board/COTS, close schematic/layout, SI/PI/thermal, DRC/DFM, firmware compatibility, BOM, and vendor pedigree.</p><small>Output: controlled build package</small></li>
+        <li><span>10</span><strong>Bring up</strong><p>Prove first hardware in dependency order, correlate measurements with the model, localize faults with planned hooks, and record errata.</p><small>Output: characterized first article</small></li>
+        <li><span>11</span><strong>Verify requirements</strong><p>Trace each hardware, interface, timing, power, reliability, security and recovery requirement to objective evidence on the controlled configuration.</p><small>Output: compliance + anomaly record</small></li>
+        <li><span>12</span><strong>Validate intended use</strong><p>Exercise the complete product with representative operators, workloads, dependencies, environments and failure responses; measure mission outcomes and limitations.</p><small>Output: stakeholder-use evidence</small></li>
+        <li><span>13</span><strong>Qualify configuration</strong><p>Bound environmental, EMC, performance, reliability, lifetime and interoperability limits for the exact design and supported hardware/software configuration.</p><small>Output: qualified operating envelope</small></li>
+        <li><span>14</span><strong>Accept + release</strong><p>Define production/lot/unit screening, calibration, secure provisioning, traceability and acceptance limits separately from design qualification; stage release with rollback.</p><small>Output: accepted release baseline</small></li>
+        <li><span>15</span><strong>Sustain + retire</strong><p>Use telemetry, RMA and failure analysis to control fixes, updates, obsolescence, service, deprovisioning, data disposition, and end of life.</p><small>Output: field evidence + retirement record</small></li>
       </ol>
-      <div class="memory-strip"><b>Memory hook</b><span>Workload → deadline → bytes → parallelism → compute → memory/fabric → physics → measurement.</span></div>
+      <div class="memory-strip"><b>Memory hook</b><span>Workload → deadline → bytes → parallelism → compute → memory/fabric → physics → proof → sign-off → bring-up → verify → validate → qualify → accept/release → sustain.</span></div>
     </section>
 
     <section class="section" id="metrics">
@@ -374,9 +382,53 @@ while not all_satisfied(<b>measurements, limits</b>):
       <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1145/1498765.1498785">Original Roofline paper ↗</a><a href="https://dl.acm.org/doi/10.1145/1465482.1465560">Amdahl’s Law paper ↗</a><a href="https://www.intel.com/content/www/us/en/docs/vtune-profiler/cookbook/2025-4/top-down-microarchitecture-analysis-method.html">Intel Top-Down analysis ↗</a><a href="https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/IHI0022H_amba_axi_protocol_spec.pdf">Arm AXI/ACE specification ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA mapping ↗</a><a href="https://docs.kernel.org/driver-api/dma-buf.html">Linux dma-buf + fences ↗</a><a href="https://docs.amd.com/r/en-US/am011-versal-acap-trm/HBM-Interface">AMD HBM interface ↗</a><a href="https://www.ti.com/lit/an/spra953c/spra953c.pdf">TI semiconductor thermal metrics ↗</a><a href="https://www.infineon.com/assets/row/public/documents/24/42/infineon-ds-explanation-update-applicationnotes-en.pdf">Infineon transient thermal impedance ↗</a></div>
     </section>
 
-    <section class="section" id="practice">
+    <section class="section hw-lifecycle-section" id="lifecycle">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">10 · Hardware interview practice</p>
+        <p class="eyebrow">10 · Realization, bring-up, and release</p>
+        <h2>Prove first hardware in dependency order</h2>
+        <p>Bring-up is a controlled experiment, not “apply power and see.” Define the configuration, instrument, expected signature, stop limit, recovery action, and evidence owner before each step.</p>
+      </div>
+
+      <ol class="hw-bringup-ladder" aria-label="Ordered first-article hardware bring-up ladder">
+        <li><span>01</span><strong>Power</strong><small>Inspect assembly and shorts; use current limits; confirm rail value, sequence, ripple, inrush, and idle thermals.</small></li>
+        <li><span>02</span><strong>Clock + reset</strong><small>Verify oscillators, PLL lock, reset assertion and release, straps, and required sequencing at each domain.</small></li>
+        <li><span>03</span><strong>Debug + boot</strong><small>Establish JTAG or console, read identity and status, execute BootROM, and load a known-good signed recovery image.</small></li>
+        <li><span>04</span><strong>Memory</strong><small>Check training, address map, ECC, destructive and retention tests, bandwidth, errors, and temperature sensitivity.</small></li>
+        <li><span>05</span><strong>I/O</strong><small>Exercise one interface at a time with loopbacks or known peers; inspect signal margin, protocol status, retries, and DMA ownership.</small></li>
+        <li><span>06</span><strong>Accelerator</strong><small>Run a known vector, compare exact or tolerance-bounded output, and test interrupts, timeout, reset, late writes, and fallback.</small></li>
+        <li><span>07</span><strong>Workload</strong><small>Run the representative concurrent workload through thermal equilibrium; correlate latency, throughput, traffic, power, and temperature with the model.</small></li>
+      </ol>
+
+      <div class="hw-lifecycle-evidence" role="group" aria-label="Lifecycle evidence after architecture">
+        <article>
+          <span>Before first hardware</span>
+          <strong>Close the correct sign-off lane</strong>
+          <p><b>Custom logic:</b> specification-to-RTL trace, lint, CDC/RDC, assertions, simulation/formal coverage, timing, power, DFT, and physical checks. <b>Board/COTS:</b> controlled BOM and errata, schematic/layout review, SI/PI/thermal, DRC/DFM, firmware/driver compatibility, and vendor qualification evidence.</p>
+        </article>
+        <article>
+          <span>Design/configuration qualification</span>
+          <strong>Prove limits and interoperability before acceptance</strong>
+          <p>Run environmental, EMC, interface, security, performance, and reliability campaigns against declared configurations and acceptance criteria. Include applicable architecture/compliance evidence—such as Arm SystemReady for a selected Arm platform—without treating one certificate as whole-system qualification.</p>
+        </article>
+        <article>
+          <span>Production acceptance</span>
+          <strong>Make quality repeatable</strong>
+          <p>Control manufacturing-test coverage and limits, calibration, secure provisioning, serial and lot traceability, golden images, tester versions, yield trends, escape rules, rework, deviations, and release authority.</p>
+        </article>
+        <article>
+          <span>Sustain + retire</span>
+          <strong>Feed field evidence back into proof</strong>
+          <p>Use telemetry, RMA and failure-reporting/corrective-action evidence to reopen models, hazards, tests, and baselines. Protect, detect, and recover platform firmware; manage errata, secure updates, component obsolescence, service data, credential deprovisioning, reuse, and disposal.</p>
+        </article>
+      </div>
+
+      <div class="memory-strip"><b>First-article rule</b><span>Do not advance because one output “looks right.” Advance when the declared signature passes, raw evidence is captured, anomalies are owned, and the next step cannot hide an unresolved dependency.</span></div>
+      <div class="reference-trail"><strong>Lifecycle trail</strong><a href="https://opentitan.org/book/doc/project_governance/development_stages.html">OpenTitan design + verification stages ↗</a><a href="https://opentitan.org/book/doc/project_governance/project_milestone_definitions.html">OpenTitan bring-up + post-silicon milestones ↗</a><a href="https://www.arm.com/architecture/learn-the-architecture/systemready">Arm SystemReady integration + compliance ↗</a><a href="https://csrc.nist.gov/pubs/sp/800/193/final">NIST SP 800-193 firmware resiliency ↗</a></div>
+    </section>
+
+    <section class="section" id="practice" data-interview-minutes="45">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">11 · Hardware interview practice</p>
         <h2>Design an edge AI computer</h2>
         <p>Speak through the checkpoints before revealing the coaching notes. The goal is a defensible allocation—not a single “correct” chip.</p>
       </div>
@@ -416,7 +468,7 @@ while not all_satisfied(<b>measurements, limits</b>):
         <li><header><span>15–25 min</span><strong>Allocate compute and memory</strong></header><p>Choose engines for sensor receive/ISP, any actual compressed-video decode, inference, tracking, control, encryption, and storage; size DRAM and on-chip buffers.</p><details><summary>Reveal coaching notes</summary><div>Use the camera receiver and fixed-function ISP for stable unpacking, demosaic only when the sensor source is Bayer/RAW, color conversion, and resize operations; use a codec only if the input is compressed. Map supported model layers to an NPU and keep CPU/vector fallback for control and unsupported operators. Preserve headroom for model growth, telemetry, and failover—not only benchmark throughput.</div></details></li>
         <li><header><span>25–33 min</span><strong>Draw the fabric and I/O</strong></header><p>Place camera inputs, memory controllers, compute, storage, network, DMA, coherency boundaries, QoS, clocks, and reset domains.</p><details><summary>Reveal coaching notes</summary><div>Reserve fabric and DRAM service for camera capture so inference bursts cannot drop frames. Define buffer ownership and completion explicitly. Isolate the management/security plane from bulk video traffic.</div></details></li>
         <li><header><span>33–40 min</span><strong>Close physical + failure budgets</strong></header><p>Explain sustained 25 W operation, thermal path, brownouts, watchdog/reset, ECC, storage wear, sensor loss, NPU hang, network loss, and safe update.</p><details><summary>Reveal coaching notes</summary><div>Model the worst ambient and dirty or aging cooling path. Use staged recovery: restart a job, reset the engine, restart the pipeline, then reboot. Keep a local health channel and signed A/B firmware/model images.</div></details></li>
-        <li><header><span>40–45 min</span><strong>Verify and summarize</strong></header><p>Name representative benchmarks, instrumentation, corner tests, acceptance thresholds, and the first likely bottleneck.</p><details><summary>Reveal coaching notes</summary><div>Replay timestamped worst-case scenes while measuring p50/p99 latency, frames dropped, DRAM/fabric utilization, power, junction temperature, throttling, and accuracy. Run steady-state thermal soak—not only a short demo.</div></details></li>
+        <li><header><span>40–45 min</span><strong>Prove, validate, qualify, and release</strong></header><p>Name the evidence ladder from pre-hardware proof through first article, requirement verification, intended-use validation, design/configuration qualification, production acceptance, field feedback, and retirement—then state the first likely bottleneck.</p><details><summary>Reveal coaching notes</summary><div>Replay timestamped worst-case scenes while measuring p50/p99 latency, dropped frames, DRAM/fabric utilization, power, junction temperature, throttling, and accuracy through thermal equilibrium. For first article, start with current-limited power and rails, then clocks/reset and debug/boot before memory, I/O, accelerator, and workload. Trace compliance to requirements; separately validate representative roadside operations, operators, dependencies, degraded behavior, and mission outcomes. State the qualified environmental/reliability/interoperability envelope; keep production screening, calibration, provisioning and per-unit acceptance distinct. Close with staged release/rollback, field telemetry/RMA and errata handling, secure-update recovery, obsolescence, and deprovisioning at retirement.</div></details></li>
       </ol>
       <div class="hw-pressure-grid">
         <article><span>Model becomes 2× larger</span><p>Recheck NPU support, model/activation capacity, bandwidth, latency, accuracy, and update time.</p></article>
@@ -429,7 +481,7 @@ while not all_satisfied(<b>measurements, limits</b>):
 
     <section class="section" id="resources">
       <div class="section-heading">
-        <p class="eyebrow">11 · Primary references</p>
+        <p class="eyebrow">12 · Primary references</p>
         <h2>Deepen the models behind the diagrams</h2>
         <p>Use vendor and project documentation for interfaces; use laboratory work for performance models; verify every estimate on the target platform.</p>
       </div>

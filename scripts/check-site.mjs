@@ -261,12 +261,12 @@ for (const [file, html] of entries) {
 }
 
 const pageChecks = {
-  "index.html": ["tracks", "shared-core", "selector", "cross-track-case", "practice", "track-grid", "atlas-loop", "offline-first autonomous inspection drone", "Cross-track artifact handoff graph"],
-  "backend.html": ["request", "scale", "decisions", "thinking-flow", "workbench", "practice", "bottleneck-catalog", "pattern-handbook", "Make correctness local", "failure contract"],
-  "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof", "statistical evidence", "Clopper–Pearson", "299 successes / 299 trials"],
-  "hardware.html": ["thinking", "metrics", "constraints", "memory", "compute", "fabric", "physical", "bottlenecks", "sizing-workbench", "practice", "Edge AI", "recovery contract"],
-  "embedded.html": ["practice", "sensor", "real-time", "timing-workbench", "Hardware-in-the-loop", "task model", "transition and recovery", "control-case", "500 Hz", "screening calculation, not a stability proof"],
-  "npu-acim.html": ["boundary", "stack", "decision", "mapping", "artifacts", "runtime", "feedback", "bottlenecks", "compiler-workbench", "practice", "Analog Compute-in-Memory", "Technology scope", "storage type, volatility/retention", "analog signal domain", "Four IR", "health generation"]
+  "index.html": ["tracks", "shared-core", "selector", "cross-track-case", "practice", "track-grid", "atlas-loop", "offline-first autonomous inspection drone", "Cross-track artifact handoff graph", "Continuous controls—not late phases"],
+  "backend.html": ["request", "scale", "decisions", "thinking-flow", "workbench", "practice", "bottleneck-catalog", "pattern-handbook", "Make correctness local", "failure contract", "Get buy-in on the deep dive", "production-readiness + feedback + retirement plan"],
+  "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof", "statistical evidence", "Clopper–Pearson", "299 successes / 299 trials", "accepted operational baseline", "retirement closure"],
+  "hardware.html": ["thinking", "metrics", "constraints", "memory", "compute", "fabric", "physical", "bottlenecks", "sizing-workbench", "lifecycle", "practice", "Edge AI", "recovery contract", "Ordered first-article hardware bring-up ladder", "qualified operating envelope", "stakeholder-use evidence", "accepted release baseline"],
+  "embedded.html": ["practice", "sensor", "real-time", "timing-workbench", "Hardware-in-the-loop", "task model", "transition and recovery", "control-case", "500 Hz", "screening calculation, not a stability proof", "implementation and integration sequence", "verified decommission"],
+  "npu-acim.html": ["boundary", "stack", "decision", "mapping", "artifacts", "runtime", "feedback", "bottlenecks", "compiler-workbench", "practice", "Analog Compute-in-Memory", "Technology scope", "storage type, volatility/retention", "analog signal domain", "Four IR", "health generation", "End-to-end lifecycle", "Fleet release + retirement"]
 };
 for (const [file, checks] of Object.entries(pageChecks)) {
   for (const check of checks) {
@@ -274,12 +274,102 @@ for (const [file, checks] of Object.entries(pageChecks)) {
   }
 }
 
+function normalizedMarkupText(markup) {
+  return markup
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&#x([0-9a-f]+);/gi, (_, value) => String.fromCodePoint(Number.parseInt(value, 16)))
+    .replace(/&#(\d+);/g, (_, value) => String.fromCodePoint(Number.parseInt(value, 10)))
+    .replace(/&(amp|middot|nbsp);/gi, (_, entity) => ({
+      amp: "&",
+      middot: "·",
+      nbsp: " "
+    })[entity.toLowerCase()])
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const phaseContracts = {
+  "index.html": {
+    model: "shared-lifecycle",
+    labels: ["Need", "Requirements", "Estimate", "Decompose", "Allocate", "Trade", "Realize", "Integrate", "Verify", "Validate", "Transition", "Operate, evolve & retire"]
+  },
+  "backend.html": [
+    {
+      model: "backend-interview",
+      labels: ["Clarify scope and priorities", "Size the system", "Draw the simplest main path", "Get buy-in on the deep dive", "Stress the design with evidence", "Make change, ownership and exit safe"]
+    },
+    {
+      model: "backend-reasoning",
+      labels: ["Clarify scope", "Set quality targets", "Estimate scale", "Define contracts + evolution", "Model the data", "Draw the simplest flow", "Align on the deep dive", "Find the bottleneck", "Add one fitting pattern", "Design failure behavior", "Recheck trade-offs", "Prove the design", "Launch, operate, evolve & retire"]
+    }
+  ],
+  "systems-engineering.html": {
+    model: "systems-engineering-lifecycle",
+    labels: ["Stakeholder needs", "ConOps", "Measures", "Requirements", "Functions", "Alternatives", "Allocate", "Balance", "Realize", "Integrate", "Verify", "Validate", "Transition", "Operate · sustain · retire"]
+  },
+  "hardware.html": {
+    model: "hardware-lifecycle",
+    labels: ["Characterize the workload", "Set measurable targets", "Count data movement", "Expose parallelism", "Choose compute", "Build the memory + fabric", "Close physical budgets", "Plan proof + observability", "Implement + sign off", "Bring up", "Verify requirements", "Validate intended use", "Qualify configuration", "Accept + release", "Sustain + retire"]
+  },
+  "embedded.html": {
+    model: "embedded-lifecycle",
+    labels: ["Define mission + environment", "Set timing + quality", "Model the plant", "Characterize plant + I/O", "Partition functions", "Schedule + communicate", "Design modes + faults", "Implement + integrate", "Verify + validate", "Transition + sustain", "Retire safely"]
+  },
+  "npu-acim.html": {
+    model: "acim-lifecycle",
+    labels: ["Frame intended use", "Baseline requirements + reference", "Characterize target", "Compile + map", "Implement + integrate", "Verify", "Validate intended use", "Qualify configuration", "Accept + release", "Operate + evolve", "Retire"]
+  }
+};
+
+for (const [file, contractOrContracts] of Object.entries(phaseContracts)) {
+  const contracts = Array.isArray(contractOrContracts) ? contractOrContracts : [contractOrContracts];
+  for (const { model, labels } of contracts) {
+    const escapedModel = model.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const flow = documents[file].match(new RegExp(
+      `<ol\\b([^>]*\\bdata-phase-model=["']${escapedModel}["'][^>]*)>([\\s\\S]*?)<\\/ol>`,
+      "i"
+    ));
+    if (!flow) throw new Error(`${file}: missing phase contract ${model}`);
+
+    const declaredCount = Number(flow[1].match(/\bdata-phase-count=["'](\d+)["']/i)?.[1]);
+    const itemBodies = [...flow[2].matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi)].map(match => match[1]);
+    const actualLabels = itemBodies.map((item, index) => {
+      const strong = item.match(/<strong\b[^>]*>([\s\S]*?)<\/strong>/i)?.[1];
+      if (!strong) throw new Error(`${file}: phase ${model} item ${index + 1} has no strong label`);
+      return normalizedMarkupText(strong);
+    });
+
+    if (declaredCount !== labels.length || itemBodies.length !== labels.length) {
+      throw new Error(`${file}: phase contract ${model} declares ${declaredCount} and renders ${itemBodies.length}; expected ${labels.length}`);
+    }
+    if (JSON.stringify(actualLabels) !== JSON.stringify(labels)) {
+      throw new Error(`${file}: phase contract ${model} is out of order (actual: ${actualLabels.join(" → ")})`);
+    }
+  }
+}
+
+const interviewDurationContracts = {
+  "index.html": 50,
+  "backend.html": 45,
+  "systems-engineering.html": 55,
+  "hardware.html": 45,
+  "embedded.html": 45,
+  "npu-acim.html": 45
+};
+for (const [file, minutes] of Object.entries(interviewDurationContracts)) {
+  const practiceTag = documents[file].match(/<section\b(?=[^>]*\bid=["']practice["'])[^>]*>/i)?.[0];
+  if (!practiceTag || !practiceTag.includes(`data-interview-minutes="${minutes}"`)) {
+    throw new Error(`${file}: practice timer must declare ${minutes} minutes`);
+  }
+}
+
 const requiredSources = {
-  "backend.html": ["github.com/donnemartin/system-design-primer", "github.com/ashishps1/awesome-system-design-resources", "oreilly.com", "sre.google", "rfc-editor.org/rfc/rfc9110", "rfc-editor.org/rfc/rfc9111", "kafka.apache.org/43/design", "docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox", "postgresql.org/docs/current/indexes-multicolumn", "people.csail.mit.edu/karger", "research.google/pubs/the-chubby"],
-  "systems-engineering.html": ["nasa.gov", "incose.org", "sebokwiki.org", "iso.org/standard/81702", "nasa.gov/reference/appendix-c-how-to-write-a-good-requirement", "nasa.gov/reference/6-5-configuration-management", "ntrs.nasa.gov/api/citations/20170007239", "nodis3.gsfc.nasa.gov/displaydir.cfm", "nasa.gov/wp-content/uploads/2023/08/nasa-risk-mgmt-handbook", "nist.gov/glossary-term/21621", "standards.nasa.gov/sites/default/files/standards/nasa/baseline/0/nasa-hdbk-873919-4.pdf", "itl.nist.gov/div898/handbook/prc/section2/prc241.htm", "itl.nist.gov/div898/handbook/prc/section2/prc242.htm", "itl.nist.gov/div898/handbook/apr/section1/apr13.htm"],
-  "hardware.html": ["lbl.gov", "developer.arm.com", "docs.kernel.org", "riscv.org", "doi.org/10.1145/1498765.1498785", "intel.com/content/www/us/en/docs/vtune-profiler", "docs.nvidia.com/cuda/cuda-programming-guide", "gstreamer.freedesktop.org/documentation/coreelements/tee", "docs.nvidia.com/metropolis/deepstream", "infineon.com/assets/row/public/documents/24/42/infineon-ds-explanation-update-applicationnotes-en.pdf"],
-  "embedded.html": ["doi.org/10.1145/321738.321743", "doi.org/10.1093/comjnl/29.5.390", "link.springer.com/article/10.1007/BF01088593", "ctms.engin.umich.edu/CTMS", "mathworks.com/help/control/ug/analyzing-control-systems-with-delays.html", "docs.zephyrproject.org", "freertos.org", "docs.kernel.org/core-api/dma-api-howto", "docs.mcuboot.com", "ti.com/lit/an/slva740a", "mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator", "can-cia.org/can-knowledge/can-cc"],
-  "npu-acim.html": ["onnx.ai/onnx/repo-docs/IR", "mlir.llvm.org/docs/DialectConversion", "iree.dev", "github.com/IBM/aihwkit", "arxiv.org/abs/2003.04293", "arxiv.org/abs/2205.10042", "github.com/sandialabs/cross-sim", "github.com/Accelergy-Project/accelergy", "github.com/mit-emze/cimloop", "doi.org/10.1109/JSSC.2022.3232601", "doi.org/10.1109/ICTA56932.2022.9963070", "doi.org/10.1109/TCSI.2021.3083275", "doi.org/10.1109/TCSII.2021.3049844"]
+  "index.html": ["nasa.gov/reference/2-0-fundamentals-of-systems-engineering", "nasa.gov/reference/5-0-product-realization", "csrc.nist.gov/pubs/sp/800/160/v1/r1/final", "docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html"],
+  "backend.html": ["github.com/donnemartin/system-design-primer", "github.com/ashishps1/awesome-system-design-resources", "oreilly.com", "sre.google", "sre.google/sre-book/reliable-product-launches", "docs.aws.amazon.com/wellarchitected/latest/framework/rel-12", "docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html", "rfc-editor.org/rfc/rfc9110", "rfc-editor.org/rfc/rfc9111", "kafka.apache.org/43/design", "docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox", "postgresql.org/docs/current/indexes-multicolumn", "people.csail.mit.edu/karger", "research.google/pubs/the-chubby"],
+  "systems-engineering.html": ["nasa.gov", "nasa.gov/reference/2-0-fundamentals-of-systems-engineering", "nasa.gov/reference/5-0-product-realization", "incose.org", "sebokwiki.org", "iso.org/standard/81702", "nasa.gov/reference/appendix-c-how-to-write-a-good-requirement", "nasa.gov/reference/6-5-configuration-management", "ntrs.nasa.gov/api/citations/20170007239", "nodis3.gsfc.nasa.gov/displaydir.cfm", "nasa.gov/wp-content/uploads/2023/08/nasa-risk-mgmt-handbook", "nist.gov/glossary-term/21621", "standards.nasa.gov/sites/default/files/standards/nasa/baseline/0/nasa-hdbk-873919-4.pdf", "itl.nist.gov/div898/handbook/prc/section2/prc241.htm", "itl.nist.gov/div898/handbook/prc/section2/prc242.htm", "itl.nist.gov/div898/handbook/apr/section1/apr13.htm"],
+  "hardware.html": ["lbl.gov", "developer.arm.com", "docs.kernel.org", "riscv.org", "opentitan.org/book/doc/project_governance/development_stages", "opentitan.org/book/doc/project_governance/project_milestone_definitions", "arm.com/architecture/learn-the-architecture/systemready", "csrc.nist.gov/pubs/sp/800/193/final", "doi.org/10.1145/1498765.1498785", "intel.com/content/www/us/en/docs/vtune-profiler", "docs.nvidia.com/cuda/cuda-programming-guide", "gstreamer.freedesktop.org/documentation/coreelements/tee", "docs.nvidia.com/metropolis/deepstream", "infineon.com/assets/row/public/documents/24/42/infineon-ds-explanation-update-applicationnotes-en.pdf"],
+  "embedded.html": ["doi.org/10.1145/321738.321743", "doi.org/10.1093/comjnl/29.5.390", "link.springer.com/article/10.1007/BF01088593", "ctms.engin.umich.edu/CTMS", "mathworks.com/help/control/ug/analyzing-control-systems-with-delays.html", "docs.zephyrproject.org", "docs.zephyrproject.org/latest/services/device_mgmt/dfu.html", "freertos.org", "docs.kernel.org/core-api/dma-api-howto", "docs.mcuboot.com", "csrc.nist.gov/pubs/sp/800/193/final", "nasa.gov/reference/5-0-product-realization", "ti.com/lit/an/slva740a", "mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator", "can-cia.org/can-knowledge/can-cc"],
+  "npu-acim.html": ["onnx.ai/onnx/repo-docs/IR", "mlir.llvm.org/docs/DialectConversion", "iree.dev", "github.com/IBM/aihwkit", "arxiv.org/abs/2003.04293", "arxiv.org/abs/2205.10042", "github.com/sandialabs/cross-sim", "github.com/Accelergy-Project/accelergy", "github.com/mit-emze/cimloop", "theupdateframework.io", "csrc.nist.gov/pubs/sp/800/218/final", "nasa.gov/reference/5-0-product-realization", "airc.nist.gov/airmf-resources/airmf/5-sec-core", "doi.org/10.1109/JSSC.2022.3232601", "doi.org/10.1109/ICTA56932.2022.9963070", "doi.org/10.1109/TCSI.2021.3083275", "doi.org/10.1109/TCSII.2021.3049844"]
 };
 for (const [file, sources] of Object.entries(requiredSources)) {
   const externalTargets = hrefsByPage[file].filter(href => /^https:/i.test(href));
@@ -352,7 +442,7 @@ for (const staleScenarioClaim of ["The read-heavy ratio strongly favors caching"
 }
 
 const semanticContentChecks = {
-  "backend.html": ["transactional outbox", "Acknowledge after durable acceptance", "Write ingress", "Live logical data", "Append-log storage", "Time-based error budget", "Request-based error budget", "non-failing node", "no finite latency bound", "provider idempotency plus uncertain-outcome reconciliation", "Atomically claim stock", "This Atlas loop adapts"],
+  "backend.html": ["transactional outbox", "Acknowledge after durable acceptance", "Write ingress", "Live logical data", "Append-log storage", "Time-based error budget", "Request-based error budget", "non-failing node", "no finite latency bound", "provider idempotency plus uncertain-outcome reconciliation", "Atomically claim stock", "This Atlas sequence expands"],
   "systems-engineering.html": ["Keep two ledgers distinct", "Power + energy", "Never add unlike units", "Upper-bound margin", "Lower-bound margin", "Verification compliance", "Administrative disposition", "authorized relief—not proof of compliance", "Which quantitative fielded-system measures enable it?", "Parent safety objective—derive", "R<sub>ref</sub>", "R<sub>indicated</sub>", "R_result − 2 percentage points ≥ 20%", "C<sub>u,ref</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh", "E<sub>remaining,ref</sub> = E<sub>initial,ref</sub> − E<sub>discharged,ref</sub>", "full-charge entry condition", "deterministic reference test demonstrates capability", "REF-MISSION-01", "SYS-LAND-024", "Evaluate the entry condition once at declaration", "CMP-ENV-022", "ALLOC-LAT-023", "HMI-OPS-032", "SYS-OPS-033"],
   "hardware.html": ["while not all_satisfied", "not one universal ladder", "QoS tag alone is not isolation", "Bounded inference queue", "Bounded recording queue", "Independent bounded processing branches", "Post-ISP surface rate", "backpressure is not isolation", "arithmetic minimum implied by that measurement", "advance the request/completion epoch", "Model sustained and transient load", "time-dependent thermal impedance"],
   "embedded.html": ["load-profile-weighted effective value", "converter quiescent loss exactly once", "observed maxima as provisional—not automatic WCET", "E_quiescent,not-yet-counted", "Job-level absolute deadlines", "fixed-priority iteration gives response times", "same first 11 identifier bits", "11-bit base frame wins"],
@@ -428,8 +518,11 @@ if (!hardwareCss.includes("left: 48%") || !hardwareCss.includes("linear-gradient
 if (!js.includes("linkCenterInContent") || js.includes("current.offsetLeft")) {
   throw new Error("Shared navigation: current-track centering must use the scroller's coordinate space");
 }
-for (const token of ["initializeInterviewMode", "45 * 60", "interview-coaching-hidden", "updateRubric", "initializeDiagramControls", "--diagram-zoom", "initializeTableScrollCues", "can-scroll-right"]) {
+for (const token of ["initializeInterviewMode", "sessionMinutes * 60", "dataset.interviewMinutes", "configuredMinutes >= 10", "configuredMinutes <= 120", "interview-coaching-hidden", "updateRubric", "initializeDiagramControls", "--diagram-zoom", "initializeTableScrollCues", "can-scroll-right"]) {
   if (!js.includes(token)) throw new Error(`app.js: shared practice or visual control is missing ${token}`);
+}
+for (const token of ["Frame", "Prove", "Transition", "Operate · evolve · retire", "Evidence + lifecycle closure", ".em-integration-board", ".acim-lifecycle-board", ".acim-integration-board"]) {
+  if (!js.includes(token)) throw new Error(`app.js: lifecycle practice or diagram coverage is missing ${token}`);
 }
 for (const token of [".interview-mode-panel", ".interview-checkpoints", ".interview-rubric", ".atlas-zoomable.is-expanded", "body.diagram-expanded", ".can-scroll-right"]) {
   if (!css.includes(token)) throw new Error(`styles.css: shared practice or visual styling is missing ${token}`);
@@ -462,7 +555,7 @@ for (const token of ["httpsRequest", "agent: false", "createPinnedLookup", "asse
 for (const token of ["reject HTTPS downgrade", "newly resolved private destination", "redirect count is bounded", "one deadline covers", "freshly resolved", "refuses another hostname", "special IPv6 routes", "path containment rejects", "path guards reject symbolic links", "source provenance requires the authoritative host"]) {
   if (!logicTestSource.includes(token)) throw new Error(`tests/logic.spec.mjs: behavioral security regression is missing ${token}`);
 }
-for (const token of ["port: 0", "reducedMotion", "[390, 320, 760, 761, 900, 901]", "target.height >= 24", "linkRect.left >= navRect.left", "centerError", 'behavior: "instant"', "Math.abs(topics.getBoundingClientRect().top - header.getBoundingClientRect().bottom) <= 1", "sticky feedback rail clears both navigation layers", "bandwidth.right - ceiling.left", "shared interview mode times", "dense diagrams expand", "wide tables expose directional edge cues", "data-horizontal-scroll", "social-atlas.png", "/package.json", 'Host: \"untrusted.example\"']) {
+for (const token of ["port: 0", "reducedMotion", "[390, 320, 760, 761, 900, 901]", "target.height >= 24", "linkRect.left >= navRect.left", "centerError", 'behavior: "instant"', "Math.abs(topics.getBoundingClientRect().top - header.getBoundingClientRect().bottom) <= 1", "lifecycle phase contracts remain complete and ordered", "track-specific interview timer", "lifecycle diagrams keep mobile arrows and controls clear", "scrollWidth - item.clientWidth <= 1", "sticky feedback rail clears both navigation layers", "bandwidth.right - ceiling.left", "shared interview mode times", "dense diagrams expand", "wide tables expose directional edge cues", "data-horizontal-scroll", "social-atlas.png", "/package.json", 'Host: \"untrusted.example\"']) {
   if (!browserTestSource.includes(token)) throw new Error(`tests/site.spec.mjs: responsive or preview-boundary regression is missing ${token}`);
 }
 

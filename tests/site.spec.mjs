@@ -118,6 +118,56 @@ for (const entry of pages) {
   });
 }
 
+test("lifecycle phase contracts remain complete and ordered", async ({ page }) => {
+  const contracts = [
+    {
+      path: "/index.html",
+      model: "shared-lifecycle",
+      labels: ["Need", "Requirements", "Estimate", "Decompose", "Allocate", "Trade", "Realize", "Integrate", "Verify", "Validate", "Transition", "Operate, evolve & retire"]
+    },
+    {
+      path: "/backend.html",
+      model: "backend-interview",
+      labels: ["Clarify scope and priorities", "Size the system", "Draw the simplest main path", "Get buy-in on the deep dive", "Stress the design with evidence", "Make change, ownership and exit safe"]
+    },
+    {
+      path: "/backend.html",
+      model: "backend-reasoning",
+      labels: ["Clarify scope", "Set quality targets", "Estimate scale", "Define contracts + evolution", "Model the data", "Draw the simplest flow", "Align on the deep dive", "Find the bottleneck", "Add one fitting pattern", "Design failure behavior", "Recheck trade-offs", "Prove the design", "Launch, operate, evolve & retire"]
+    },
+    {
+      path: "/systems-engineering.html",
+      model: "systems-engineering-lifecycle",
+      labels: ["Stakeholder needs", "ConOps", "Measures", "Requirements", "Functions", "Alternatives", "Allocate", "Balance", "Realize", "Integrate", "Verify", "Validate", "Transition", "Operate · sustain · retire"]
+    },
+    {
+      path: "/hardware.html",
+      model: "hardware-lifecycle",
+      labels: ["Characterize the workload", "Set measurable targets", "Count data movement", "Expose parallelism", "Choose compute", "Build the memory + fabric", "Close physical budgets", "Plan proof + observability", "Implement + sign off", "Bring up", "Verify requirements", "Validate intended use", "Qualify configuration", "Accept + release", "Sustain + retire"]
+    },
+    {
+      path: "/embedded.html",
+      model: "embedded-lifecycle",
+      labels: ["Define mission + environment", "Set timing + quality", "Model the plant", "Characterize plant + I/O", "Partition functions", "Schedule + communicate", "Design modes + faults", "Implement + integrate", "Verify + validate", "Transition + sustain", "Retire safely"]
+    },
+    {
+      path: "/npu-acim.html",
+      model: "acim-lifecycle",
+      labels: ["Frame intended use", "Baseline requirements + reference", "Characterize target", "Compile + map", "Implement + integrate", "Verify", "Validate intended use", "Qualify configuration", "Accept + release", "Operate + evolve", "Retire"]
+    }
+  ];
+
+  for (const contract of contracts) {
+    await page.goto(`${origin}${contract.path}`);
+    const flow = page.locator(`[data-phase-model="${contract.model}"]`);
+    await expect(flow).toHaveCount(1);
+    await expect(flow).toHaveAttribute("data-phase-count", String(contract.labels.length));
+    await expect(flow.locator(":scope > li")).toHaveCount(contract.labels.length);
+    const labels = await flow.locator(":scope > li strong").allTextContents();
+    expect(labels.map(label => label.replace(/\s+/g, " ").trim())).toEqual(contract.labels);
+  }
+});
+
 test("theme control follows the OS initially and works from the keyboard", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto(`${origin}/index.html`);
@@ -128,6 +178,14 @@ test("theme control follows the OS initially and works from the keyboard", async
   await page.keyboard.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.getByRole("button", { name: "Switch to light theme" })).toBeFocused();
+});
+
+test("track-specific interview timer follows the declared practice duration", async ({ page }) => {
+  await page.goto(`${origin}/systems-engineering.html#practice`);
+  await page.getByRole("button", { name: /Interview mode/ }).click();
+  const panel = page.locator("#interview-mode-panel");
+  await expect(panel.locator("header span")).toHaveText("55-minute practice");
+  await expect(panel.locator(".interview-timer strong")).toHaveText("55:00");
 });
 
 test("backend decision and coaching controls update meaningful state", async ({ page }) => {
@@ -229,6 +287,40 @@ test("embedded interrupt and DMA flow preserves numbered direction on mobile", a
   }
 });
 
+test("lifecycle diagrams keep mobile arrows and controls clear", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto(`${origin}/npu-acim.html#stack`);
+  const lifecycleItems = await page.locator(".acim-lifecycle-flow > li").evaluateAll(items => items.map(item => ({
+    clientWidth: item.clientWidth,
+    scrollWidth: item.scrollWidth,
+    arrow: getComputedStyle(item, "::after").content,
+    arrowLeft: Number.parseFloat(getComputedStyle(item, "::after").left)
+  })));
+  expect(lifecycleItems.slice(0, -1).every(item => item.arrow === '"↓"' && Math.abs(item.arrowLeft - item.clientWidth / 2) <= 1)).toBeTruthy();
+  expect(lifecycleItems.every(item => item.scrollWidth - item.clientWidth <= 1)).toBeTruthy();
+
+  const diagrams = [
+    { path: "/embedded.html#verification", selector: ".em-integration-board" },
+    { path: "/npu-acim.html#stack", selector: ".acim-lifecycle-board" },
+    { path: "/npu-acim.html#runtime", selector: ".acim-integration-board" }
+  ];
+  for (const diagram of diagrams) {
+    await page.goto(`${origin}${diagram.path}`);
+    for (const width of [320, 390, 761]) {
+      await page.setViewportSize({ width, height: 844 });
+      const overlaps = await page.locator(diagram.selector).evaluate(board => {
+        const heading = board.querySelector("h3").getBoundingClientRect();
+        const toolbar = board.querySelector(".diagram-toolbar").getBoundingClientRect();
+        return heading.left < toolbar.right
+          && heading.right > toolbar.left
+          && heading.top < toolbar.bottom
+          && heading.bottom > toolbar.top;
+      });
+      expect(overlaps).toBeFalsy();
+    }
+  }
+});
+
 test("shared interview mode times, hides coaching, tracks progress, and scores a response", async ({ page }) => {
   await page.goto(`${origin}/backend.html#practice`);
   const trigger = page.getByRole("button", { name: /Interview mode/ });
@@ -247,10 +339,18 @@ test("shared interview mode times, hides coaching, tracks progress, and scores a
 
   await panel.getByLabel("Hide coaching notes").uncheck();
   await expect(page.locator("#practice details").first()).toBeVisible();
-  await panel.getByLabel("Clarify").check();
+  const lifecycleCheckpoints = ["Frame", "Quantify", "Model", "Design", "Stress", "Prove", "Transition", "Operate · evolve · retire", "Close"];
+  await expect(panel.locator(".interview-checkpoints input")).toHaveCount(lifecycleCheckpoints.length);
+  for (const checkpoint of lifecycleCheckpoints) {
+    await expect(panel.getByRole("checkbox", { name: checkpoint, exact: true })).toBeVisible();
+  }
+  await panel.getByRole("checkbox", { name: "Frame", exact: true }).check();
+  await panel.getByRole("checkbox", { name: "Transition", exact: true }).check();
+  await panel.getByRole("checkbox", { name: "Operate · evolve · retire", exact: true }).check();
   await panel.getByText("Self-score the answer").click();
   await panel.getByLabel("Scope and requirements score").selectOption("2");
   await panel.getByLabel("Quantitative reasoning score").selectOption("2");
+  await expect(panel.getByLabel("Evidence and lifecycle closure score")).toBeVisible();
   await expect(panel.locator(".interview-rubric output")).toContainText("4/10");
 
   await page.keyboard.press("Escape");

@@ -17,7 +17,7 @@ The Atlas uses flowcharts, decision maps, trade-off matrices, bottleneck catalog
 
 1. Choose the page that matches the system boundary—not merely the job title.
 2. Follow the page’s reasoning flow: clarify outcomes, make assumptions visible, estimate the first-order budgets, draw the critical path, choose a design, and close with failure handling and evidence.
-3. Open **Interview mode** for a 45-minute timer, six thinking checkpoints, hidden coaching, and a five-part self-score.
+3. Open **Interview mode** for the track’s 45–55 minute timer, nine interview checkpoints, hidden coaching, and a five-part self-score.
 4. Work the quantitative example before opening the coaching notes.
 5. Use the bottleneck matrix to pressure-test the proposal and the evidence table to turn claims into measurable pass/fail criteria.
 
@@ -26,11 +26,19 @@ The worked numbers are deliberately labeled as illustrative assumptions. Recalcu
 ## Pages
 
 - `index.html` — track selector, shared reasoning loop, and an integrated autonomous-drone case spanning all five tracks
-- `backend.html` — scalable software and distributed systems
-- `systems-engineering.html` — lifecycle, requirements, allocation, interfaces, risk, integration, statistical evidence, verification and validation
-- `hardware.html` — workload-driven computer and hardware architecture
-- `embedded.html` — real-time embedded and cyber-physical design, including a numerical sampled-control case
-- `npu-acim.html` — analog compute-in-memory NPU compiler/runtime stack
+- `backend.html` — scalable software and distributed systems from interview framing through launch, operation, evolution, and retirement
+- `systems-engineering.html` — needs, requirements, allocation, realization, integration, statistical evidence, transition, operation, sustainment, and retirement
+- `hardware.html` — workload-driven architecture, implementation sign-off, ordered bring-up, qualification, production release, sustainment, and retirement
+- `embedded.html` — real-time and cyber-physical design through characterization, integration, V&V, commissioning, update/recovery, and safe decommissioning
+- `npu-acim.html` — ACiM NPU compiler/runtime stack from intended-use framing and target characterization through qualification, fleet release, operation, and retirement
+
+## Lifecycle completeness model
+
+The shared Atlas contract has 12 ordered phases: need, requirements, estimate, decompose, allocate, trade, realize, integrate, verify, validate, transition, and operate/evolve/retire. Each track adapts that contract to its design object instead of forcing identical vocabulary or pretending the work is a one-way waterfall.
+
+Risk and safety, security and privacy, configuration and interface control, evidence and traceability, cost, and operability are continuous controls. They are reassessed throughout the lifecycle rather than appended as late cleanup phases.
+
+The repository enforces each primary phase flow as an ordered, counted contract in both the static validator and browser suite. This guards against accidentally dropping integration, proof, transition, operational ownership, or retirement when the interview content evolves.
 
 ## Local development
 
