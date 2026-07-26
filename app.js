@@ -2,6 +2,7 @@ const root = document.documentElement;
 const themeToggle = document.querySelector("#theme-toggle");
 const themeColor = document.querySelector('meta[name="theme-color"]');
 const systemTheme = window.matchMedia("(prefers-color-scheme: light)");
+const siteHeader = document.querySelector(".site-header");
 
 function storedTheme() {
   try {
@@ -44,10 +45,38 @@ systemTheme.addEventListener?.("change", event => {
 const trackNav = document.querySelector('.site-header nav[aria-label="Track navigation"]');
 const currentTrack = trackNav?.querySelector('[aria-current="page"]');
 
-function revealCurrentTrack() {
-  if (!trackNav || !currentTrack || trackNav.scrollWidth <= trackNav.clientWidth) return;
-  const centeredLeft = currentTrack.offsetLeft - (trackNav.clientWidth - currentTrack.offsetWidth) / 2;
-  trackNav.scrollTo({ left: Math.max(0, centeredLeft), behavior: "auto" });
+function syncStickyHeaderOffset() {
+  if (!siteHeader) return;
+  root.style.setProperty("--site-header-height", `${Math.ceil(siteHeader.getBoundingClientRect().height)}px`);
 }
 
-requestAnimationFrame(revealCurrentTrack);
+function revealCurrentTrack() {
+  if (!trackNav || !currentTrack) return;
+  if (trackNav.scrollWidth <= trackNav.clientWidth) {
+    trackNav.scrollTo({ left: 0, behavior: "auto" });
+    return;
+  }
+  const navRect = trackNav.getBoundingClientRect();
+  const linkRect = currentTrack.getBoundingClientRect();
+  const linkCenterInContent = linkRect.left - navRect.left + trackNav.scrollLeft + linkRect.width / 2;
+  trackNav.scrollTo({ left: Math.max(0, linkCenterInContent - trackNav.clientWidth / 2), behavior: "auto" });
+}
+
+let layoutFrame;
+function scheduleLayoutSync() {
+  cancelAnimationFrame(layoutFrame);
+  layoutFrame = requestAnimationFrame(() => {
+    syncStickyHeaderOffset();
+    revealCurrentTrack();
+  });
+}
+
+scheduleLayoutSync();
+window.addEventListener("resize", scheduleLayoutSync, { passive: true });
+window.addEventListener("orientationchange", scheduleLayoutSync, { passive: true });
+
+if (typeof ResizeObserver === "function") {
+  const layoutObserver = new ResizeObserver(scheduleLayoutSync);
+  if (siteHeader) layoutObserver.observe(siteHeader);
+  if (trackNav) layoutObserver.observe(trackNav);
+}

@@ -17,6 +17,7 @@
   --focus: #68a7ff;
   --shadow: 0 24px 70px rgba(0, 0, 0, .26);
   --max: 1180px;
+  --site-header-height: 68px;
 }
 
 :root[data-theme="light"] {
@@ -478,10 +479,10 @@ footer a { justify-self: end; color: var(--blue-2); text-decoration: none; }
 
 /* Systems Engineering track */
 .se-hero h1 span { background-image: linear-gradient(110deg, var(--violet), var(--cyan), var(--green)); }
-:is(.page-nav, .se-page-nav) { position: sticky; z-index: 40; top: 68px; width: min(calc(100% - 2.4rem), var(--max)); margin: -2.4rem auto 0; padding: .65rem; display: flex; gap: .35rem; overflow-x: auto; border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(16px); }
+:is(.page-nav, .se-page-nav) { position: sticky; z-index: 40; top: var(--site-header-height); width: min(calc(100% - 2.4rem), var(--max)); margin: -2.4rem auto 0; padding: .65rem; display: flex; gap: .35rem; overflow-x: auto; border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(16px); }
 :is(.page-nav, .se-page-nav) a { flex: 0 0 auto; padding: .45rem .65rem; border-radius: 999px; color: var(--muted); text-decoration: none; font-size: .8125rem; font-weight: 700; }
 :is(.page-nav, .se-page-nav) a:hover, :is(.page-nav, .se-page-nav) a:focus-visible { background: var(--surface); color: var(--text); }
-:is(.page-nav, .se-page-nav) ~ section[id] { scroll-margin-top: 145px; }
+:is(.page-nav, .se-page-nav) ~ section[id] { scroll-margin-top: calc(var(--site-header-height) + 77px); }
 .se-context-map { margin: 0; padding: 1rem; display: grid; gap: .65rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-2); }
 .se-context-ring { display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; }
 .se-context-exchanges { grid-template-columns: 1fr 1.25fr 1fr; }
@@ -532,11 +533,10 @@ footer a { justify-self: end; color: var(--blue-2); text-decoration: none; }
 .se-case-scorecard, .se-pressure-test { margin-top: .8rem; }
 
 @media (max-width: 900px) {
+  :root { --site-header-height: 117px; }
   .site-header { flex-wrap: wrap; padding-block: .5rem; }
   .site-header nav { order: 3; width: 100%; display: flex; overflow-x: auto; gap: 1rem; padding-bottom: .25rem; }
   .site-header nav a { flex: 0 0 auto; }
-  :is(.page-nav, .se-page-nav) { top: 105px; }
-  :is(.page-nav, .se-page-nav) ~ section[id] { scroll-margin-top: 175px; }
   .se-allocation-map, .se-v-model { grid-template-columns: 1fr; }
   .se-allocation-connectors { grid-template-columns: repeat(6, auto); }
   .se-allocation-connectors b { transform: rotate(90deg); }
@@ -545,7 +545,7 @@ footer a { justify-self: end; color: var(--blue-2); text-decoration: none; }
 }
 @media (max-width: 560px) {
   .se-context-ring, .se-context-exchanges, .se-fault-branches, .se-interface-contract ol, .se-practice-timeline { grid-template-columns: 1fr; }
-  :is(.page-nav, .se-page-nav) { top: 105px; border-radius: .75rem; }
+  :is(.page-nav, .se-page-nav) { border-radius: .75rem; }
 }
 
 .site-header nav, .page-nav, .se-page-nav {

@@ -59,7 +59,7 @@ Run the fast static checks:
 npm run check
 ```
 
-The check command syntax-checks all browser and repository scripts, rebuilds `_site/`, validates the source content, and confirms that the artifact contains only the intended public files with byte-for-byte matching content.
+The check command syntax-checks all browser and repository scripts, runs deterministic calculation and security-boundary tests, rebuilds `_site/`, validates the source content, and confirms that the artifact contains only the intended public files with byte-for-byte matching content.
 
 For browser smoke tests, install Chromium once and run Playwright:
 
@@ -68,7 +68,7 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-The site validator checks all six pages, internal files and fragments, shared navigation, encoded attributes, source anchors, core calculation sentinels, accessible table contracts, responsive CSS tokens, contrast, the packaged artifact, and pinned Pages workflows. A separate scheduled workflow checks external references weekly; access-controlled or rate-limited responses are reported as inconclusive rather than broken.
+The site validator checks all six pages, internal files and fragments, shared navigation, encoded attributes, source anchors, core calculation sentinels, accessible table contracts, responsive CSS tokens, contrast, the packaged artifact, and pinned Pages workflows. A separate scheduled workflow checks external references weekly. Access-controlled, rate-limited, timeout, and transient gateway/service responses are reported as inconclusive; persistent HTTP 500, DNS, TLS, and other deterministic connection failures fail the check.
 
 ## Reference policy
 
@@ -82,7 +82,7 @@ Detailed sections link sources beside the decision they support. The Atlas favor
 
 Sources explain a model or contract; they do not prove a particular design meets its requirements. A real project still needs configuration-controlled assumptions, current product specifications, representative load/fault tests, calibrated measurements, and explicit acceptance criteria.
 
-Reference availability was reviewed on 2026-07-19. Links containing `current` or `latest` intentionally follow living documentation; record the exact applicable revision and access date when using one in a design decision.
+Reference availability was reviewed on 2026-07-25. Links containing `current` or `latest` intentionally follow living documentation; record the exact applicable revision and access date when using one in a design decision.
 
 ## Deployment
 

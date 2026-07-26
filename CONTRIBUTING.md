@@ -28,7 +28,7 @@ npm ci
 npm run check
 ```
 
-This syntax-checks the scripts, rebuilds `_site/`, validates content and local links, and verifies the public artifact allowlist. Use `npm run serve` for a local preview. Run `npx playwright install chromium` once and `npm run test:ui` for browser smoke coverage. External links are checked separately with `npm run check:links`; some providers may report access-controlled or rate-limited responses as inconclusive.
+This syntax-checks the scripts, runs deterministic calculation and security-boundary tests, rebuilds `_site/`, validates content and local links, and verifies the public artifact allowlist. Use `npm run serve` for a local preview. Run `npx playwright install chromium` once and `npm run test:ui` for browser smoke coverage. External links are checked separately with `npm run check:links`; access controls, rate limits, timeouts, and transient gateway/service failures may be inconclusive, while persistent HTTP 500, DNS, TLS, and other deterministic connection failures fail the check.
 
 ## Pull requests
 

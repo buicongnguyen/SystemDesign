@@ -1,7 +1,6 @@
 /* Hardware track-specific components. */
 .hw-hero h1 span { background-image: linear-gradient(110deg, var(--amber), var(--cyan), var(--blue)); }
 .hw-hero .hero-panel { transform: rotate(-1deg); }
-.hw-kicker { color: var(--green); }
 .hw-inline-label { color: var(--amber); font: 800 .68rem ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
 .hw-section-note { margin-top: 1rem; padding: 1rem 1.2rem; border-left: 3px solid var(--green); background: var(--surface-2); color: var(--muted); }
 .hw-section-note b { color: var(--green); }

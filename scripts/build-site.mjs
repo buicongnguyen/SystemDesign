@@ -1,22 +1,36 @@
-import { copyFile, mkdir, rm } from "node:fs/promises";
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { copyFile, lstat, mkdir, realpath, rm } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  assertInside,
+  assertNotSymbolicLink,
+  assertRegularNonSymlinkFile,
+  resolveContainedPath
+} from "./path-safety.mjs";
 import { publicFiles } from "./site-files.mjs";
 
-const root = resolve(process.cwd());
-const output = resolve(root, "_site");
-const outputOffset = relative(root, output);
+const root = await realpath(resolve(dirname(fileURLToPath(import.meta.url)), ".."));
+const output = resolveContainedPath(root, "_site", "Build output");
 
-if (outputOffset === ".." || outputOffset.startsWith(`..${sep}`) || isAbsolute(outputOffset)) {
-  throw new Error("Refusing to build outside the repository root");
+assertInside(root, output, "Build output");
+try {
+  const existingOutput = await lstat(output);
+  assertNotSymbolicLink(existingOutput, "Build output");
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
 }
-
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 
 for (const file of publicFiles) {
-  const destination = resolve(output, file);
+  const sourceCandidate = resolveContainedPath(root, file, `Public source ${file}`);
+  const sourceInfo = await lstat(sourceCandidate);
+  assertRegularNonSymlinkFile(sourceInfo, `Public source ${file}`);
+  const source = await realpath(sourceCandidate);
+  assertInside(root, source, `Public source ${file}`);
+  const destination = resolveContainedPath(output, file, `Public destination ${file}`);
   await mkdir(dirname(destination), { recursive: true });
-  await copyFile(resolve(root, file), destination);
+  await copyFile(source, destination);
 }
 
 console.log(`Built ${publicFiles.length} public files in _site/.`);

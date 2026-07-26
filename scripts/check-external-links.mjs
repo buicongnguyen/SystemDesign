@@ -1,9 +1,13 @@
 import { readFile } from "node:fs/promises";
+import { requestExternalLink } from "./external-link-core.mjs";
 import { pages } from "./site-files.mjs";
 
 const timeoutMilliseconds = 20_000;
 const concurrency = 6;
+const maximumRedirects = 8;
 const toleratedStatuses = new Set([401, 403, 405, 429]);
+const transientStatuses = new Set([408, 425, 502, 503, 504]);
+const transientNetworkCodes = new Set(["EAI_AGAIN", "ECONNRESET", "ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_HEADERS_TIMEOUT", "UND_ERR_SOCKET"]);
 
 function externalLinks(html) {
   return [...html.matchAll(/<a\b[^>]*\bhref\s*=\s*(["'])(https:\/\/.*?)\1/gis)]
@@ -13,34 +17,45 @@ function externalLinks(html) {
 const documents = await Promise.all(pages.map(file => readFile(file, "utf8")));
 const links = [...new Set(documents.flatMap(externalLinks))].sort();
 
-async function request(url) {
-  const response = await fetch(url, {
+async function request(source) {
+  return requestExternalLink(source, {
     headers: {
       "Accept": "text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8",
       "User-Agent": "SystemDesign-Atlas-Link-Check/1.0 (+https://github.com/buicongnguyen/SystemDesign)"
     },
-    redirect: "follow",
-    signal: AbortSignal.timeout(timeoutMilliseconds)
+    maximumRedirects,
+    timeoutMilliseconds
   });
-  await response.body?.cancel();
-  return response.status;
+}
+
+function networkFailure(error) {
+  const code = error?.cause?.code || error?.code;
+  const detail = [error?.message, code].filter(Boolean).join(" · ") || "unknown network error";
+  const transient = error?.name === "AbortError" || error?.name === "TimeoutError" || transientNetworkCodes.has(code);
+  return { detail, result: transient ? "inconclusive" : "failed" };
 }
 
 async function check(url) {
-  let lastError;
+  let lastFailure;
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
       const status = await request(url);
       if (status >= 200 && status < 400) return { url, status, result: "ok" };
       if (toleratedStatuses.has(status)) return { url, status, result: "inconclusive" };
-      if (status < 500) return { url, status, result: "failed" };
-      if (attempt === 2) return { url, status, result: "inconclusive" };
+      if (transientStatuses.has(status)) {
+        lastFailure = { url, status, result: "inconclusive" };
+        if (attempt === 2) return lastFailure;
+        continue;
+      }
+      lastFailure = { url, status, result: "failed" };
+      if (attempt === 2 || status < 500) return lastFailure;
     } catch (error) {
-      lastError = error;
-      if (attempt === 2) return { url, error: error.message, result: "inconclusive" };
+      const failure = networkFailure(error);
+      lastFailure = { url, error: failure.detail, result: failure.result };
+      if (attempt === 2) return lastFailure;
     }
   }
-  return { url, error: lastError?.message || "unknown error", result: "inconclusive" };
+  return lastFailure || { url, error: "unknown error", result: "failed" };
 }
 
 const results = [];
@@ -68,7 +83,7 @@ for (const failure of failures) {
 }
 
 if (failures.length) {
-  throw new Error(`${failures.length} of ${links.length} external links returned a failing HTTP status.`);
+  throw new Error(`${failures.length} of ${links.length} external links returned a persistent HTTP or network failure.`);
 }
 
 console.log(`External link check completed: ${links.length} unique HTTPS links, ${results.filter(item => item.result === "ok").length} reachable, ${results.filter(item => item.result === "inconclusive").length} inconclusive.`);

@@ -18,5 +18,6 @@ export const publicFiles = Object.freeze([
   "theme-init.js",
   "assets/favicon.svg",
   "assets/social-card.svg",
+  "assets/social-card.png",
   ".nojekyll"
 ]);

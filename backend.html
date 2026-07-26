@@ -11,15 +11,21 @@
   <meta property="og:title" content="Backend &amp; Distributed Systems — System Design Atlas">
   <meta property="og:description" content="A visual interview guide to scalable architecture, data, caching, queues, reliability, bottlenecks, and trade-offs.">
   <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/backend.html">
-  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.svg">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="System Design Atlas with five visual interview tracks">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta name="twitter:image:alt" content="System Design Atlas with five visual interview tracks">
   <title>Backend &amp; Distributed Systems — System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/backend.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260719b"></script>
-  <link rel="stylesheet" href="styles.css?v=20260719b">
-  <script src="app.js?v=20260719b" defer></script>
-  <script src="backend.js?v=20260719b" defer></script>
+  <script src="theme-init.js?v=20260725a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260725a">
+  <script src="app.js?v=20260725a" defer></script>
+  <script src="backend.js?v=20260725a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -233,7 +239,7 @@ measure_and_iterate()</code></pre>
       <div class="section-heading centered-heading">
         <p class="eyebrow">08 · Interview loop</p>
         <h2>Four phases. One coherent story.</h2>
-        <p>Alex Xu’s framework is effective because it keeps the conversation requirement-led and trade-off-aware.</p>
+        <p>This Atlas loop adapts <a href="https://blog.bytebytego.com/p/ep46-step-by-step-guide-on-system">Alex Xu and ByteByteGo’s four-step framework ↗</a>. Their named steps are understand the scope, propose a high-level design and get buy-in, deep-dive the design, and wrap up; this page pulls estimation into its own phase so every later choice is grounded in an explicit load assumption.</p>
       </div>
       <ol class="interview-system-loop">
         <li><span>01 · Understand</span><strong>Clarify scope</strong><p>Users, use cases, read/write ratio, latency, consistency, geography.</p><small>Output: functional + non-functional requirements</small></li>
@@ -458,7 +464,7 @@ measure_and_iterate()</code></pre>
       </div>
 
       <div class="reasoning-workbench">
-        <article class="workbench-main">
+        <article class="workbench-main" data-calculation="flash-sale" data-attempts="2000000" data-duration-seconds="600" data-burst-factor="5" data-mean-seconds="0.25" data-response-bytes="2000" data-conversion-rate="0.01" data-retries-per-layer="2" data-retry-layers="3">
           <span>Worked example · flash-sale checkout</span>
           <h3>Follow one assumption until it changes the design</h3>
           <p>Assume two million purchase attempts arrive over ten minutes, peak traffic is five times the average, the synchronous path targets 250 ms, responses average 2 kB, and one percent of attempts become orders.</p>
@@ -492,7 +498,7 @@ measure_and_iterate()</code></pre>
           <thead><tr><th scope="col">Invariant</th><th scope="col">Scope</th><th scope="col">Candidate mechanism</th><th scope="col">Failure test</th></tr></thead>
           <tbody>
             <tr><th scope="row">One local payment intent/result per scoped idempotency key</th><td>Merchant + operation + idempotency key</td><td>Atomically persist local intent, result, and outbox; propagate the same authenticated key to a provider that supports idempotency. If the remote outcome is unknown, query and reconcile before retry.</td><td>The provider charge succeeds but the response is lost; prove lookup/reconciliation prevents a second charge and rejects a conflicting payload for the same scoped key.</td></tr>
-            <tr><th scope="row">Sellable inventory never drops below zero</th><td>SKU or reservation</td><td>Transactional conditional decrement, or a durable expiring reservation with an explicit release path.</td><td>Many buyers race for the last unit; a checkout crashes after reservation but before payment.</td></tr>
+            <tr><th scope="row">Sellable inventory never drops below zero</th><td>SKU or reservation</td><td>Atomically claim stock: use a conditional decrement, serialize reservation creation per SKU, or create the durable expiring reservation in the same transaction that decrements available quantity. Expiration or cancellation atomically releases that claim; a durable reservation record without the stock claim is insufficient.</td><td>Many buyers race for the last unit; a checkout crashes after reservation but before payment; expiration races with payment confirmation.</td></tr>
             <tr><th scope="row">Messages stay ordered inside one conversation</th><td>Conversation</td><td>Per-conversation sequence numbers or one ordered partition; reject, buffer, or reconcile gaps.</td><td>Two devices send concurrently while one reconnects and replays an earlier request.</td></tr>
             <tr><th scope="row">A short alias names at most one URL</th><td>Alias key</td><td>Conditional insert or unique constraint at the authoritative store.</td><td>Two creators claim the same custom alias at the same time.</td></tr>
             <tr><th scope="row">A feed meets its freshness objective</th><td>Feed read</td><td>Event watermark, consumer-age SLI, and a declared stale-read policy.</td><td>Pause a consumer, build backlog, recover, and prove drain time without overloading the source.</td></tr>

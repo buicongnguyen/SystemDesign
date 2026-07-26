@@ -11,15 +11,21 @@
   <meta property="og:title" content="Embedded &amp; Cyber-Physical Systems — System Design Atlas">
   <meta property="og:description" content="A visual interview guide to control loops, hardware/software partitioning, real-time scheduling, power, safety, and verification.">
   <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/embedded.html">
-  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.svg">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="System Design Atlas with five visual interview tracks">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta name="twitter:image:alt" content="System Design Atlas with five visual interview tracks">
   <title>Embedded &amp; Cyber-Physical Systems · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/embedded.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260719b"></script>
-  <link rel="stylesheet" href="styles.css?v=20260719b">
-  <script src="app.js?v=20260719b" defer></script>
-  <link rel="stylesheet" href="embedded.css?v=20260719b">
+  <script src="theme-init.js?v=20260725a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260725a">
+  <script src="app.js?v=20260725a" defer></script>
+  <link rel="stylesheet" href="embedded.css?v=20260725a">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -156,7 +162,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <div class="em-schedule-selector">
           <article><span>Simple + static periods</span><strong>Cyclic executive</strong><p>A repeating table is easy to inspect and deterministic when activities are few, known, and fit cleanly.</p><small>Watch: poor flexibility + long task blocking</small></article>
           <article><span>Periodic / sporadic critical tasks</span><strong>Fixed-priority preemptive</strong><p>Assign priorities from criticality and analyzed relative deadlines. The classic rate-monotonic optimality and utilization guarantees apply only under their independent, periodic, preemptive, deadline-equals-period assumptions; period-based priorities can still be used outside that model when an applicable response-time analysis proves schedulability. Include blocking, ISR interference, release jitter, and overload.</p><small>Watch: priority inversion + starvation</small></article>
-          <article><span>Dynamic deadlines</span><strong>Earliest Deadline First</strong><p>Schedule the ready job with the nearest deadline when the platform and certification approach support dynamic priority.</p><small>Watch: overload behavior + implementation cost</small></article>
+          <article><span>Job-level absolute deadlines</span><strong>Earliest Deadline First</strong><p>Schedule the ready job with the earliest absolute deadline. Periodic and sporadic tasks may have fixed relative deadlines; priority still changes from job to job. Under the classic independent, preemptible, single-core model EDF is optimal, but a real implementation must include blocking and overhead and define overload behavior.</p><small>Watch: overload behavior + implementation and assurance cost</small></article>
           <article><span>Soft background work</span><strong>Best effort below the critical lane</strong><p>Run logging, uploads, UI, and maintenance at bounded lower priority or under a server/budget.</p><small>Watch: background backpressure + memory growth</small></article>
         </div>
       </div>
@@ -295,14 +301,14 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
       </div>
 
       <div class="reasoning-workbench">
-        <article class="workbench-main">
+        <article class="workbench-main" data-calculation="embedded-timing" data-execution-ms="0.08,0.35,0.25,0.8" data-period-ms="1,5,5,20" data-deadline-ms="1,5,5,20" data-priority-order="capture,estimator,control,communications" data-blocking-ms="0,0,0,0" data-jitter-ms="0,0,0,0">
           <span>Worked example · single-core control lane</span>
           <h3>Build the task model before choosing priorities</h3>
-          <p>Illustrative conservative execution-time bounds under declared measurement corners: sensor capture 80 μs every 1 ms, estimator 350 μs every 5 ms, control update 250 μs every 5 ms, and communications service 800 μs every 20 ms. Treat observed maxima as provisional—not automatic WCET—until analysis and corner evidence justify each bound.</p>
+          <p>Illustrative conservative execution-time bounds under declared measurement corners: sensor capture 80 μs every 1 ms, estimator 350 μs every 5 ms, control update 250 μs every 5 ms, and communications service 800 μs every 20 ms. For a reproducible baseline, set each relative deadline equal to its period, use the fixed-priority order capture → estimator → control → communications, assume a fully preemptive single core, and initially set blocking and release jitter to zero with no ISR, context-switch, cache, flash, or bus overhead. Treat observed maxima as provisional—not automatic WCET—until analysis and corner evidence justify each bound.</p>
           <ol class="evidence-chain">
             <li><div><b>Compute a screening load</b><span>Utilizations are 0.08 + 0.07 + 0.05 + 0.04 = 0.24. That is encouraging capacity evidence, but not a schedulability proof.</span></div></li>
-            <li><div><b>Add missing interference</b><span>Measure ISR execution and arrival bursts; include critical sections, DMA completion work, cache or flash stalls, release jitter, context switches, bus arbitration, and non-preemptive regions.</span></div></li>
-            <li><div><b>Analyze each deadline</b><span>Assign priorities from the chosen policy, iterate fixed-priority response time under its assumptions, and check every task—not only total utilization—against its relative deadline.</span></div></li>
+            <li><div><b>Run the explicit baseline</b><span>With B = J = 0 and the stated priority order, fixed-priority iteration gives response times of 0.08 ms for capture, 0.43 ms for estimator, 0.68 ms for control, and 1.56 ms for communications. Each is below its 1, 5, 5, or 20 ms relative deadline; the estimator/control tie order is part of the model.</span></div></li>
+            <li><div><b>Add missing interference and rerun</b><span>Measure ISR execution and arrival bursts; include critical sections, DMA completion work, cache or flash stalls, release jitter, context switches, bus arbitration, and non-preemptive regions. Iterate again and check every task—not only total utilization—against its relative deadline.</span></div></li>
             <li><div><b>Size ownership queues</b><span>Bound the backlog accumulated while a consumer is unavailable; define free, DMA-owned, ready, processing, and returning states so timeout/reset cannot create aliasing or reuse a live buffer.</span></div></li>
             <li><div><b>Measure on the target</b><span>Trace release-to-completion latency and jitter at voltage, temperature, clock, memory, and bus corners. Inject overrun and missed-completion faults; confirm the stated degraded or safe behavior.</span></div></li>
           </ol>
@@ -339,7 +345,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
           <caption>Transitions deserve the same rigor as steady states. Define entry guard, authority, timeout, cleanup, output validity, and proof for every edge.</caption>
           <thead><tr><th scope="col">Transition fault</th><th scope="col">Required behavior</th><th scope="col">What can remain ambiguous</th><th scope="col">Test</th></tr></thead>
           <tbody>
-            <tr><th scope="row">DMA timeout during capture</th><td>Stop or drain the peripheral, invalidate the buffer, revoke ownership, clear status in the documented order, and rearm or reset the smallest safe scope.</td><td>A late write or completion can corrupt a buffer already recycled to another task.</td><td>Delay/drop completion and inject bus faults at every descriptor boundary.</td></tr>
+            <tr><th scope="row">DMA timeout during capture</th><td>Fence rearm, mark the buffer invalid, stop/disable the peripheral and DMA channel in the documented order, and keep ownership and storage pinned until an idle indication—or the target’s containment/reset sequence plus any required posted-write drain—proves the device cannot write again. Only then clear/reinitialize, revoke ownership, recycle the buffer, and rearm.</td><td>Without quiescence proof, a late write or completion can corrupt a buffer already returned to another task.</td><td>Delay/drop completion and inject bus faults at every descriptor and reset boundary; assert that reuse never precedes proven quiescence.</td></tr>
             <tr><th scope="row">Brownout during flash write</th><td>Hold outputs safe, protect boot metadata, detect incomplete records, and recover the last committed state.</td><td>Torn data may look structurally valid without CRC/version/commit markers.</td><td>Sweep power removal across each program/erase and metadata update phase.</td></tr>
             <tr><th scope="row">Wake dependency fails</th><td>Bound each rail/clock/device wait, clean up partially enabled domains, log the failing dependency, and enter a defined low-power or service state.</td><td>One powered device may back-power another or leave the bus stuck.</td><td>Stuck-ready, missing clock, false wake, repeated wake, and power-sequence injection.</td></tr>
             <tr><th scope="row">Watchdog reset loop</th><td>Persist bounded reset history, prevent unsafe output replay, escalate after the retry budget, and expose a diagnosable latched state.</td><td>A reset can repeatedly recreate the hazardous condition before monitoring is ready.</td><td>Hang each supervised layer, corrupt progress signals, and fail the recovery itself.</td></tr>
@@ -355,7 +361,7 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
         <article class="workbench-card"><span>Evidence</span><h3>Test timing faults in context</h3><p>Combine MIL/SIL/PIL/HIL with bus delay, clock drift, corrupt samples, brownout, partial update, stuck actuator, thermal throttling, and repeated recovery. Preserve seeds, traces, versions, and acceptance limits.</p></article>
       </div>
 
-      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1145/321738.321743">Liu–Layland scheduling ↗</a><a href="https://doi.org/10.1093/comjnl/29.5.390">Joseph–Pandya response time ↗</a><a href="https://doi.org/10.1007/BF01088593">Jitter-aware response time ↗</a><a href="https://docs.zephyrproject.org/latest/kernel/services/scheduling/index.html">Zephyr scheduling ↗</a><a href="https://docs.zephyrproject.org/latest/services/pm/index.html">Zephyr power management ↗</a><a href="https://freertos.org/Documentation/02-Kernel/02-Kernel-features/01-Tasks-and-co-routines/04-Task-scheduling">FreeRTOS scheduling ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA ownership ↗</a><a href="https://www.ti.com/lit/an/slva740a/slva740a.pdf">TI pulsed-load battery budgeting ↗</a><a href="https://www.mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator_v1-0p.pdf">MIPI I3C integration ↗</a><a href="https://docs.mcuboot.com/design.html">MCUboot image + recovery design ↗</a><a href="https://docs.kernel.org/watchdog/watchdog-api.html">Linux watchdog contract ↗</a></div>
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://doi.org/10.1145/321738.321743">Liu–Layland scheduling ↗</a><a href="https://doi.org/10.1093/comjnl/29.5.390">Joseph–Pandya response time ↗</a><a href="https://link.springer.com/article/10.1007/BF01088593">Jitter-aware response time ↗</a><a href="https://docs.zephyrproject.org/latest/kernel/services/scheduling/index.html">Zephyr scheduling ↗</a><a href="https://docs.zephyrproject.org/latest/services/pm/index.html">Zephyr power management ↗</a><a href="https://freertos.org/Documentation/02-Kernel/02-Kernel-features/01-Tasks-and-co-routines/04-Task-scheduling">FreeRTOS scheduling ↗</a><a href="https://docs.kernel.org/core-api/dma-api-howto.html">Linux DMA ownership ↗</a><a href="https://www.ti.com/lit/an/slva740a/slva740a.pdf">TI pulsed-load battery budgeting ↗</a><a href="https://www.mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator_v1-0p.pdf">MIPI I3C integration ↗</a><a href="https://docs.mcuboot.com/design.html">MCUboot image + recovery design ↗</a><a href="https://docs.kernel.org/watchdog/watchdog-api.html">Linux watchdog contract ↗</a></div>
     </section>
 
     <section class="section" id="practice">

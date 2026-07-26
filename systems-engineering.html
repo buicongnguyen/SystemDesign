@@ -11,14 +11,20 @@
   <meta property="og:title" content="Systems Engineering — System Design Atlas">
   <meta property="og:description" content="A visual interview guide to stakeholder needs, ConOps, requirements, architecture, interfaces, risk, integration, verification, and validation.">
   <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
-  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.svg">
+  <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="System Design Atlas with five visual interview tracks">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-card.png">
+  <meta name="twitter:image:alt" content="System Design Atlas with five visual interview tracks">
   <title>Systems Engineering · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260719b"></script>
-  <link rel="stylesheet" href="styles.css?v=20260719b">
-  <script src="app.js?v=20260719b" defer></script>
+  <script src="theme-init.js?v=20260725a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260725a">
+  <script src="app.js?v=20260725a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -50,7 +56,7 @@
           <a class="button secondary" href="#practice">Practice the drone case</a>
         </div>
         <ul class="hero-stats" aria-label="Page summary">
-          <li><strong>11</strong><span>connected views</span></li>
+          <li><strong>13</strong><span>connected views</span></li>
           <li><strong>7</strong><span>decision artifacts</span></li>
           <li><strong>1</strong><span>full interview case</span></li>
         </ul>
@@ -269,9 +275,9 @@ validate(<b>solves the mission</b>)</code></pre>
       </div>
 
       <div class="factor-compass se-budget-compass">
-        <div class="factor-center"><span>Control the total</span><strong>Σ estimates + growth allowance + system margin ≤ limit</strong></div>
+        <div class="factor-center"><span>For additive resources</span><strong>Σ(CBE + applicable growth allowance) + unallocated margin ≤ limit</strong></div>
         <article><span>Mass</span><strong>What must move?</strong><p>Structure, payload, energy, wiring, fasteners, growth allowance, and center of gravity.</p></article>
-        <article><span>Power</span><strong>What consumes energy?</strong><p>Peak, average, startup, conversion loss, duty cycle, reserve, and degradation.</p></article>
+        <article><span>Power + energy</span><strong>What demands watts and consumes joules?</strong><p>Track peak, startup, and continuous demand plus conversion loss in W; track duty-cycle duration, usable capacity, reserve, and degradation in Wh or J. Never add unlike units in one ledger.</p></article>
         <article><span>Thermal</span><strong>Where does heat go?</strong><p>Dissipation by mode, junction limits, path resistance, ambient, and hot spots.</p></article>
         <article><span>Latency</span><strong>Where is time spent?</strong><p>Sense, transfer, compute, decision, actuation, jitter, and deadline margin.</p></article>
         <article><span>Bandwidth</span><strong>What shares the link?</strong><p>Payload, overhead, burst, retransmission, contention, and degraded modes.</p></article>
@@ -285,7 +291,7 @@ validate(<b>solves the mission</b>)</code></pre>
       <div class="se-budget-equation slo-equation">
         <span>Budget control loop</span><strong>Requirement</strong><i>sets limit</i><b>→</b><strong>Allocation</strong><i>assigns ceilings</i><b>→</b><strong>Estimate</strong><i>shows expected use</i><b>→</b><strong>Growth + margin</strong><i>cover defined uncertainty</i><b>→</b><strong>Test</strong><i>updates the estimate</i>
       </div>
-      <p class="evidence-note"><b>Keep two ledgers distinct:</b> an estimate-based status uses <i>Σ current best estimates + growth allowances + unallocated system margin ≤ system limit</i>. An allocation-based plan uses <i>Σ subsystem allocations + system reserve ≤ system limit</i>; do not add growth again when it is already inside an allocation. State the denominator, confidence, lifecycle phase, and owner for every margin.</p>
+      <p class="evidence-note"><b>Keep two ledgers distinct:</b> an estimate-based status uses <i>Σ current best estimates + growth allowances + unallocated system margin ≤ system limit</i>. An allocation-based plan uses <i>Σ subsystem allocations + system reserve ≤ system limit</i>; do not add growth again when it is already inside an allocation. State the denominator, confidence, lifecycle phase, and owner for every margin. The simple resource-use summation applies only to additive quantities such as mass or energy. Reliability needs a probability and fault-dependency model, an RF link uses a signed gain/loss equation in dB, and a schedule uses precedence and critical-path logic; declare the composition model for every budget.</p>
       <p class="section-source">Accounting anchor: <a href="https://ntrs.nasa.gov/api/citations/20170007239/downloads/20170007239.pdf">NASA technical-margin guidance ↗</a>. Tailor the convention, but keep its terms and sign visible.</p>
     </section>
 
@@ -308,14 +314,14 @@ validate(<b>solves the mission</b>)</code></pre>
           <caption>Illustrative navigation architecture trade study — scores are 1 (weak) to 5 (strong)</caption>
           <thead><tr><th scope="col">Criterion</th><th scope="col">Weight</th><th scope="col">Onboard only</th><th scope="col">Cloud assisted</th><th scope="col">Hybrid</th></tr></thead>
           <tbody>
-            <tr><th scope="row">Safe without link</th><td>30%</td><td>5</td><td>1</td><td>5</td></tr>
-            <tr><th scope="row">Perception capability</th><td>20%</td><td>3</td><td>5</td><td>5</td></tr>
-            <tr><th scope="row">Energy efficiency</th><td>15%</td><td>3</td><td>4</td><td>3</td></tr>
-            <tr><th scope="row">Lifecycle cost</th><td>15%</td><td>4</td><td>3</td><td>2</td></tr>
-            <tr><th scope="row">Update flexibility</th><td>10%</td><td>2</td><td>5</td><td>4</td></tr>
-            <tr><th scope="row">Certification clarity</th><td>10%</td><td>4</td><td>2</td><td>3</td></tr>
+            <tr data-calculation="trade-safe-without-link" data-weight="0.30" data-onboard="5" data-cloud="1" data-hybrid="5"><th scope="row">Safe without link</th><td>30%</td><td>5</td><td>1</td><td>5</td></tr>
+            <tr data-calculation="trade-perception" data-weight="0.20" data-onboard="3" data-cloud="5" data-hybrid="5"><th scope="row">Perception capability</th><td>20%</td><td>3</td><td>5</td><td>5</td></tr>
+            <tr data-calculation="trade-energy" data-weight="0.15" data-onboard="3" data-cloud="4" data-hybrid="3"><th scope="row">Energy efficiency</th><td>15%</td><td>3</td><td>4</td><td>3</td></tr>
+            <tr data-calculation="trade-lifecycle-cost" data-weight="0.15" data-onboard="4" data-cloud="3" data-hybrid="2"><th scope="row">Lifecycle cost</th><td>15%</td><td>4</td><td>3</td><td>2</td></tr>
+            <tr data-calculation="trade-update-flexibility" data-weight="0.10" data-onboard="2" data-cloud="5" data-hybrid="4"><th scope="row">Update flexibility</th><td>10%</td><td>2</td><td>5</td><td>4</td></tr>
+            <tr data-calculation="trade-certification" data-weight="0.10" data-onboard="4" data-cloud="2" data-hybrid="3"><th scope="row">Certification clarity</th><td>10%</td><td>4</td><td>2</td><td>3</td></tr>
           </tbody>
-          <tfoot><tr><th scope="row">Weighted total</th><td>100%</td><td>3.75</td><td>3.05</td><td><strong>3.95</strong></td></tr></tfoot>
+          <tfoot><tr data-calculation="trade-totals" data-weight="1" data-onboard="3.75" data-cloud="3.05" data-hybrid="3.95"><th scope="row">Weighted total</th><td>100%</td><td>3.75</td><td>3.05</td><td><strong>3.95</strong></td></tr></tfoot>
         </table>
       </div>
 
@@ -445,8 +451,12 @@ validate(<b>solves the mission</b>)</code></pre>
           <thead><tr><th scope="col">Requirement</th><th scope="col">Method</th><th scope="col">Level</th><th scope="col">Acceptance criterion</th><th scope="col">Evidence</th><th scope="col">Status</th></tr></thead>
           <tbody>
             <tr><th scope="row">SYS-PERF-014</th><td>Test</td><td>System</td><td>At maximum gross mass, on the defined dry test surface, and at 8.0 ± 0.2 m/s, reach zero ground speed within 4.0 m after a valid stop command.</td><td>Calibrated braking test report</td><td>Planned</td></tr>
-            <tr><th scope="row">SYS-ENV-022</th><td>Analysis + test</td><td>Subsystem</td><td>During a 60-minute exposure from −10 to 45 °C, the named flight-compute subsystem performs navigation functions within its allocated latency, accuracy, and power limits.</td><td>Configuration-specific thermal model + chamber data</td><td>In work</td></tr>
-            <tr><th scope="row">SYS-OPS-031</th><td>Demonstration + test</td><td>Operational</td><td>After the declared handover cue in supervised-flight mode, a trained operator obtains command authority and positive confirmation within 2.0 s; failure leaves the vehicle in the defined hold state.</td><td>Timestamped representative mission trial</td><td>Planned</td></tr>
+            <tr><th scope="row">CMP-ENV-022</th><td>Test</td><td>Flight-compute subsystem</td><td>During and after a 60-minute chamber exposure at each declared −10 °C and 45 °C operating corner, the count of uncommanded flight-compute resets is zero.</td><td>Configuration-specific chamber report</td><td>In work</td></tr>
+            <tr><th scope="row">ALLOC-LAT-023</th><td>Test</td><td>Flight-compute subsystem</td><td>At each CMP-ENV-022 corner and under workload profile WP-03, p99 navigation-update completion latency is no more than 20.0 ms over the declared sample count.</td><td>The same chamber run, traced to a separate latency result</td><td>In work</td></tr>
+            <tr><th scope="row">ALLOC-PWR-024</th><td>Analysis + test</td><td>Flight-compute subsystem</td><td>At each CMP-ENV-022 corner and under workload profile WP-03, 60-second mean input power is no more than 5.0 W using the specified calibrated measurement boundary.</td><td>The same chamber run plus power uncertainty report</td><td>In work</td></tr>
+            <tr><th scope="row">SYS-OPS-031</th><td>Demonstration + test</td><td>System</td><td>After handover cue HC-01 in supervised-flight mode, command authority changes to the trained and authenticated operator within 2.0 s.</td><td>Timestamped representative mission trial</td><td>Planned</td></tr>
+            <tr><th scope="row">HMI-OPS-032</th><td>Demonstration</td><td>Operator console</td><td>After the SYS-OPS-031 authority change, the console presents the named positive confirmation within 0.1 s.</td><td>Timestamped console demonstration</td><td>Planned</td></tr>
+            <tr><th scope="row">SYS-OPS-033</th><td>Test</td><td>System</td><td>If the HC-01 authority transfer is not completed within 2.0 s, the vehicle enters the named <code>SUPERVISED_HOLD</code> state within the next 0.5 s.</td><td>Timed failed-handover injection</td><td>Planned</td></tr>
           </tbody>
         </table>
       </div>
@@ -467,8 +477,8 @@ validate(<b>solves the mission</b>)</code></pre>
           <p>Numbers below are example assumptions, not universal drone requirements. In an interview, label every value as confirmed, assumed, derived, allocated, estimated, or measured.</p>
           <ol class="evidence-chain">
             <li><div><b>Need + operational scenario</b><span>N-01: deliver the declared payload safely within the service area. Scenario records route, wind, temperature, precipitation, communications, operator role, alternates, and emergency landing behavior.</span></div></li>
-            <li><div><b>Measure of effectiveness</b><span>MOE-01: at least 99% of eligible reference missions complete within 25 minutes over the declared operating envelope, with package-condition and safety outcomes reported separately. Define the evaluation window and control every exclusion.</span></div></li>
-            <li><div><b>System requirement</b><span>SYS-ENERGY-014: with a 2.0 kg payload on the reference route and environment, the vehicle shall land with reserve fraction R = estimated remaining usable energy ÷ verified usable-at-condition capacity ≥ 20%. The denominator is deliverable energy from full charge to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile. Use the configuration-controlled BMS remaining-energy estimator, cross-check it against calibrated energy integration, and subtract the declared combined tolerance; with an illustrative 2-percentage-point tolerance, require an indicated R ≥ 22% so the acceptance lower bound remains 20%.</span></div></li>
+            <li><div><b>Measure of effectiveness</b><span>MOE-01: at least 99% of eligible REF-MISSION-01 missions complete within 25 minutes over the declared operating envelope. REF-MISSION-01 starts at launch authorization, flies from the clinic to an approved delivery pad, releases the package, returns to the clinic, and ends in the named landed safe state; its total ground track is 10 km. Report outbound delivery time, package condition, and safety outcomes separately, define the evaluation window, and control every exclusion.</span></div></li>
+            <li><div><b>System requirement</b><span>SYS-ENERGY-014: with a 2.0 kg payload on REF-MISSION-01 and its declared environment, the vehicle shall land with reserve fraction R = estimated remaining usable energy ÷ verified usable-at-condition capacity ≥ 20%. The denominator is deliverable energy from full charge to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile. Use the configuration-controlled BMS remaining-energy estimator and cross-check it against calibrated energy integration. Treat the illustrative 2-percentage-point combined BMS-estimator/test tolerance as a one-sided acceptance guard band justified by a combined uncertainty and maximum-permitted-error budget at the declared coverage probability—not as an unexplained nominal tolerance—and require an indicated R ≥ 22% so the 20% acceptance lower bound remains protected.</span></div></li>
             <li><div><b>Allocation + interfaces</b><span>Allocate mass, energy, thermal, navigation, propulsion, and reserve budgets to elements; record voltage, current, update rate, units, timing, ownership, and degraded behavior at every crossing.</span></div></li>
             <li><div><b>Verification + validation</b><span>Verify the requirement with calibrated energy instrumentation and environmental test evidence; validate the route, operator workflow, contingency behavior, turnaround, and customer outcome in representative missions.</span></div></li>
           </ol>
@@ -478,8 +488,9 @@ validate(<b>solves the mission</b>)</code></pre>
           <span>Control the numbers</span>
           <h3>Budget, margin, and closure</h3>
           <div class="formula-stack">
-            <div class="formula-line"><b>Absolute margin</b><code>allocated limit − current best estimate</code><small>Keep the definition and sign convention in the budget. A positive number is useful only if uncertainty and growth policy are also visible.</small></div>
-            <div class="formula-line"><b>Margin percentage</b><code>(limit − estimate) ÷ limit × 100%</code><small>Do not compare percentages that use different denominators, lifecycle states, or confidence levels.</small></div>
+            <div class="formula-line"><b>Upper-bound margin</b><code>maximum allowed − predicted consumption</code><small>Use for mass, power draw, latency, or another quantity that must remain below a ceiling. Predicted consumption is the CBE plus the applicable growth allowance.</small></div>
+            <div class="formula-line"><b>Lower-bound margin</b><code>predicted capability − minimum required</code><small>Use for reserve, range, reliability, throughput, or another quantity that must remain above a floor. Declare which side of the requirement is favorable before assigning a sign.</small></div>
+            <div class="formula-line"><b>Margin percentage</b><code>applicable absolute margin ÷ declared denominator × 100%</code><small>Name the denominator and whether the requirement is an upper or lower bound. Do not compare percentages that use different conventions, lifecycle states, or confidence levels.</small></div>
             <div class="formula-line"><b>Verification compliance</b><code>verified-pass requirements ÷ applicable baseline requirements</code><small>Count a pass only when configuration-matched evidence satisfies the acceptance criterion. A waiver, deviation, or accepted nonconformance is authorized relief—not proof of compliance.</small></div>
             <div class="formula-line"><b>Administrative disposition</b><code>pass + approved relief + failed/open + not run + not applicable = baseline</code><small>Report every category separately and link anomalies, risk acceptance, approval authority, and affected evidence. Never present administrative closure as verification success.</small></div>
             <div class="formula-line"><b>Change impact path</b><code>need → requirement → function → element → interface → budget → risk → evidence</code><small>Revisit both upstream rationale and downstream implementation whenever a controlled item changes.</small></div>
@@ -493,8 +504,8 @@ validate(<b>solves the mission</b>)</code></pre>
           <thead><tr><th scope="col">Level</th><th scope="col">Question</th><th scope="col">Drone example</th><th scope="col">How it is used</th></tr></thead>
           <tbody>
             <tr><th scope="row">Need</th><td>Why does the system exist?</td><td>Deliver a time-sensitive medical package safely.</td><td>Frames the outcome and stakeholder, without prescribing a design.</td></tr>
-            <tr><th scope="row">MOE</th><td>Does the mission create value?</td><td>At least 99% of eligible reference missions deliver within 25 minutes with accepted package condition.</td><td>Judged in the operational context; unsuccessful or excluded missions must not be hidden by averaging.</td></tr>
-            <tr><th scope="row">MOP</th><td>Which quantitative fielded-system measures enable it?</td><td>Payload capacity ≥ 2.0 kg; range ≥ 10 km; package temperature remains between 2 and 8 °C; command-link-loss contingency starts within 1.0 s; landing reserve ≥ 20% usable energy.</td><td>Each threshold is measured under the separately declared reference route, wind, ambient temperature, battery age, payload, and operating mode; those conditions are not themselves measures.</td></tr>
+            <tr><th scope="row">MOE</th><td>Does the mission create value?</td><td>At least 99% of eligible 10 km clinic-to-pad-to-clinic REF-MISSION-01 missions complete within 25 minutes; outbound delivery time and package condition are reported separately.</td><td>Judged in the operational context; unsuccessful or excluded missions must not be hidden by averaging.</td></tr>
+            <tr><th scope="row">MOP</th><td>Which quantitative fielded-system measures enable it?</td><td>Payload capacity ≥ 2.0 kg; range ≥ 10 km; package temperature remains between 2 and 8 °C; command-link-loss declaration occurs within 0.6 s and contingency-mode entry within 1.0 s after the last authenticated heartbeat; landing reserve ≥ 20% usable energy.</td><td>Each threshold is measured under the separately declared reference route, wind, ambient temperature, battery age, payload, and operating mode; those conditions are not themselves measures.</td></tr>
             <tr><th scope="row">TPM</th><td>Is the developing design converging?</td><td>Predicted mission energy and landing reserve, takeoff mass, navigation error, thermal margin, and sensor-to-actuator latency.</td><td>Trend requirement/budget, current estimate, margin, uncertainty, evidence date, and owner across reviews.</td></tr>
           </tbody>
         </table>
@@ -536,7 +547,7 @@ validate(<b>solves the mission</b>)</code></pre>
         <article class="workbench-card"><span>ORR / acceptance</span><h3>Can the system be operated?</h3><p>Close critical anomalies; prove procedures, training, support, spares, monitoring, recovery, cybersecurity, regulatory obligations, and the transfer of residual risk to an accountable owner.</p></article>
       </div>
 
-      <div class="reference-trail"><strong>Primary trail</strong><a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">NASA SE Handbook ↗</a><a href="https://www.nasa.gov/reference/4-2-technical-requirements-definition/">NASA MOE/MOP/TPM ↗</a><a href="https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/">NASA requirement quality ↗</a><a href="https://www.nasa.gov/reference/6-3-interface-management/">NASA interface management ↗</a><a href="https://www.nasa.gov/reference/6-5-configuration-management/">NASA configuration management ↗</a><a href="https://www.nasa.gov/reference/6-8-decision-analysis/">NASA decision analysis ↗</a><a href="https://www.nasa.gov/reference/2-4-distinctions-between-product-verification-and-product-validation/">NASA V&amp;V distinction ↗</a><a href="https://www.iso.org/standard/81702.html">ISO/IEC/IEEE 15288 ↗</a><a href="https://explorers.larc.nasa.gov/APSMEX26/SMEX/pdf_files/NASA02_NPR_7123_1D.pdf">NPR 7123.1D reviews ↗</a></div>
+      <div class="reference-trail"><strong>Primary trail</strong><a href="https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf">NASA SE Handbook ↗</a><a href="https://www.nasa.gov/reference/4-2-technical-requirements-definition/">NASA MOE/MOP/TPM ↗</a><a href="https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/">NASA requirement quality ↗</a><a href="https://www.nasa.gov/reference/6-3-interface-management/">NASA interface management ↗</a><a href="https://www.nasa.gov/reference/6-5-configuration-management/">NASA configuration management ↗</a><a href="https://www.nasa.gov/reference/6-8-decision-analysis/">NASA decision analysis ↗</a><a href="https://www.nasa.gov/reference/2-4-distinctions-between-product-verification-and-product-validation/">NASA V&amp;V distinction ↗</a><a href="https://www.iso.org/standard/81702.html">ISO/IEC/IEEE 15288 ↗</a><a href="https://nodis3.gsfc.nasa.gov/displayDir.cfm?Internal_ID=N_PR_7123_001D_">Current NPR 7123.1D in NODIS ↗</a></div>
     </section>
 
     <section class="section practice-arena se-practice" id="practice">
@@ -549,7 +560,7 @@ validate(<b>solves the mission</b>)</code></pre>
       <article class="scenario-brief se-case-brief">
         <div>
           <p class="eyebrow">Multidisciplinary case · 55 minutes</p>
-          <h3>Door-to-door medical delivery</h3>
+          <h3>Clinic-to-approved-site medical delivery</h3>
           <p>A healthcare network needs an autonomous electric drone to move small medical packages between a clinic and approved delivery sites. Design the whole system, including vehicle, software, operator, communications, support, and evidence—not only the flight controller.</p>
           <ul class="scenario-signals" aria-label="Case signals">
             <li>Safety critical</li><li>Energy limited</li><li>Intermittent link</li><li>Weather exposed</li><li>Human oversight</li>
@@ -559,7 +570,7 @@ validate(<b>solves the mission</b>)</code></pre>
       </article>
 
       <div class="se-case-assumptions">
-        <p><b>Illustrative baseline:</b> 2 kg protected payload, 10 km round trip, 25-minute mission, 1,000 missions/day across 10 sites, controlled delivery pads, supervised autonomy, and no dependence on the command link for immediate flight safety.</p>
+        <p><b>Illustrative baseline · REF-MISSION-01:</b> carry a 2 kg protected payload over a 10 km clinic-to-pad-to-clinic ground track, starting at launch authorization, releasing the package at the assigned approved pad, returning to the clinic, and entering the named landed safe state within 25 minutes. Assume 1,000 missions/day across 10 sites, controlled delivery pads, supervised autonomy, and no dependence on the command link for immediate flight safety. Measure outbound delivery time separately from full-mission completion time.</p>
         <p>In an interview, confirm or replace these assumptions before designing. Regulation, acceptable risk, operating airspace, population exposure, weather, and medical handling rules can change the architecture.</p>
       </div>
 
@@ -588,11 +599,14 @@ validate(<b>solves the mission</b>)</code></pre>
             <p><b>Your turn:</b> propose functional and quality requirements, each with an acceptance criterion.</p>
             <p><b>Coaching examples:</b></p>
             <ul>
-              <li>The system shall transport a 2 kg payload over a 10 km reference mission within 25 minutes under the defined wind and temperature envelope.</li>
-              <li>The containment subsystem shall keep the payload between its specified temperature limits for the complete mission plus a 30-minute recovery interval.</li>
-              <li>After command-link loss, the vehicle shall continue an independently safe contingency plan without requiring remote commands.</li>
-              <li>The system shall prevent release unless vehicle position, pad identity, and recipient authorization all satisfy policy.</li>
-              <li>The operator shall be able to command hold, reroute to an approved site, or safe termination within the defined authority and latency constraints.</li>
+              <li><b>SYS-MISSION-010:</b> with a 2.0 kg payload and under the declared environmental envelope, the system shall complete REF-MISSION-01 within 25 minutes.</li>
+              <li><b>SYS-PAYLOAD-011:</b> under the declared environmental and door-open profile, the calibrated payload-chamber reference temperature shall remain from 2.0 °C through 8.0 °C throughout REF-MISSION-01 and the following 30-minute recovery interval.</li>
+              <li><b>SYS-LINK-021:</b> in an airborne mode, after 0.5 s without an authenticated command heartbeat, the vehicle shall declare <code>COMMAND_LINK_LOST</code> within 0.1 s.</li>
+              <li><b>SYS-LINK-022:</b> upon declaration of <code>COMMAND_LINK_LOST</code>, the vehicle shall enter the preflight-selected <code>LINK_LOSS_CONTINGENCY</code> mode within 0.4 s.</li>
+              <li><b>SYS-LINK-023:</b> if the recorded vehicle state satisfies contingency-entry envelope <code>E-LL-01</code> when <code>COMMAND_LINK_LOST</code> is declared, the vehicle shall, without a remote command, remain inside the associated configuration-controlled contingency corridor and reach the preflight-assigned recovery-site approach gate within the maximum transit time specified for that entry-state bin in <code>RPT-LL-01</code>. Evaluate the entry condition once at declaration; later energy use cannot erase the obligation.</li>
+              <li><b>SYS-LAND-024:</b> after reaching that approach gate in <code>LINK_LOSS_CONTINGENCY</code>, the vehicle shall enter <code>LANDED_SAFE</code> without a remote command within 90 s, with touchdown position, vertical speed, attitude, and post-touchdown output state satisfying the separately configuration-controlled acceptance limits in <code>LAND-ACC-01</code>.</li>
+              <li><b>SYS-RELEASE-025:</b> the payload-release actuator enable shall remain deasserted unless the position, pad-identity, and recipient-authorization predicates all pass under the configuration-controlled release-policy version recorded for the mission.</li>
+              <li><b>Operator-control parent capability—derive before baselining:</b> keep operator tasks and authority in the ConOps, then write separate product-interface requirements for hold, reroute, and flight termination. Each child shall name authentication and authorization, applicable vehicle mode, acceptance/rejection feedback, command-to-response deadline, invalid-command behavior, and the hazard-analysis control that permits the action; do not verify the three commands as one requirement.</li>
               <li><b>Parent safety objective—derive, do not verify as one compound requirement:</b> no credible single failure in baselined Hazard Analysis HA-001 may cause uncontrolled descent within the approved operating envelope. Derive one atomic requirement per failure class and mode, naming the required outcome (controlled flight or one specific safe state), detection assumption, transition time, envelope, and verification method; trace each child back to HA-001.</li>
             </ul>
             <p>Define measurable availability, dispatch success, delivery success, containment, geofence, detect-and-avoid range, navigation accuracy, noise, turnaround, maintainability, cybersecurity, audit, RTO, and data retention targets. Mark every number as confirmed, assumed, derived, or allocated.</p>
@@ -622,7 +636,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <div>
             <p><b>Your turn:</b> identify five critical interfaces and sketch mass, energy, latency, and communication budgets.</p>
             <p><b>Coaching:</b> critical interfaces include battery–power distribution, flight computer–motor controllers, sensors–estimator, primary controller–safety monitor, vehicle–operator, vehicle–pad, container–vehicle, fleet service–airspace service, and maintainer–configuration system. Specify units, update rates, freshness, authority, timeout, degraded behavior, integrity, and versioning.</p>
-            <p><b>Illustrative energy budget:</b> expected use is 570 Wh = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload. Add 70 Wh contingency consumption and 80 Wh analysis/growth allowance, giving a full consumption allowance of 720 Wh. Define C<sub>u</sub> as deliverable energy from full charge to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile; the reserve denominator is C<sub>u</sub>, not beginning-of-life nameplate capacity. For a 20% acceptance lower bound and an illustrative 2-percentage-point combined BMS-estimator/test tolerance, design to an indicated 22% reserve: C<sub>u</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh. At that minimum, 203.1 Wh remains, or 22% of C<sub>u</sub>; subtracting the 2-point tolerance leaves the required 20% lower bound. Verify the configuration-controlled BMS remaining-energy estimate against calibrated voltage-and-current integration during the time-resolved mission profile. Select installed nameplate capacity so qualification evidence still provides at least 923.1 Wh usable at the declared age and temperature; do not apply the same ageing or temperature loss again as margin. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
+            <p data-calculation="drone-energy" data-cruise-wh="440" data-takeoff-landing-wh="90" data-avionics-payload-wh="40" data-contingency-wh="70" data-analysis-growth-wh="80" data-acceptance-reserve-fraction="0.2" data-one-sided-guard-band-fraction="0.02"><b>Illustrative energy budget for REF-MISSION-01:</b> expected use is 570 Wh = 440 Wh cruise + 90 Wh takeoff/landing + 40 Wh avionics/payload. Add 70 Wh contingency consumption and 80 Wh analysis/growth allowance, giving a full consumption allowance of 720 Wh. Define C<sub>u</sub> as deliverable energy from full charge to the operational cutoff at the baselined end-of-life state of health and minimum qualified battery temperature under the mission power profile; the reserve denominator is C<sub>u</sub>, not beginning-of-life nameplate capacity. For a 20% acceptance lower bound and an illustrative 2-percentage-point combined BMS-estimator/test tolerance used as a one-sided acceptance guard band justified by a combined uncertainty and maximum-permitted-error budget at the declared coverage probability, design to an indicated 22% reserve: C<sub>u</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh. At that minimum, 203.1 Wh remains, or 22% of C<sub>u</sub>; subtracting the 2-point tolerance leaves the required 20% lower bound. Verify the configuration-controlled BMS remaining-energy estimate against calibrated battery-terminal measurements over explicit limits: E<sub>discharged,ref</sub> [Wh] = ∫<sub>t₀</sub><sup>t_land</sup> V(t) × I<sub>discharge</sub>(t) dt ÷ 3600, then E<sub>remaining,ref</sub> = C<sub>u,ref</sub> − E<sub>discharged,ref</sub>. If charging or regeneration is possible, integrate signed net battery power instead and declare the sign convention. Establish C<sub>u,ref</sub> for the tested battery condition and include capacity characterization, sensor calibration, timing, integration, estimator, environmental, and repeatability contributions in the guard band. Select installed nameplate capacity so qualification evidence still provides at least 923.1 Wh usable at the declared age and temperature; do not apply the same ageing or temperature loss again as margin. Track maximum takeoff mass, center of gravity, peak motor power, thermal dissipation, control-loop deadline, sensor-to-actuator latency, link bandwidth, and maintenance time in the same owned way.</p>
           </div>
         </details>
 
@@ -694,7 +708,7 @@ validate(<b>solves the mission</b>)</code></pre>
         <article><span>SEBoK · Architecture</span><h3>Logical and Physical Architecture</h3><p>Explore how functions, behavior, system elements, allocation, viewpoints, and interfaces form a defensible architecture description.</p><a href="https://sebokwiki.org/wiki/System_Architecture_Design_Definition">Study system architecture design ↗</a></article>
         <article><span>Practice loop</span><h3>Create evidence, not flashcards alone</h3><p>For one case, redraw the context, ConOps, requirements tree, allocation, budget, risk path, V-model, and V&amp;V matrix from memory.</p><a href="#practice">Repeat the drone case ↑</a></article>
         <article><span>NASA · Evidence</span><h3>Handbook Appendices</h3><p>Requirement quality checks, verification and validation matrices, functional/timing/state analysis, V&amp;V plan content, interface document outlines, and technical peer-review guidance.</p><a href="https://www.nasa.gov/reference/system-engineering-handbook-appendix/">Open the official appendices ↗</a></article>
-        <article><span>NASA · Governance</span><h3>NPR 7123.1D</h3><p>NASA’s systems-engineering process requirements, lifecycle expectations, technical reviews, measurement, verification, and tailoring framework.</p><a href="https://explorers.larc.nasa.gov/APSMEX26/SMEX/pdf_files/NASA02_NPR_7123_1D.pdf">Read the directive ↗</a></article>
+        <article><span>NASA · Governance</span><h3>NPR 7123.1D</h3><p>NASA’s systems-engineering process requirements, lifecycle expectations, technical reviews, measurement, verification, and tailoring framework. NODIS is the controlled source for the current revision.</p><a href="https://nodis3.gsfc.nasa.gov/displayDir.cfm?Internal_ID=N_PR_7123_001D_">Read the current directive in NODIS ↗</a></article>
         <article><span>SEBoK · Decisions</span><h3>Decision Management</h3><p>Frame alternatives, criteria, uncertainty, stakeholder values, analysis methods, and a transparent decision record that can be revisited when evidence changes.</p><a href="https://sebokwiki.org/wiki/Decision_Management">Read the SEBoK article ↗</a></article>
         <article><span>SEBoK · Risk</span><h3>Risk Management</h3><p>Connect scenarios, likelihood, consequence, handling actions, monitoring, ownership, and residual risk across the lifecycle.</p><a href="https://sebokwiki.org/wiki/Risk_Management">Read the SEBoK article ↗</a></article>
       </div>

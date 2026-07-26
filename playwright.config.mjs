@@ -10,7 +10,6 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
   use: {
-    baseURL: "http://127.0.0.1:43129",
     trace: "retain-on-failure"
   },
   projects: [
