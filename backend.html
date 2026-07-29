@@ -22,10 +22,10 @@
   <title>Backend &amp; Distributed Systems — System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/backend.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726c"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726c">
-  <script src="app.js?v=20260726c" defer></script>
-  <script src="backend.js?v=20260726c" defer></script>
+  <script src="theme-init.js?v=20260729a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260729a">
+  <script src="app.js?v=20260729a" defer></script>
+  <script src="backend.js?v=20260729a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -57,7 +57,7 @@
           <a class="button secondary" href="https://buicongnguyen.github.io/Leetcode/">Return to DSA Atlas</a>
         </div>
         <ul class="hero-stats" aria-label="Page summary">
-          <li><strong>10</strong><span>visual maps</span></li>
+          <li><strong>11</strong><span>visual maps</span></li>
           <li><strong>6</strong><span>design phases</span></li>
           <li><strong>8</strong><span>core trade-offs</span></li>
         </ul>
@@ -83,12 +83,17 @@ measure_and_iterate()</code></pre>
     </section>
 
     <nav class="page-nav" aria-label="Backend topics">
+      <a href="#top">Overview</a>
       <a href="#request">Request path</a>
       <a href="#scale">Scaling</a>
       <a href="#decisions">Decision graph</a>
+      <a href="#data-decisions">Data stores</a>
+      <a href="#distributed-tradeoffs">Distributed trade-offs</a>
+      <a href="#fast-slow-paths">Fast + slow paths</a>
+      <a href="#reliability">Reliability</a>
       <a href="#interview">Interview loop</a>
       <a href="#thinking-flow">Reasoning</a>
-      <a href="#workbench">Deep dive</a>
+      <a href="#workbench">Quantitative workbench</a>
       <a href="#practice">Practice</a>
       <a href="#resources">Resources</a>
     </nav>
@@ -152,7 +157,7 @@ measure_and_iterate()</code></pre>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="data-decisions">
       <div class="section-heading">
         <p class="eyebrow">04 · Data decision matrix</p>
         <h2>Match the store to the access pattern</h2>
@@ -173,7 +178,7 @@ measure_and_iterate()</code></pre>
       </div>
     </section>
 
-    <section class="section cap-section">
+    <section class="section cap-section" id="distributed-tradeoffs">
       <div class="section-heading">
         <p class="eyebrow">05 · Distributed trade-offs</p>
         <h2>During a partition, choose the operation’s contract</h2>
@@ -195,7 +200,7 @@ measure_and_iterate()</code></pre>
       <p class="section-source">Formal basis: <a href="https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf">Gilbert and Lynch’s CAP review ↗</a>. Consistency models and session guarantees are a toolbox—not one total ordering of “strength.”</p>
     </section>
 
-    <section class="section">
+    <section class="section" id="fast-slow-paths">
       <div class="section-heading">
         <p class="eyebrow">06 · Fast paths and slow paths</p>
         <h2>Cache repeated work. Queue deferred work.</h2>
@@ -218,7 +223,7 @@ measure_and_iterate()</code></pre>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="reliability">
       <div class="section-heading">
         <p class="eyebrow">07 · Reliability stack</p>
         <h2>Assume every dependency will fail</h2>
@@ -232,6 +237,22 @@ measure_and_iterate()</code></pre>
         <article><span>Degrade</span><strong>Fallback · stale read · shed load</strong><small>Preserve the most important user path.</small></article>
         <article><span>Recover</span><strong>Replication · backup · failover</strong><small>Restore service and data.</small></article>
       </div>
+      <figure class="concept-map backend-reliability-loop" aria-labelledby="backend-loop-title" aria-describedby="backend-loop-caption">
+        <div class="concept-map-heading">
+          <span>Overload causal map</span>
+          <h3 id="backend-loop-title">Slow work can create more work</h3>
+          <p>Follow the feedback loop, then attach each defense to the edge it must interrupt. Pattern names matter less than the measured amplification they stop.</p>
+        </div>
+        <ol class="concept-flow backend-causal-cycle" aria-label="Positive feedback loop from slow work to retries">
+          <li><span>01 · trigger</span><strong>A dependency slows or admitted arrivals exceed capacity</strong><small>Offered work begins to exceed useful completion capacity.</small><b>Gate entry: admission control + rate limit + load shedding</b></li>
+          <li><span>02 · accumulation</span><strong>Queues and in-flight work grow</strong><small>Connections, threads, memory, locks, and downstream pools stay occupied longer.</small><b>Bound useless work: propagate deadlines + cooperative cancellation</b></li>
+          <li><span>03 · saturation</span><strong>Pools and queues fill</strong><small>Healthy requests now contend with slow or abandoned work for finite resources.</small><b>Isolate: bulkhead + bounded queue</b></li>
+          <li><span>04 · user impact</span><strong>Tail latency and timeouts rise</strong><small>Callers stop benefiting even when expired work continues in the background.</small><b>Stop failing calls: circuit breaker + fallback / stale result</b></li>
+          <li><span>05 · amplification</span><strong>Retries multiply offered load</strong><small>New attempts compete with originals and healthy traffic, further reducing useful capacity.</small><b>Stop re-entry: one retry owner + budget + backoff/jitter</b></li>
+        </ol>
+        <div class="backend-causal-return"><span aria-hidden="true">↺</span><strong>Positive feedback</strong><p>Retry attempts re-enter at step 01. Use telemetry to confirm which edge is active before adding a control.</p></div>
+        <figcaption id="backend-loop-caption">Retries help only when the operation is safe to repeat, the failure is plausibly transient, and the total retry budget is bounded. Otherwise they strengthen the outage loop.</figcaption>
+      </figure>
       <div class="slo-equation"><span>Reliability contract</span><strong>SLI</strong><i>measured behavior</i><b>→</b><strong>SLO</strong><i>target over a defined window</i><b>→</b><strong>Error budget</strong><i>1 − SLO target over that window</i></div>
     </section>
 

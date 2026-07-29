@@ -147,7 +147,7 @@
 .acim-lifecycle-flow strong { margin: .65rem 0 .35rem; font-size: .86rem; }
 .acim-lifecycle-flow p { margin: 0; color: var(--muted); font-size: .74rem; }
 
-.acim-feedback-rail { position: sticky; top: calc(var(--site-header-height) + var(--page-nav-stack-height)); padding: 1rem; border: 1px solid color-mix(in srgb, var(--green) 40%, var(--line)); border-radius: .8rem; background: var(--surface-2); }
+.acim-feedback-rail { position: sticky; top: calc(var(--site-header-height) + 1rem); padding: 1rem; border: 1px solid color-mix(in srgb, var(--green) 40%, var(--line)); border-radius: .8rem; background: var(--surface-2); }
 .acim-feedback-rail > span { color: var(--green); font: 800 .65rem ui-monospace, monospace; text-transform: uppercase; }
 .acim-feedback-rail h3 { margin: .55rem 0; font-size: 1.1rem; }
 .acim-feedback-rail p { color: var(--muted); font-size: .78rem; }

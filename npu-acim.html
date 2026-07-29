@@ -22,10 +22,10 @@
   <title>NPU + ACiM Software Stack · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/npu-acim.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726c"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726c">
-  <script src="app.js?v=20260726c" defer></script>
-  <link rel="stylesheet" href="npu-acim.css?v=20260726c">
+  <script src="theme-init.js?v=20260729a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260729a">
+  <script src="app.js?v=20260729a" defer></script>
+  <link rel="stylesheet" href="npu-acim.css?v=20260729a">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -78,14 +78,16 @@
     </section>
 
     <nav class="page-nav" aria-label="NPU and ACiM topics">
+      <a href="#top">Overview</a>
       <a href="#boundary">Boundary</a>
       <a href="#stack">Compiler stack</a>
       <a href="#decision">Placement</a>
       <a href="#mapping">Mapping</a>
+      <a href="#artifacts">Artifacts</a>
       <a href="#runtime">Runtime</a>
       <a href="#feedback">Calibration</a>
       <a href="#bottlenecks">Bottlenecks</a>
-      <a href="#compiler-workbench">Deep dive</a>
+      <a href="#compiler-workbench">Compiler/runtime workbench</a>
       <a href="#practice">Practice</a>
       <a href="#sources">Sources</a>
     </nav>
@@ -364,7 +366,37 @@
       </div>
 
       <div class="acim-callout"><b>Runtime invariant</b><span>A timeout, reset, model switch, or concurrent context must never expose unknown weights, aliased buffers, a partially published residency, or a stale ownership token to the next request.</span></div>
-      <p class="evidence-note"><b>Four-context residency protocol:</b> planned model state moves through <code>EMPTY → LOADING/PROGRAMMING → VERIFYING → READY → EVICTING</code>. Only one owner may hold the tile-set mutation lease. Dispatches atomically pin one immutable <code>{bundle_hash, weight_image_hash, profile_hash, health_generation, reset_generation, residency_generation}</code> tuple and increment its reference count. Planned mutation atomically claims the lease for that observed generation; under the lease it fences new pins, drains existing references and device work, and revalidates the generation plus zero-reference condition before changing weights. A fault path instead fences and invalidates immediately, contains/quiesces device access, resets if required, and retires references only after access is impossible. Affected records move to <code>UNKNOWN</code> when reset effects invalidate them or identity cannot be re-established; proven retained residency may survive an unaffected scoped reset. Readiness proof precedes atomic <code>READY</code> publication, so four contexts may share a generation safely but can never observe a half-loaded model.</p>
+      <figure class="concept-map acim-residency-machine" aria-labelledby="acim-residency-title" aria-describedby="acim-residency-caption">
+        <div class="concept-map-heading">
+          <span>Residency state machine</span>
+          <h3 id="acim-residency-title">Separate planned mutation from fault recovery</h3>
+          <p>The exclusive mutation lease protects planned state changes. A residency-affecting fault or an in-flight access fault fences and invalidates the affected request immediately; it does not wait forever for a hung owner.</p>
+        </div>
+        <ol class="concept-flow acim-residency-states" aria-label="Planned residency mutation cycle">
+          <li><span>01</span><strong>EMPTY</strong><small>No published weight identity.</small></li>
+          <li><span>02</span><strong>LOADING / PROGRAMMING</strong><small>Lease held; execute only the target-declared mutation operation.</small></li>
+          <li><span>03</span><strong>VERIFYING</strong><small>Prove image, state, self-test, or conductance as the manifest permits.</small></li>
+          <li><span>04</span><strong>READY</strong><small>Atomically publish one immutable identity tuple and residency generation.</small></li>
+          <li><span>05</span><strong>EVICTING</strong><small>Fence new pins, drain references and device work, revalidate, then retire to EMPTY.</small></li>
+        </ol>
+        <div class="acim-residency-cycle-return"><span aria-hidden="true">↺</span><strong>Planned mutation loop</strong><p>EVICTING → EMPTY → the next target-declared load or program transaction.</p></div>
+        <div class="acim-residency-ready-loop"><span>READY self-loop</span><strong>Context A · B · C · D</strong><p>Atomic pin + reference increment → submit against the exact generation → valid completion or proven quiescence → reference release.</p></div>
+        <section class="acim-residency-fault" aria-labelledby="acim-residency-fault-title">
+          <h4 id="acim-residency-fault-title">In-flight access fault path: invalidate first, recover only after proof</h4>
+          <p class="acim-residency-fault-scope"><b>Scope the failure before choosing this path:</b> a correctable per-request numeric or ECC event may invalidate only that request and leave proven residency intact. A load, program, or verify failure never reaches READY; publish UNKNOWN or enter the target-declared recovery path. The sequence below applies when a command timeout, DMA/IOMMU fault, or affecting reset leaves device access or residency uncertain.</p>
+          <ol class="concept-flow acim-residency-fault-steps">
+            <li><span>In-flight command / access fault</span><strong>Fence affected admission + invalidate request output</strong><small>Keep residency references and DMA resources alive.</small></li>
+            <li><span>Contain</span><strong>Quiesce possible device access</strong><small>Use the documented abort, containment, or scoped reset; retire references only after late access is impossible.</small></li>
+            <li><span>Evidence gate</span><strong>Can exact residency identity and readiness be re-established?</strong><small>Never infer retained weights from device technology or reset name.</small></li>
+          </ol>
+          <div class="acim-residency-outcomes">
+            <article><span>Identity + readiness proven</span><strong>Publish a valid READY record</strong><p>Bind the proven state to the correct bundle, weight, profile, health, reset, and residency generations before admitting work.</p></article>
+            <article><span>Identity not proven</span><strong>Publish UNKNOWN · dispatch forbidden</strong><p>Run the versioned target-declared reload or reconciliation path, quarantine/remap capacity, or use digital fallback.</p></article>
+          </div>
+        </section>
+        <figcaption id="acim-residency-caption">Planned mutation drains to zero references under the lease. An in-flight access fault fences and invalidates the affected request first, then uses containment and evidence to decide whether READY can be re-established or UNKNOWN recovery is required.</figcaption>
+      </figure>
+      <p class="evidence-note"><b>Four-context residency protocol:</b> planned model state moves through <code>EMPTY → LOADING/PROGRAMMING → VERIFYING → READY → EVICTING</code>. Only one owner may hold the tile-set mutation lease. Dispatches atomically pin one immutable <code>{bundle_hash, weight_image_hash, profile_hash, health_generation, reset_generation, residency_generation}</code> tuple and increment its reference count. Planned mutation atomically claims the lease for that observed generation; under the lease it fences new pins, drains existing references and device work, and revalidates the generation plus zero-reference condition before changing weights. An in-flight access or residency-affecting fault path instead fences affected admission, invalidates the affected request/output immediately, contains or quiesces device access, resets if required, and retires references only after access is impossible; a correctable request-local event may leave proven residency intact. Affected records move to <code>UNKNOWN</code> when reset effects invalidate them or identity cannot be re-established; proven retained residency may survive an unaffected scoped reset. Readiness proof precedes atomic <code>READY</code> publication, so four contexts may share a generation safely but can never observe a half-loaded model.</p>
 
       <div class="detail-table-wrap" role="region" aria-label="ACiM runtime ownership by layer" tabindex="0">
         <table class="detail-table">

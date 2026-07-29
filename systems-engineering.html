@@ -22,9 +22,9 @@
   <title>Systems Engineering · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726c"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726c">
-  <script src="app.js?v=20260726c" defer></script>
+  <script src="theme-init.js?v=20260729a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260729a">
+  <script src="app.js?v=20260729a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -56,7 +56,7 @@
           <a class="button secondary" href="#practice">Practice the drone case</a>
         </div>
         <ul class="hero-stats" aria-label="Page summary">
-          <li><strong>13</strong><span>connected views</span></li>
+          <li><strong>14</strong><span>connected views</span></li>
           <li><strong>7</strong><span>decision artifacts</span></li>
           <li><strong>1</strong><span>full interview case</span></li>
         </ul>
@@ -77,6 +77,7 @@ validate(<b>solves the mission</b>)</code></pre>
     </section>
 
     <nav class="page-nav se-page-nav" aria-label="Systems Engineering topics">
+      <a href="#top">Overview</a>
       <a href="#context">Context</a>
       <a href="#conops">ConOps</a>
       <a href="#process">Requirements</a>
@@ -515,6 +516,33 @@ validate(<b>solves the mission</b>)</code></pre>
           </tbody>
         </table>
       </div>
+
+      <figure class="concept-map se-evidence-plan-map" aria-labelledby="se-evidence-plan-title" aria-describedby="se-evidence-plan-caption">
+        <div class="concept-map-heading">
+          <span>Binary reliability evidence-plan selector</span>
+          <h3 id="se-evidence-plan-title">Choose the decision first; then choose the sample and model</h3>
+          <p>This overview is scoped to fixed-sample binary success/failure evidence. Declare the population, trial, success rule, operating envelope, configuration, and decision rule before observing outcomes; continuous, count, ordinal, and time-to-event outcomes require their own estimand and model.</p>
+        </div>
+        <div class="concept-root"><span>Decision 01</span><strong>What must the evidence support?</strong><small>The objective determines the estimand, planning criterion, and acceptable risk.</small></div>
+        <ul class="se-evidence-plan-choices" aria-label="Binary reliability evidence objectives">
+          <li><span>Path A · estimate</span><strong>What is the success probability?</strong><small>Choose confidence, interval method, planning value, coverage, and desired half-width.</small><b>Output: precision-based sample plan</b></li>
+          <li><span>Path B · conformance</span><strong>Can we demonstrate a minimum?</strong><small>Set R₀, a one-sided bound or acceptance number, allowable failures, and consumer and producer risks.</small><b>Output: acceptance / OC plan</b></li>
+          <li><span>Path C · compare</span><strong>Which candidate is better—or not worse?</strong><small>Set the effect or noninferiority margin, groups, pairing or randomization, multiplicity policy, and power.</small><b>Output: comparison / power plan</b></li>
+        </ul>
+        <div class="concept-down-arrow" aria-hidden="true">↓ validity gates before inference</div>
+        <div class="se-evidence-validity-gates" role="group" aria-label="Validity gates before statistical inference">
+          <article><span>Gate 02 · coverage</span><strong>Representative and configuration-matched?</strong><p><b>Yes:</b> preserve declared strata and eligibility. <b>No:</b> redesign coverage or narrow the claim; statistics cannot repair selection bias.</p></article>
+          <article><span>Gate 03 · model</span><strong>Independent enough with a common success probability inside each modeled stratum?</strong><p><b>Yes:</b> the predeclared Bernoulli/binomial plan may fit. <b>No:</b> use a cluster-aware, hierarchical, stratified, time/exposure, or other outcome-appropriate model and recalculate the plan.</p></article>
+        </div>
+        <ol class="concept-flow se-evidence-decision-cycle" aria-label="Controlled statistical evidence sequence">
+          <li><span>01</span><strong>Freeze</strong><small>Claim, eligibility, exclusions, stopping rule, method, and threshold.</small></li>
+          <li><span>02</span><strong>Observe</strong><small>Counts or exposure, strata, missing data, retries, anomalies, and configuration.</small></li>
+          <li><span>03</span><strong>Bound</strong><small>Point estimate plus uncertainty from the predeclared model.</small></li>
+          <li><span>04</span><strong>Decide</strong><small>Compare the bound, effect, or acceptance result with the rule.</small></li>
+          <li><span>05</span><strong>Audit coverage</strong><small>Report limits, anomalies, model checks, and ungeneralized conditions.</small></li>
+        </ol>
+        <figcaption id="se-evidence-plan-caption">For binary reliability evidence, the objective chooses what to estimate; coverage and probability assumptions determine what can be generalized and whether a binomial model is defensible.</figcaption>
+      </figure>
 
       <div class="reasoning-workbench" role="group" aria-labelledby="statistical-evidence-heading" data-calculation="statistical-evidence" data-alpha="0.05" data-target-success="0.99" data-planning-proportion="0.99" data-half-width="0.01" data-zero-failure-sample="299">
         <article class="workbench-main">

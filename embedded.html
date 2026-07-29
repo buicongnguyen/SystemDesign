@@ -22,10 +22,10 @@
   <title>Embedded &amp; Cyber-Physical Systems · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/embedded.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726c"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726c">
-  <script src="app.js?v=20260726c" defer></script>
-  <link rel="stylesheet" href="embedded.css?v=20260726c">
+  <script src="theme-init.js?v=20260729a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260729a">
+  <script src="app.js?v=20260729a" defer></script>
+  <link rel="stylesheet" href="embedded.css?v=20260729a">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -78,11 +78,13 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
     </section>
 
     <nav class="page-nav" aria-label="Embedded topics">
+      <a href="#top">Overview</a>
       <a href="#loop">Control loop</a>
       <a href="#partition">Partitioning</a>
       <a href="#scheduling">Scheduling</a>
       <a href="#interrupts">Interrupts</a>
       <a href="#modes">Power modes</a>
+      <a href="#protocols">Protocols</a>
       <a href="#safety">Safety</a>
       <a href="#verification">Verification</a>
       <a href="#timing-workbench">Timing</a>
@@ -170,7 +172,44 @@ verify(<b>model → software → processor → plant</b>)</code></pre>
           <article><span>Soft background work</span><strong>Best effort below the critical lane</strong><p>Run logging, uploads, UI, and maintenance at bounded lower priority or under a server/budget.</p><small>Watch: background backpressure + memory growth</small></article>
         </div>
       </div>
-      <div class="em-timing-equation"><b>For each critical task</b><span>response</span><i>=</i><span>execution + blocking + interference(response)</span><i>≤</i><span>deadline</span></div>
+      <figure class="concept-map em-schedule-tree" aria-labelledby="em-schedule-tree-title" aria-describedby="em-schedule-tree-caption">
+        <div class="concept-map-heading">
+          <span>Scheduling decision tree</span>
+          <h3 id="em-schedule-tree-title">Move from workload facts to an analyzable policy</h3>
+          <p>Classify each activity or lane independently; one product may combine a fixed-priority critical lane with budgeted background work.</p>
+        </div>
+        <div class="concept-root em-schedule-tree-root"><span>Gate 01 · characterize first</span><strong>Are release behavior, WCET, deadline, blocking, and relevant overhead bounded?</strong><small><b>No:</b> measure and bound them before selecting a policy. <b>Yes:</b> continue through the gates.</small></div>
+        <div class="em-schedule-policy-question"><span>Gate 02 · static-table fit</span><strong>Can a small, fixed periodic set fit a maintainable worst-case repeating table?</strong><small>Every frame, job, and transition must fit under the declared timing model.</small></div>
+        <div class="em-schedule-paths">
+          <article class="em-schedule-cyclic">
+            <span>Yes · candidate</span>
+            <strong>Cyclic executive</strong>
+            <p>Inspect every slot and transition; recheck the table after each timing or task change.</p>
+            <small>Best fit: few known activities with stable periods and dependencies.</small>
+          </article>
+          <section class="em-schedule-priority" aria-labelledby="em-schedule-priority-title">
+            <span>No · Gate 03</span>
+            <h4 id="em-schedule-priority-title">Which priority semantics can you state and analyze?</h4>
+            <div class="em-schedule-priority-choices">
+              <article><span>Static task-level priority</span><strong>Fixed priority + response-time analysis</strong><p>Use a justified priority assignment; include blocking, ISR interference, release jitter, and scheduler overhead.</p></article>
+              <article><span>Per-job absolute deadline</span><strong>EDF + demand analysis</strong><p>Use when the task model, implementation, and assurance case support dynamic priority; include blocking, overhead, and overload behavior.</p></article>
+            </div>
+            <p class="em-schedule-priority-note">If neither model fits, repartition the work or select another analyzable scheduler and proof method; do not silently demote hard-deadline work to best effort.</p>
+          </section>
+        </div>
+        <div class="em-schedule-background"><span>Independent soft lane</span><strong>Budgeted best effort</strong><p>Place logging, UI, upload, and maintenance below the critical lane or inside a server/budget so their processor demand is bounded; prove shared-resource interference separately below.</p></div>
+        <div class="em-schedule-proof">
+          <span>Proof follows the selected policy</span>
+          <ul aria-label="Scheduling proof obligations">
+            <li><b>Cyclic executive</b><small>Show every job fits its frame/table, precedence and transition constraints, including overhead and exceptional modes.</small></li>
+            <li><b>Fixed priority</b><small>Use an applicable response-time recurrence with blocking, release jitter in the interference model, ISR/scheduler cost, and R<sub>i</sub> ≤ D<sub>i</sub>.</small></li>
+            <li><b>EDF</b><small>Show demand plus blocking and implementation overhead does not exceed available processor supply over every required interval; define overload behavior.</small></li>
+          </ul>
+          <small>A CPU budget bounds processor demand only. Also bound interference through locks, memory, buses, DMA/I/O, interrupts, and power or thermal throttling.</small>
+        </div>
+        <figcaption id="em-schedule-tree-caption">The tree selects a candidate policy, not a schedulability result. Accept it only after analysis under the stated task model and measured implementation costs.</figcaption>
+      </figure>
+      <div class="em-timing-equation"><b>Fixed-priority response-time anchor</b><span>response</span><i>=</i><span>execution + blocking + applicable interference(response, release jitter)</span><i>≤</i><span>deadline</span></div>
       <div class="em-note"><b>Practical anchor:</b> FreeRTOS documents fixed-priority preemptive scheduling as its default policy, with time slicing among equal priorities. A policy name is only the start; the application still needs measured execution times and schedulability analysis.</div>
     </section>
 

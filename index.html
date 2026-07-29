@@ -22,16 +22,16 @@
   <title>System Design Atlas — Choose Your Track</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726c"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726c">
-  <script src="app.js?v=20260726c" defer></script>
+  <script src="theme-init.js?v=20260729a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260729a">
+  <script src="app.js?v=20260729a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <a class="brand" href="index.html#top" aria-label="System Design Atlas home"><span class="brand-mark" aria-hidden="true">SD</span><span>System Design <b>Atlas</b></span></a>
     <nav aria-label="Primary navigation">
-      <a href="#tracks">Choose track</a><a href="#shared-core">Shared core</a><a href="#selector">Decision map</a><a href="#cross-track-case">Mission case</a><a href="#practice">Practice</a><a href="https://buicongnguyen.github.io/Leetcode/">DSA Atlas ↗</a>
+      <a href="#top">Overview</a><a href="#tracks">Choose track</a><a href="#shared-core">Shared core</a><a href="#selector">Decision map</a><a href="#cross-track-case">Mission case</a><a href="#practice">Practice</a><a href="https://buicongnguyen.github.io/Leetcode/">DSA Atlas ↗</a>
     </nav>
     <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
   </header>
@@ -97,7 +97,32 @@ state_requirements_and_tradeoffs()</code></pre>
         <li><span>12</span><strong>Operate, evolve &amp; retire</strong><p>Observe outcomes, recover, improve safely and close the lifecycle responsibly.</p></li>
       </ol>
       <div class="atlas-formula"><b>Reasoning sentence</b><span>Because requirement <i>R</i> and estimate <i>E</i> expose constraint <i>C</i>, choose architecture <i>A</i>, accepting trade-off <i>T</i>, verified by measure <i>M</i>.</span></div>
-      <p class="evidence-note"><b>Continuous controls—not late phases:</b> risk and safety, security and privacy, configuration and interface control, evidence and traceability, cost and operability run through all 12 steps. Reassess them whenever an assumption, requirement, design, supplier, implementation, test result, release or operating condition changes.</p>
+      <figure class="concept-map atlas-lifecycle-rails" aria-labelledby="shared-rails-title" aria-describedby="shared-rails-caption">
+        <div class="concept-map-heading">
+          <span>Lifecycle memory map</span>
+          <h3 id="shared-rails-title">Six lifecycle groups; five continuous concerns</h3>
+          <p>The upper path advances the evidence. The lower rails remain active through every group and are reassessed whenever the baseline or operating context changes.</p>
+        </div>
+        <ol class="concept-flow atlas-lifecycle-groups" aria-label="Six grouped lifecycle stages" data-lifecycle-groups="6">
+          <li><span>01–02</span><strong>Define</strong><small>Need → measurable requirements</small></li>
+          <li><span>03–04</span><strong>Analyze</strong><small>Estimate constraints → decompose functions</small></li>
+          <li><span>05–06</span><strong>Architect</strong><small>Allocate functions → trade alternatives</small></li>
+          <li><span>07–08</span><strong>Realize</strong><small>Build, buy, or configure → integrate</small></li>
+          <li><span>09–10</span><strong>Prove</strong><small>Verify requirements → validate the need</small></li>
+          <li><span>11–12</span><strong>Sustain</strong><small>Transition → operate, evolve, and retire</small></li>
+        </ol>
+        <div class="atlas-continuous-rail" role="group" aria-labelledby="continuous-rail-title">
+          <strong id="continuous-rail-title">Continuous concerns across every group · reassess after every change</strong>
+          <ul class="atlas-continuous-concerns" data-continuous-concerns="5">
+            <li><b>Risk + safety</b><span>hazards · controls · residual risk</span></li>
+            <li><b>Security + privacy</b><span>threats · trust · data obligations</span></li>
+            <li><b>Configuration + interfaces</b><span>identity · compatibility · ownership</span></li>
+            <li><b>Evidence + traceability</b><span>rationale · versions · proof</span></li>
+            <li><b>Cost + operability</b><span>capacity · support · recovery</span></li>
+          </ul>
+        </div>
+        <figcaption id="shared-rails-caption">Read left to right as the dominant evidence flow, not a one-pass waterfall: a failed test, changed assumption, supplier change, incident, or new operating condition can send the design back to an earlier decision.</figcaption>
+      </figure>
       <nav class="reference-trail" aria-label="Primary lifecycle guidance">
         <strong>Lifecycle anchors</strong>
         <a href="https://www.nasa.gov/reference/2-0-fundamentals-of-systems-engineering/">NASA SE fundamentals: design through retirement ↗</a>

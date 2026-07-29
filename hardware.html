@@ -22,10 +22,10 @@
   <title>Hardware &amp; Computer Systems · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/hardware.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260726c"></script>
-  <link rel="stylesheet" href="styles.css?v=20260726c">
-  <script src="app.js?v=20260726c" defer></script>
-  <link rel="stylesheet" href="hardware.css?v=20260726c">
+  <script src="theme-init.js?v=20260729a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260729a">
+  <script src="app.js?v=20260729a" defer></script>
+  <link rel="stylesheet" href="hardware.css?v=20260729a">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -80,11 +80,14 @@ while not all_satisfied(<b>measurements, limits</b>):
     </section>
 
     <nav class="page-nav" aria-label="Hardware topics">
+      <a href="#top">Overview</a>
       <a href="#thinking">Reasoning flow</a>
       <a href="#metrics">Metrics</a>
       <a href="#constraints">Constraints</a>
       <a href="#memory">Memory</a>
       <a href="#compute">Compute</a>
+      <a href="#fabric">Fabric + I/O</a>
+      <a href="#physical">Physical limits</a>
       <a href="#bottlenecks">Bottlenecks</a>
       <a href="#sizing-workbench">Sizing</a>
       <a href="#lifecycle">Lifecycle</a>
@@ -209,12 +212,58 @@ while not all_satisfied(<b>measurements, limits</b>):
         <h2>Match programmability to regularity</h2>
         <p>The best engine is the least specialized one that still meets the whole-system target.</p>
       </div>
-      <div class="hw-choice-grid">
-        <article><span>CPU</span><h3>Irregular + latency-sensitive</h3><p>Control-heavy code, branches, operating systems, orchestration, sparse pointer-rich work, and frequently changing algorithms.</p><small>Cost: lower throughput per watt</small></article>
-        <article><span>GPU / programmable NPU</span><h3>Massively parallel kernels</h3><p>Regular tensor, graphics, signal, and vector workloads with enough work to amortize launch and transfer overhead.</p><small>Cost: utilization + memory orchestration</small></article>
-        <article><span>FPGA</span><h3>Custom streaming pipeline</h3><p>Cycle-controlled, analyzable I/O paths, evolving protocols, bit-level operations, and modest volume where reconfiguration matters—provided timing, arbitration, and external interfaces are bounded and verified.</p><small>Cost: development complexity</small></article>
-        <article><span>ASIC / fixed function</span><h3>Stable, high-volume hotspot</h3><p>Maximum efficiency when the workload and market justify non-recurring engineering, validation, and long lead time.</p><small>Cost: inflexibility + NRE</small></article>
-      </div>
+      <figure class="concept-map hw-engine-selector" aria-labelledby="hw-engine-selector-title" aria-describedby="hw-engine-selector-caption">
+        <div class="concept-map-heading">
+          <span>Compute-engine selection tree</span>
+          <h3 id="hw-engine-selector-title">Use the least specialized engine that closes the whole path</h3>
+          <p>This chooses the primary engine for a measured hotspot—not one engine for the whole computer.</p>
+        </div>
+        <div class="concept-root hw-engine-root"><span>Gate 01 · general-purpose first</span><strong>Can a CPU meet latency, throughput, energy, and cost targets with margin?</strong><small>Include I/O, operating-system work, memory traffic, contention, and tail or worst-case behavior under representative load.</small></div>
+        <div class="hw-engine-root-branches">
+          <article class="hw-engine-leaf">
+            <span>Yes · stop specializing</span>
+            <strong>CPU</strong>
+            <p>Keep irregular, branch-heavy, latency-sensitive control/orchestration, sparse, and frequently changing work on the CPU when it cannot amortize or justify an offload boundary.</p>
+            <small>Trade-off: lower throughput per watt on regular parallel kernels.</small>
+          </article>
+          <section class="hw-engine-accelerate" aria-labelledby="hw-engine-hotspot-title">
+            <span>No · isolate the measured hotspot</span>
+            <h4 id="hw-engine-hotspot-title">What structure does the hot path expose?</h4>
+            <div class="hw-engine-structure-options">
+              <article>
+                <span>Regular + data parallel</span>
+                <strong>GPU / programmable NPU candidate</strong>
+                <p>Use enough reuse and concurrency to amortize launch, synchronization, conversion, and movement.</p>
+                <div class="hw-engine-refinement"><b>NPU legality gate</b><small>Require supported operations, shapes, layouts, numeric formats, memory capacity, compiler mapping, and an explicit fallback boundary; otherwise keep the region on GPU or CPU.</small></div>
+              </article>
+              <article>
+                <span>Cycle-controlled stream + custom I/O</span>
+                <strong>FPGA</strong>
+                <p>Use reconfigurable logic when evolving protocols, deterministic pipelines, bit-level operations, or bounded I/O timing justify its timing-closure and verification cost.</p>
+              </article>
+              <article>
+                <span>No clean accelerator-shaped region</span>
+                <strong>Heterogeneous / repartition</strong>
+                <p>Keep control on the CPU, accelerate only isolated measured regions, or revise the algorithm, concurrency, and data ownership before specializing.</p>
+              </article>
+            </div>
+            <div class="hw-engine-specialization"><b>Specialize only after any candidate path is proven</b><span>Stable workload and interfaces + sufficient volume + lifetime energy, area, and unit-cost savings justify NRE and validation?</span><small><i>Yes →</i> consider ASIC / fixed function for the proven tensor, streaming, protocol, or control hotspot. <i>No →</i> retain the programmable CPU, GPU/NPU, or FPGA path.</small></div>
+          </section>
+        </div>
+        <div class="hw-engine-whole-path">
+          <span>Every leaf converges here</span>
+          <strong>Does the candidate win end to end?</strong>
+          <ul aria-label="Whole-path compute-engine checks">
+            <li><b>Move</b><small>bytes · locality · transfers</small></li>
+            <li><b>Wait</b><small>queues · launch · sync · conversion</small></li>
+            <li><b>Use</b><small>utilization · tails · worst case</small></li>
+            <li><b>Fit</b><small>power · thermal · area · cost</small></li>
+            <li><b>Own</b><small>software · debug · update · fallback</small></li>
+          </ul>
+          <p><b>No:</b> revisit the partition, dataflow, or engine. <b>Yes:</b> prototype the complete path and verify measured margin.</p>
+        </div>
+        <figcaption id="hw-engine-selector-caption">The workload and whole-path prototype decide—not the engine label. Most useful platforms combine engines and make their boundaries explicit.</figcaption>
+      </figure>
       <div class="hw-dataflow-grid">
         <article><strong>Weight stationary</strong><p>Keep weights local and stream activations. Useful when weights are heavily reused across batches or spatial positions.</p><small>Watch: activation traffic + accumulation</small></article>
         <article><strong>Output stationary</strong><p>Keep partial sums local until complete. Useful when reductions dominate and accumulator movement is expensive.</p><small>Watch: accumulator capacity + precision</small></article>

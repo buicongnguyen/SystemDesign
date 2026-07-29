@@ -261,12 +261,12 @@ for (const [file, html] of entries) {
 }
 
 const pageChecks = {
-  "index.html": ["tracks", "shared-core", "selector", "cross-track-case", "practice", "track-grid", "atlas-loop", "offline-first autonomous inspection drone", "Cross-track artifact handoff graph", "Continuous controls—not late phases"],
-  "backend.html": ["request", "scale", "decisions", "thinking-flow", "workbench", "practice", "bottleneck-catalog", "pattern-handbook", "Make correctness local", "failure contract", "Get buy-in on the deep dive", "production-readiness + feedback + retirement plan"],
-  "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof", "statistical evidence", "Clopper–Pearson", "299 successes / 299 trials", "accepted operational baseline", "retirement closure"],
-  "hardware.html": ["thinking", "metrics", "constraints", "memory", "compute", "fabric", "physical", "bottlenecks", "sizing-workbench", "lifecycle", "practice", "Edge AI", "recovery contract", "Ordered first-article hardware bring-up ladder", "qualified operating envelope", "stakeholder-use evidence", "accepted release baseline"],
-  "embedded.html": ["practice", "sensor", "real-time", "timing-workbench", "Hardware-in-the-loop", "task model", "transition and recovery", "control-case", "500 Hz", "screening calculation, not a stability proof", "implementation and integration sequence", "verified decommission"],
-  "npu-acim.html": ["boundary", "stack", "decision", "mapping", "artifacts", "runtime", "feedback", "bottlenecks", "compiler-workbench", "practice", "Analog Compute-in-Memory", "Technology scope", "storage type, volatility/retention", "analog signal domain", "Four IR", "health generation", "End-to-end lifecycle", "Fleet release + retirement"]
+  "index.html": ["tracks", "shared-core", "selector", "cross-track-case", "practice", "track-grid", "atlas-loop", "offline-first autonomous inspection drone", "Cross-track artifact handoff graph", "atlas-lifecycle-rails", "Continuous concerns across every group", "data-continuous-concerns=\"5\""],
+  "backend.html": ["request", "scale", "decisions", "thinking-flow", "workbench", "practice", "bottleneck-catalog", "pattern-handbook", "Make correctness local", "failure contract", "Get buy-in on the deep dive", "production-readiness + feedback + retirement plan", "11</strong><span>visual maps", "backend-reliability-loop", "Retries multiply offered load", "one retry owner", "admission control + rate limit + load shedding"],
+  "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof", "statistical evidence", "Clopper–Pearson", "299 successes / 299 trials", "accepted operational baseline", "retirement closure", "14</strong><span>connected views", "se-evidence-plan-map", "fixed-sample binary", "Path A · estimate", "Path B · conformance", "Path C · compare"],
+  "hardware.html": ["thinking", "metrics", "constraints", "memory", "compute", "fabric", "physical", "bottlenecks", "sizing-workbench", "lifecycle", "practice", "Edge AI", "recovery contract", "Ordered first-article hardware bring-up ladder", "qualified operating envelope", "stakeholder-use evidence", "accepted release baseline", "hw-engine-selector", "NPU legality gate", "Specialize only after any candidate path is proven", "Does the candidate win end to end?", "Heterogeneous / repartition"],
+  "embedded.html": ["practice", "sensor", "real-time", "timing-workbench", "Hardware-in-the-loop", "task model", "transition and recovery", "control-case", "500 Hz", "screening calculation, not a stability proof", "implementation and integration sequence", "verified decommission", "em-schedule-tree", "Proof follows the selected policy", "Static task-level priority", "Per-job absolute deadline"],
+  "npu-acim.html": ["boundary", "stack", "decision", "mapping", "artifacts", "runtime", "feedback", "bottlenecks", "compiler-workbench", "practice", "Analog Compute-in-Memory", "Technology scope", "storage type, volatility/retention", "analog signal domain", "Four IR", "health generation", "End-to-end lifecycle", "Fleet release + retirement", "acim-residency-machine", "dispatch forbidden", "correctable per-request", "load, program, or verify failure", "Separate planned mutation from fault recovery"]
 };
 for (const [file, checks] of Object.entries(pageChecks)) {
   for (const check of checks) {
@@ -417,7 +417,7 @@ for (const [file, claims] of Object.entries(forbiddenClaims)) {
   }
 }
 
-for (const selector of [":root", ".site-header", ".hero", ".section", ":focus-visible", "@media", "prefers-reduced-motion", ".track-grid", ".se-context-map", ".detail-table", ".compact-flow", ".reference-trail"]) {
+for (const selector of [":root", ".site-header", ".hero", ".section", ":focus-visible", "@media", "prefers-reduced-motion", ".track-grid", ".se-context-map", ".detail-table", ".compact-flow", ".reference-trail", ".concept-map", ".book-sidebar", ".book-nav-toggle", ".book-chapter-link", ".book-section-link", ".book-chapter-pagination"]) {
   if (!css.includes(selector)) throw new Error(`styles.css: missing shared responsive selector ${selector}`);
 }
 if (!js.includes("theme-toggle") || !js.includes("dsa-theme")) throw new Error("app.js: theme persistence is missing");
@@ -478,7 +478,7 @@ const readmeReferenceAuditDate = readme.match(/Reference availability was review
 if (!pageReferenceAuditDate || pageReferenceAuditDate !== readmeReferenceAuditDate) {
   throw new Error("Reference-audit provenance date must match in index.html and README.md");
 }
-if (!documents["systems-engineering.html"].includes("13</strong><span>connected views")) {
+if (!documents["systems-engineering.html"].includes("14</strong><span>connected views")) {
   throw new Error("systems-engineering.html: connected-view count is stale");
 }
 
@@ -506,11 +506,48 @@ for (const [background, label] of [[lightBackground, "background"], [lightSurfac
 if (!css.includes("color: var(--on-accent)") || !css.includes('nav a[aria-current="page"]')) {
   throw new Error("styles.css: shared accent foreground or current-page navigation styling is missing");
 }
-if (!css.includes("--site-header-height") || !css.includes("--page-nav-stack-height") || !css.includes("top: var(--site-header-height)") || !js.includes("ResizeObserver") || !js.includes('window.addEventListener("resize", scheduleLayoutSync')) {
-  throw new Error("Shared navigation: sticky offset or resize-aware current-track reveal is incomplete");
+for (const token of [
+  "BOOK_CHAPTER_GROUPS",
+  "Chapter ${chapter.number}",
+  "system-design-atlas-reading-place-v1",
+  "system-design-atlas-resume-intent-v1",
+  "initializeBookNavigation",
+  "syncBookReadingLocation",
+  "currentSectionFromScroll",
+  "positionBookReadingProgress",
+  "sectionProgress",
+  "aria-modal",
+  "atlas:book-drawer-opening",
+  "book-current-bookmark",
+  "book-save-status",
+  "book-navigation-ready",
+  "book-nav-open",
+  "aria-current",
+  "bookDesktopMedia",
+  "setBookBackgroundInert",
+  "book-chapter-pagination"
+]) {
+  if (!js.includes(token)) throw new Error(`app.js: book-reader contract is missing ${token}`);
 }
-if (!npuAcimCss.includes("top: calc(var(--site-header-height) + var(--page-nav-stack-height))")) {
-  throw new Error("npu-acim.css: sticky feedback rail must clear both navigation layers");
+for (const token of [
+  'href: "index.html"',
+  'href: "backend.html"',
+  'href: "systems-engineering.html"',
+  'href: "hardware.html"',
+  'href: "embedded.html"',
+  'href: "npu-acim.html"',
+  '["fabric", "06 · Interconnect and I/O"]',
+  '["physical", "07 · Power, thermal, and reliability"]',
+  '["protocols", "06 · Protocol selection"]',
+  '["artifacts", "05 · Versioned artifacts"]'
+]) {
+  if (!js.includes(token)) throw new Error(`app.js: book outline is incomplete (${token})`);
+}
+if (!css.includes("--site-header-height") || !css.includes("--book-rail-width") || !css.includes("@media (min-width: 76.25em)") || !css.includes(".book-current-bookmark") || !css.includes(".book-contents") || !css.includes("container: book-pane / inline-size") || !css.includes("@container book-pane") || !css.includes("top: var(--site-header-height)") || !js.includes("ResizeObserver") || !js.includes('window.addEventListener("resize", scheduleLayoutSync')) {
+  throw new Error("Shared book navigation: rail geometry or resize-aware sticky offset is incomplete");
+}
+if (!npuAcimCss.includes("top: calc(var(--site-header-height) + 1rem)")) {
+  throw new Error("npu-acim.css: sticky feedback rail must clear the book header");
 }
 if (!hardwareCss.includes("left: 48%") || !hardwareCss.includes("linear-gradient(to bottom right")) {
   throw new Error("hardware.css: Roofline segments must share a continuous knee");
@@ -555,7 +592,7 @@ for (const token of ["httpsRequest", "agent: false", "createPinnedLookup", "asse
 for (const token of ["reject HTTPS downgrade", "newly resolved private destination", "redirect count is bounded", "one deadline covers", "freshly resolved", "refuses another hostname", "special IPv6 routes", "path containment rejects", "path guards reject symbolic links", "source provenance requires the authoritative host"]) {
   if (!logicTestSource.includes(token)) throw new Error(`tests/logic.spec.mjs: behavioral security regression is missing ${token}`);
 }
-for (const token of ["port: 0", "reducedMotion", "[390, 320, 760, 761, 900, 901]", "target.height >= 24", "linkRect.left >= navRect.left", "centerError", 'behavior: "instant"', "Math.abs(topics.getBoundingClientRect().top - header.getBoundingClientRect().bottom) <= 1", "lifecycle phase contracts remain complete and ordered", "track-specific interview timer", "lifecycle diagrams keep mobile arrows and controls clear", "scrollWidth - item.clientWidth <= 1", "sticky feedback rail clears both navigation layers", "bandwidth.right - ceiling.left", "shared interview mode times", "dense diagrams expand", "wide tables expose directional edge cues", "data-horizontal-scroll", "social-atlas.png", "/package.json", 'Host: \"untrusted.example\"']) {
+for (const token of ["port: 0", "reducedMotion", "[390, 320, 760, 761, 900, 901]", 'behavior: "instant"', "book outline exposes every chapter and current-page section", "desktop book rail stays beside the reading pane", "selected chapter reads as a bookmark rather than a section marker", "mobile book drawer traps focus and restores the Contents trigger", "mobile contents selection closes the drawer and updates the reading location", "book breakpoint preserves the reader's within-section position", "dense track diagrams reflow for the rail-reduced reading pane", "scrollspy follows the current section without rewriting the URL", "saved reading place resumes across chapters", "saved reading place stays inside its section after responsive reflow", "lifecycle phase contracts remain complete and ordered", "track-specific interview timer", "lifecycle diagrams keep mobile arrows and controls clear", "scrollWidth - item.clientWidth <= 1", "sticky feedback rail clears the book header", "bandwidth.right - ceiling.left", "shared interview mode times", "dense diagrams expand", "wide tables expose directional edge cues", "data-horizontal-scroll", "social-atlas.png", "/package.json", 'Host: \"untrusted.example\"']) {
   if (!browserTestSource.includes(token)) throw new Error(`tests/site.spec.mjs: responsive or preview-boundary regression is missing ${token}`);
 }
 
