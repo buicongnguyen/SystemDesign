@@ -109,13 +109,14 @@ const BOOK_CHAPTER_GROUPS = [
           ["allocation", "04 · Logical-to-physical allocation"],
           ["interfaces", "05 · Interface contracts"],
           ["budgets", "06 · Technical budgets"],
-          ["trades", "07 · Trade studies"],
-          ["risk", "08 · Risk, FMEA, and fault trees"],
-          ["integration", "09 · Integration and V-model"],
-          ["verification", "10 · Verification and validation"],
-          ["evidence-package", "11 · Evidence package"],
-          ["practice", "12 · Interview practice"],
-          ["resources", "13 · Foundations"]
+          ["optimization", "07 · Optimization and architecture search"],
+          ["trades", "08 · Trade studies"],
+          ["risk", "09 · Risk, FMEA, and fault trees"],
+          ["integration", "10 · Integration and V-model"],
+          ["verification", "11 · Verification and validation"],
+          ["evidence-package", "12 · Evidence package"],
+          ["practice", "13 · Interview practice"],
+          ["resources", "14 · Foundations"]
         ]
       }
     ]

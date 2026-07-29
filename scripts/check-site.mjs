@@ -263,7 +263,7 @@ for (const [file, html] of entries) {
 const pageChecks = {
   "index.html": ["tracks", "shared-core", "selector", "cross-track-case", "practice", "track-grid", "atlas-loop", "offline-first autonomous inspection drone", "Cross-track artifact handoff graph", "atlas-lifecycle-rails", "Continuous concerns across every group", "data-continuous-concerns=\"5\""],
   "backend.html": ["request", "scale", "decisions", "thinking-flow", "workbench", "practice", "bottleneck-catalog", "pattern-handbook", "Make correctness local", "failure contract", "Get buy-in on the deep dive", "production-readiness + feedback + retirement plan", "11</strong><span>visual maps", "backend-reliability-loop", "Retries multiply offered load", "one retry owner", "admission control + rate limit + load shedding"],
-  "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof", "statistical evidence", "Clopper–Pearson", "299 successes / 299 trials", "accepted operational baseline", "retirement closure", "14</strong><span>connected views", "se-evidence-plan-map", "fixed-sample binary", "Path A · estimate", "Path B · conformance", "Path C · compare"],
+  "systems-engineering.html": ["context", "conops", "process", "allocation", "interfaces", "budgets", "optimization", "trades", "risk", "integration", "verification", "evidence-package", "practice", "Autonomous delivery drone", "MOE", "configuration-specific proof", "statistical evidence", "Clopper–Pearson", "299 successes / 299 trials", "accepted operational baseline", "retirement closure", "15</strong><span>connected views", "se-optimization-map", "se-pareto-figure", "data-pareto-status=\"efficient\"", "data-pareto-status=\"dominated\"", "data-pareto-status=\"infeasible\"", "data-calculation=\"drone-optimization-contract\"", "data-time-plan=\"systems-interview\"", "Optimization and architecture search", "fixed-sample binary", "Path A · estimate", "Path B · conformance", "Path C · compare"],
   "hardware.html": ["thinking", "metrics", "constraints", "memory", "compute", "fabric", "physical", "bottlenecks", "sizing-workbench", "lifecycle", "practice", "Edge AI", "recovery contract", "Ordered first-article hardware bring-up ladder", "qualified operating envelope", "stakeholder-use evidence", "accepted release baseline", "hw-engine-selector", "NPU legality gate", "Specialize only after any candidate path is proven", "Does the candidate win end to end?", "Heterogeneous / repartition"],
   "embedded.html": ["practice", "sensor", "real-time", "timing-workbench", "Hardware-in-the-loop", "task model", "transition and recovery", "control-case", "500 Hz", "screening calculation, not a stability proof", "implementation and integration sequence", "verified decommission", "em-schedule-tree", "Proof follows the selected policy", "Static task-level priority", "Per-job absolute deadline"],
   "npu-acim.html": ["boundary", "stack", "decision", "mapping", "artifacts", "runtime", "feedback", "bottlenecks", "compiler-workbench", "practice", "Analog Compute-in-Memory", "Technology scope", "storage type, volatility/retention", "analog signal domain", "Four IR", "health generation", "End-to-end lifecycle", "Fleet release + retirement", "acim-residency-machine", "dispatch forbidden", "correctable per-request", "load, program, or verify failure", "Separate planned mutation from fault recovery"]
@@ -363,13 +363,64 @@ for (const [file, minutes] of Object.entries(interviewDurationContracts)) {
   }
 }
 
+const systemsInterviewPlan = [
+  { label: "Frame", start: 0, end: 10 },
+  { label: "Architect", start: 10, end: 25 },
+  { label: "Balance", start: 25, end: 35 },
+  { label: "Risk", start: 35, end: 45 },
+  { label: "Prove", start: 45, end: 52 },
+  { label: "Close", start: 52, end: 55 }
+];
+const systemsPlanMarkup = documents["systems-engineering.html"].match(
+  /<ol\b(?=[^>]*\bdata-time-plan=["']systems-interview["'])([^>]*)>([\s\S]*?)<\/ol>/i
+);
+if (!systemsPlanMarkup) throw new Error("systems-engineering.html: structured interview time plan is missing");
+const attributeValue = (tag, name) => tag.match(new RegExp(`\\b${name}=["']([^"']+)["']`, "i"))?.[1];
+if (Number(attributeValue(systemsPlanMarkup[1], "data-total-minutes")) !== 55) {
+  throw new Error("systems-engineering.html: interview time-plan total must be 55 minutes");
+}
+const systemsPlanItems = [...systemsPlanMarkup[2].matchAll(/<li\b([^>]*)>([\s\S]*?)<\/li>/gi)];
+if (systemsPlanItems.length !== systemsInterviewPlan.length) {
+  throw new Error("systems-engineering.html: interview time plan must contain six contiguous phases");
+}
+let plannedMinutes = 0;
+for (const [index, expected] of systemsInterviewPlan.entries()) {
+  const [_, attributes, body] = systemsPlanItems[index];
+  const actual = {
+    label: attributeValue(attributes, "data-summary-label"),
+    start: Number(attributeValue(attributes, "data-start-minute")),
+    end: Number(attributeValue(attributes, "data-end-minute"))
+  };
+  const visibleRange = normalizedMarkupText(body.match(/<span\b[^>]*>([\s\S]*?)<\/span>/i)?.[1] ?? "");
+  if (actual.label !== expected.label || actual.start !== expected.start || actual.end !== expected.end) {
+    throw new Error(`systems-engineering.html: interview phase ${index + 1} must be ${expected.label} ${expected.start}–${expected.end}`);
+  }
+  if (index > 0 && actual.start !== systemsInterviewPlan[index - 1].end) {
+    throw new Error(`systems-engineering.html: interview phase ${expected.label} is not contiguous`);
+  }
+  if (actual.end <= actual.start || visibleRange !== `${actual.start}–${actual.end}`) {
+    throw new Error(`systems-engineering.html: interview phase ${expected.label} has an invalid visible range`);
+  }
+  plannedMinutes += actual.end - actual.start;
+}
+if (plannedMinutes !== 55) throw new Error("systems-engineering.html: interview phase durations must sum to 55 minutes");
+const systemsSummary = normalizedMarkupText(
+  documents["systems-engineering.html"].match(/<div\b[^>]*class=["'][^"']*\bscenario-timer\b[^"']*["'][^>]*>[\s\S]*?<small>([\s\S]*?)<\/small>/i)?.[1] ?? ""
+);
+const expectedSystemsSummary = systemsInterviewPlan
+  .map(({ label, start, end }) => `${label} ${end - start}`)
+  .join(" · ");
+if (systemsSummary !== expectedSystemsSummary) {
+  throw new Error(`systems-engineering.html: scenario timer summary must be ${expectedSystemsSummary}`);
+}
+
 const requiredSources = {
   "index.html": ["nasa.gov/reference/2-0-fundamentals-of-systems-engineering", "nasa.gov/reference/5-0-product-realization", "csrc.nist.gov/pubs/sp/800/160/v1/r1/final", "docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html"],
-  "backend.html": ["github.com/donnemartin/system-design-primer", "github.com/ashishps1/awesome-system-design-resources", "oreilly.com", "sre.google", "sre.google/sre-book/reliable-product-launches", "docs.aws.amazon.com/wellarchitected/latest/framework/rel-12", "docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html", "rfc-editor.org/rfc/rfc9110", "rfc-editor.org/rfc/rfc9111", "kafka.apache.org/43/design", "docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox", "postgresql.org/docs/current/indexes-multicolumn", "people.csail.mit.edu/karger", "research.google/pubs/the-chubby"],
-  "systems-engineering.html": ["nasa.gov", "nasa.gov/reference/2-0-fundamentals-of-systems-engineering", "nasa.gov/reference/5-0-product-realization", "incose.org", "sebokwiki.org", "iso.org/standard/81702", "nasa.gov/reference/appendix-c-how-to-write-a-good-requirement", "nasa.gov/reference/6-5-configuration-management", "ntrs.nasa.gov/api/citations/20170007239", "nodis3.gsfc.nasa.gov/displaydir.cfm", "nasa.gov/wp-content/uploads/2023/08/nasa-risk-mgmt-handbook", "nist.gov/glossary-term/21621", "standards.nasa.gov/sites/default/files/standards/nasa/baseline/0/nasa-hdbk-873919-4.pdf", "itl.nist.gov/div898/handbook/prc/section2/prc241.htm", "itl.nist.gov/div898/handbook/prc/section2/prc242.htm", "itl.nist.gov/div898/handbook/apr/section1/apr13.htm"],
-  "hardware.html": ["lbl.gov", "developer.arm.com", "docs.kernel.org", "riscv.org", "opentitan.org/book/doc/project_governance/development_stages", "opentitan.org/book/doc/project_governance/project_milestone_definitions", "arm.com/architecture/learn-the-architecture/systemready", "csrc.nist.gov/pubs/sp/800/193/final", "doi.org/10.1145/1498765.1498785", "intel.com/content/www/us/en/docs/vtune-profiler", "docs.nvidia.com/cuda/cuda-programming-guide", "gstreamer.freedesktop.org/documentation/coreelements/tee", "docs.nvidia.com/metropolis/deepstream", "infineon.com/assets/row/public/documents/24/42/infineon-ds-explanation-update-applicationnotes-en.pdf"],
-  "embedded.html": ["doi.org/10.1145/321738.321743", "doi.org/10.1093/comjnl/29.5.390", "link.springer.com/article/10.1007/BF01088593", "ctms.engin.umich.edu/CTMS", "mathworks.com/help/control/ug/analyzing-control-systems-with-delays.html", "docs.zephyrproject.org", "docs.zephyrproject.org/latest/services/device_mgmt/dfu.html", "freertos.org", "docs.kernel.org/core-api/dma-api-howto", "docs.mcuboot.com", "csrc.nist.gov/pubs/sp/800/193/final", "nasa.gov/reference/5-0-product-realization", "ti.com/lit/an/slva740a", "mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator", "can-cia.org/can-knowledge/can-cc"],
-  "npu-acim.html": ["onnx.ai/onnx/repo-docs/IR", "mlir.llvm.org/docs/DialectConversion", "iree.dev", "github.com/IBM/aihwkit", "arxiv.org/abs/2003.04293", "arxiv.org/abs/2205.10042", "github.com/sandialabs/cross-sim", "github.com/Accelergy-Project/accelergy", "github.com/mit-emze/cimloop", "theupdateframework.io", "csrc.nist.gov/pubs/sp/800/218/final", "nasa.gov/reference/5-0-product-realization", "airc.nist.gov/airmf-resources/airmf/5-sec-core", "doi.org/10.1109/JSSC.2022.3232601", "doi.org/10.1109/ICTA56932.2022.9963070", "doi.org/10.1109/TCSI.2021.3083275", "doi.org/10.1109/TCSII.2021.3049844"]
+  "backend.html": ["github.com/donnemartin/system-design-primer", "github.com/ashishps1/awesome-system-design-resources", "oreilly.com", "sre.google", "sre.google/sre-book/reliable-product-launches", "docs.aws.amazon.com/wellarchitected/latest/framework/rel-12.html", "docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html", "rfc-editor.org/rfc/rfc9110.html", "rfc-editor.org/rfc/rfc9111.html", "kafka.apache.org/43/design", "docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html", "postgresql.org/docs/current/indexes-multicolumn.html", "people.csail.mit.edu/karger", "research.google/pubs/the-chubby-lock-service-for-loosely-coupled-distributed-systems"],
+  "systems-engineering.html": ["nasa.gov", "nasa.gov/reference/2-0-fundamentals-of-systems-engineering", "nasa.gov/reference/4-4-design-solution-definition", "nasa.gov/reference/5-0-product-realization", "nasa.gov/reference/6-8-decision-analysis", "nasa.gov/directorates/stmd/space-tech-research-grants/design-and-optimization-of-space-system-architectures-applying-and-extracting-lessons-learned", "incose.org", "sebokwiki.org", "sebokwiki.org/wiki/System_Analysis", "iso.org/standard/81702.html", "nasa.gov/reference/appendix-c-how-to-write-a-good-requirement", "nasa.gov/reference/6-5-configuration-management", "ntrs.nasa.gov/api/citations/20170007239", "nodis3.gsfc.nasa.gov/displaydir.cfm", "nasa.gov/wp-content/uploads/2023/08/nasa-risk-mgmt-handbook.pdf", "nist.gov/glossary-term/21621", "standards.nasa.gov/sites/default/files/standards/nasa/baseline/0/nasa-hdbk-873919-4.pdf", "itl.nist.gov/div898/handbook/pri/section3/pri33.htm", "developers.google.com/optimization/cp", "itl.nist.gov/div898/handbook/prc/section2/prc241.htm", "itl.nist.gov/div898/handbook/prc/section2/prc242.htm", "itl.nist.gov/div898/handbook/apr/section1/apr13.htm"],
+  "hardware.html": ["lbl.gov", "developer.arm.com", "docs.kernel.org", "riscv.org", "opentitan.org/book/doc/project_governance/development_stages.html", "opentitan.org/book/doc/project_governance/project_milestone_definitions.html", "arm.com/architecture/learn-the-architecture/systemready", "csrc.nist.gov/pubs/sp/800/193/final", "doi.org/10.1145/1498765.1498785", "intel.com/content/www/us/en/docs/vtune-profiler", "docs.nvidia.com/cuda/cuda-programming-guide", "gstreamer.freedesktop.org/documentation/coreelements/tee.html", "docs.nvidia.com/metropolis/deepstream", "infineon.com/assets/row/public/documents/24/42/infineon-ds-explanation-update-applicationnotes-en.pdf"],
+  "embedded.html": ["doi.org/10.1145/321738.321743", "doi.org/10.1093/comjnl/29.5.390", "link.springer.com/article/10.1007/BF01088593", "ctms.engin.umich.edu/CTMS", "mathworks.com/help/control/ug/analyzing-control-systems-with-delays.html", "docs.zephyrproject.org", "docs.zephyrproject.org/latest/services/device_mgmt/dfu.html", "freertos.org", "docs.kernel.org/core-api/dma-api-howto.html", "docs.mcuboot.com", "csrc.nist.gov/pubs/sp/800/193/final", "nasa.gov/reference/5-0-product-realization", "ti.com/lit/an/slva740a", "mipi.org/sites/default/files/mipi_i3c-and-i3c-basic_app-note-system-integrator_v1-0p.pdf", "can-cia.org/can-knowledge/can-cc"],
+  "npu-acim.html": ["onnx.ai/onnx/repo-docs/IR.html", "mlir.llvm.org/docs/DialectConversion", "iree.dev", "github.com/IBM/aihwkit", "arxiv.org/abs/2003.04293", "arxiv.org/abs/2205.10042", "github.com/sandialabs/cross-sim", "github.com/Accelergy-Project/accelergy", "github.com/mit-emze/cimloop", "theupdateframework.io", "csrc.nist.gov/pubs/sp/800/218/final", "nasa.gov/reference/5-0-product-realization", "airc.nist.gov/airmf-resources/airmf/5-sec-core", "doi.org/10.1109/JSSC.2022.3232601", "doi.org/10.1109/ICTA56932.2022.9963070", "doi.org/10.1109/TCSI.2021.3083275", "doi.org/10.1109/TCSII.2021.3049844"]
 };
 for (const [file, sources] of Object.entries(requiredSources)) {
   const externalTargets = hrefsByPage[file].filter(href => /^https:/i.test(href));
@@ -377,6 +428,24 @@ for (const [file, sources] of Object.entries(requiredSources)) {
     if (!externalTargets.some(target => matchesSourceRequirement(target, source))) {
       throw new Error(`${file}: missing linked source ${source}`);
     }
+  }
+}
+
+const optimizationSection = documents["systems-engineering.html"].match(
+  /<section\b(?=[^>]*\bid=["']optimization["'])[^>]*>([\s\S]*?)<\/section>/i
+);
+if (!optimizationSection) throw new Error("systems-engineering.html: optimization section is missing");
+const optimizationTargets = anchorHrefs(optimizationSection[1]).filter(href => /^https:/i.test(href));
+for (const source of [
+  "nasa.gov/reference/4-4-design-solution-definition",
+  "nasa.gov/reference/6-8-decision-analysis",
+  "sebokwiki.org/wiki/System_Analysis",
+  "itl.nist.gov/div898/handbook/pri/section3/pri33.htm",
+  "developers.google.com/optimization/cp",
+  "nasa.gov/directorates/stmd/space-tech-research-grants/design-and-optimization-of-space-system-architectures-applying-and-extracting-lessons-learned"
+]) {
+  if (!optimizationTargets.some(target => matchesSourceRequirement(target, source))) {
+    throw new Error(`systems-engineering.html#optimization: missing contextual source ${source}`);
   }
 }
 
@@ -443,7 +512,7 @@ for (const staleScenarioClaim of ["The read-heavy ratio strongly favors caching"
 
 const semanticContentChecks = {
   "backend.html": ["transactional outbox", "Acknowledge after durable acceptance", "Write ingress", "Live logical data", "Append-log storage", "Time-based error budget", "Request-based error budget", "non-failing node", "no finite latency bound", "provider idempotency plus uncertain-outcome reconciliation", "Atomically claim stock", "This Atlas sequence expands"],
-  "systems-engineering.html": ["Keep two ledgers distinct", "Power + energy", "Never add unlike units", "Upper-bound margin", "Lower-bound margin", "Verification compliance", "Administrative disposition", "authorized relief—not proof of compliance", "Which quantitative fielded-system measures enable it?", "Parent safety objective—derive", "R<sub>ref</sub>", "R<sub>indicated</sub>", "R_result − 2 percentage points ≥ 20%", "C<sub>u,ref</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh", "E<sub>remaining,ref</sub> = E<sub>initial,ref</sub> − E<sub>discharged,ref</sub>", "full-charge entry condition", "deterministic reference test demonstrates capability", "REF-MISSION-01", "SYS-LAND-024", "Evaluate the entry condition once at declaration", "CMP-ENV-022", "ALLOC-LAT-023", "HMI-OPS-032", "SYS-OPS-033"],
+  "systems-engineering.html": ["Keep two ledgers distinct", "Power + energy", "Never add unlike units", "Upper-bound margin", "Lower-bound margin", "Verification compliance", "Administrative disposition", "authorized relief—not proof of compliance", "Which quantitative fielded-system measures enable it?", "Parent safety objective—derive", "R<sub>ref</sub>", "R<sub>indicated</sub>", "R_result − 2 percentage points ≥ 20%", "C<sub>u,ref</sub> ≥ 720 ÷ (1 − 0.22) = 923.1 Wh", "E<sub>remaining,ref</sub> = E<sub>initial,ref</sub> − E<sub>discharged,ref</sub>", "full-charge entry condition", "deterministic reference test demonstrates capability", "REF-MISSION-01", "SYS-LAND-024", "Evaluate the entry condition once at declaration", "CMP-ENV-022", "ALLOC-LAT-023", "HMI-OPS-032", "SYS-OPS-033", "nondominated set among evaluated feasible candidates", "Monte Carlo propagates assumed input distributions and any dependencies explicitly encoded in the joint sampling model", "preliminary hazard and risk analysis", "hypothetical unanchored 1–5 labels are not decision-grade", "there is no decision winner until criterion-specific value functions and evidence are established"],
   "hardware.html": ["while not all_satisfied", "not one universal ladder", "QoS tag alone is not isolation", "Bounded inference queue", "Bounded recording queue", "Independent bounded processing branches", "Post-ISP surface rate", "backpressure is not isolation", "arithmetic minimum implied by that measurement", "advance the request/completion epoch", "Model sustained and transient load", "time-dependent thermal impedance"],
   "embedded.html": ["load-profile-weighted effective value", "converter quiescent loss exactly once", "observed maxima as provisional—not automatic WCET", "E_quiescent,not-yet-counted", "Job-level absolute deadlines", "fixed-priority iteration gives response times", "same first 11 identifier bits", "11-bit base frame wins"],
   "npu-acim.html": ["Storage technology and analog signal domain are separate axes", "W × P_a = 2 × 4 = 8", "K = 768, M = 384 → N_K = 3, N_M = 6", "E_complete_path(p)", "80-request/s steady", "110-request/s burst", "B₀ = 0", "B_end = max(0, B₀ + (λ_burst − μ)T)", "separately for vision and audio", "steady arrival to remain below sustained thermally limited service", "if the 20 ms SLO is extended to the burst window", "requires p95 below 20 ms at the steady mix, not during the burst", "device_uid_match", "Four-context residency protocol", "atomically claims the lease", "Keep DMA-accessible memory and residency references pinned"]
@@ -478,7 +547,7 @@ const readmeReferenceAuditDate = readme.match(/Reference availability was review
 if (!pageReferenceAuditDate || pageReferenceAuditDate !== readmeReferenceAuditDate) {
   throw new Error("Reference-audit provenance date must match in index.html and README.md");
 }
-if (!documents["systems-engineering.html"].includes("14</strong><span>connected views")) {
+if (!documents["systems-engineering.html"].includes("15</strong><span>connected views")) {
   throw new Error("systems-engineering.html: connected-view count is stale");
 }
 
@@ -536,6 +605,7 @@ for (const token of [
   'href: "hardware.html"',
   'href: "embedded.html"',
   'href: "npu-acim.html"',
+  '["optimization", "07 · Optimization and architecture search"]',
   '["fabric", "06 · Interconnect and I/O"]',
   '["physical", "07 · Power, thermal, and reliability"]',
   '["protocols", "06 · Protocol selection"]',

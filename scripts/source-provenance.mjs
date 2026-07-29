@@ -26,6 +26,8 @@ export function matchesSourceRequirement(target, requirement) {
     || actualHostname.endsWith(`.${expected.hostname}`);
   if (!hostnameMatches) return false;
 
-  const actualPath = url.pathname.toLowerCase();
-  return expected.pathPrefix === "/" || actualPath.startsWith(expected.pathPrefix);
+  if (expected.pathPrefix === "/") return true;
+  const expectedPath = expected.pathPrefix.replace(/\/+$/, "");
+  const actualPath = url.pathname.toLowerCase().replace(/\/+$/, "");
+  return actualPath === expectedPath || actualPath.startsWith(`${expectedPath}/`);
 }

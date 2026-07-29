@@ -27,7 +27,7 @@ The worked numbers are deliberately labeled as illustrative assumptions. Recalcu
 
 - `index.html` — track selector, shared reasoning loop, and an integrated autonomous-drone case spanning all five tracks
 - `backend.html` — scalable software and distributed systems from interview framing through launch, operation, evolution, and retirement
-- `systems-engineering.html` — needs, requirements, allocation, realization, integration, statistical evidence, transition, operation, sustainment, and retirement
+- `systems-engineering.html` — needs, requirements, allocation, coupled budgets, architecture search and optimization, trade decisions, risk, integration, statistical evidence, transition, operation, sustainment, and retirement
 - `hardware.html` — workload-driven architecture, implementation sign-off, ordered bring-up, qualification, production release, sustainment, and retirement
 - `embedded.html` — real-time and cyber-physical design through characterization, integration, V&V, commissioning, update/recovery, and safe decommissioning
 - `npu-acim.html` — ACiM NPU compiler/runtime stack from intended-use framing and target characterization through qualification, fleet release, operation, and retirement
@@ -90,6 +90,9 @@ The site validator checks all six pages, internal files and fragments, shared na
 Detailed sections link sources beside the decision they support. The Atlas favors standards, official implementation documentation, foundational papers, and published measurement evidence, including:
 
 - [NASA Systems Engineering Handbook](https://www.nasa.gov/wp-content/uploads/2018/09/nasa_systems_engineering_handbook_0.pdf)
+- [NASA Design Solution Definition](https://www.nasa.gov/reference/4-4-design-solution-definition/) and [NASA Decision Analysis](https://www.nasa.gov/reference/6-8-decision-analysis/)
+- [SEBoK System Analysis](https://sebokwiki.org/wiki/System_Analysis)
+- [NIST experimental-design selection](https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm)
 - [HTTP Semantics, RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html) and [HTTP Caching, RFC 9111](https://www.rfc-editor.org/rfc/rfc9111.html)
 - [Linux DMA API HOWTO](https://docs.kernel.org/core-api/dma-api-howto.html)
 - [Roofline: an insightful visual performance model](https://doi.org/10.1145/1498765.1498785)

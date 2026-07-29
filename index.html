@@ -22,9 +22,9 @@
   <title>System Design Atlas — Choose Your Track</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260729a"></script>
-  <link rel="stylesheet" href="styles.css?v=20260729a">
-  <script src="app.js?v=20260729a" defer></script>
+  <script src="theme-init.js?v=20260730a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260730a">
+  <script src="app.js?v=20260730a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -72,7 +72,7 @@ state_requirements_and_tradeoffs()</code></pre>
         <div class="track-connector" aria-hidden="true"></div>
         <div class="track-grid">
           <a class="track-card backend" href="backend.html"><span>01 · Software services</span><h3>Backend &amp; Distributed</h3><p>APIs, data stores, caches, queues, consistency, availability, traffic and operations.</p><small>Example: design a global news feed →</small></a>
-          <a class="track-card systems" href="systems-engineering.html"><span>02 · Whole product</span><h3>Systems Engineering</h3><p>Stakeholders, ConOps, requirements, allocation, interfaces, risk, integration and V&amp;V.</p><small>Example: design an autonomous drone →</small></a>
+          <a class="track-card systems" href="systems-engineering.html"><span>02 · Whole product</span><h3>Systems Engineering</h3><p>Stakeholders, ConOps, requirements, allocation, coupled budgets, architecture search, trade studies, risk, integration and V&amp;V.</p><small>Example: design an autonomous drone →</small></a>
           <a class="track-card hardware" href="hardware.html"><span>03 · Compute platform</span><h3>Hardware &amp; Computer</h3><p>Workloads, microarchitecture, memory, interconnect, PPA, thermal and reliability.</p><small>Example: design an edge AI computer →</small></a>
           <a class="track-card embedded" href="embedded.html"><span>04 · Physical control</span><h3>Embedded &amp; Cyber-Physical</h3><p>Sensors, firmware, real-time deadlines, control, power, safety and actuators.</p><small>Example: design a smart camera →</small></a>
           <a class="track-card acim" href="npu-acim.html"><span>05 · Analog AI compute</span><h3>NPU Software Stack · ACiM</h3><p>Graph compiler, analog-aware mapping, runtime, calibration, drift and digital fallback.</p><small>Example: design a hybrid ACiM NPU →</small></a>
@@ -88,7 +88,7 @@ state_requirements_and_tradeoffs()</code></pre>
         <li><span>03</span><strong>Estimate</strong><p>Size load, data, timing, energy and environment.</p></li>
         <li><span>04</span><strong>Decompose</strong><p>Break behavior into functions and interfaces.</p></li>
         <li><span>05</span><strong>Allocate</strong><p>Assign functions to services, hardware, software or people.</p></li>
-        <li><span>06</span><strong>Trade</strong><p>Compare alternatives with explicit criteria.</p></li>
+        <li><span>06</span><strong>Trade</strong><p>Search and compare feasible alternatives with explicit criteria.</p></li>
         <li><span>07</span><strong>Realize</strong><p>Build, buy, configure or reuse each planned element.</p></li>
         <li><span>08</span><strong>Integrate</strong><p>Combine elements in a planned order and close their interfaces.</p></li>
         <li><span>09</span><strong>Verify</strong><p>Prove the realized system meets its specified requirements.</p></li>
@@ -106,7 +106,7 @@ state_requirements_and_tradeoffs()</code></pre>
         <ol class="concept-flow atlas-lifecycle-groups" aria-label="Six grouped lifecycle stages" data-lifecycle-groups="6">
           <li><span>01–02</span><strong>Define</strong><small>Need → measurable requirements</small></li>
           <li><span>03–04</span><strong>Analyze</strong><small>Estimate constraints → decompose functions</small></li>
-          <li><span>05–06</span><strong>Architect</strong><small>Allocate functions → trade alternatives</small></li>
+          <li><span>05–06</span><strong>Architect</strong><small>Allocate functions → search and trade alternatives</small></li>
           <li><span>07–08</span><strong>Realize</strong><small>Build, buy, or configure → integrate</small></li>
           <li><span>09–10</span><strong>Prove</strong><small>Verify requirements → validate the need</small></li>
           <li><span>11–12</span><strong>Sustain</strong><small>Transition → operate, evolve, and retire</small></li>
@@ -145,7 +145,7 @@ state_requirements_and_tradeoffs()</code></pre>
         <div class="selector-question"><span>Start</span><strong>What must your architecture primarily coordinate?</strong></div>
         <div class="selector-grid">
           <article><span>Services + durable data</span><h3>Backend</h3><p>Optimize throughput, latency, consistency and availability.</p><a href="backend.html">Open track →</a></article>
-          <article><span>Multiple engineering disciplines</span><h3>Systems Engineering</h3><p>Manage requirements, interfaces, lifecycle risk and integration.</p><a href="systems-engineering.html">Open track →</a></article>
+          <article><span>Multiple engineering disciplines</span><h3>Systems Engineering</h3><p>Manage requirements, interfaces, coupled budgets, architecture search, trade decisions, lifecycle risk and integration.</p><a href="systems-engineering.html">Open track →</a></article>
           <article><span>Compute + memory + I/O</span><h3>Hardware</h3><p>Balance performance, power, area, cost and programmability.</p><a href="hardware.html">Open track →</a></article>
           <article><span>Software + physical environment</span><h3>Embedded</h3><p>Meet deadlines, safety, power and control stability.</p><a href="embedded.html">Open track →</a></article>
           <article><span>Model graph + analog arrays</span><h3>ACiM NPU</h3><p>Preserve accuracy while exploiting efficient in-memory matrix operations.</p><a href="npu-acim.html">Open track →</a></article>
@@ -190,7 +190,7 @@ state_requirements_and_tradeoffs()</code></pre>
       </div>
       <div class="atlas-cross-track-map" role="group" aria-label="Cross-track artifact handoff graph">
         <ol class="compact-flow">
-          <li><b><a href="systems-engineering.html#conops">Systems Engineering</a></b><span>ConOps, hazards, SHALL requirements, interface ownership, and allocated mass, energy, latency, and reliability budgets.</span></li>
+          <li><b><a href="systems-engineering.html#optimization">Systems Engineering</a></b><span>ConOps, hazards, SHALL requirements, interface ownership, allocated budgets, modeled alternatives, feasible Pareto finalists, and the decision record.</span></li>
           <li><b><a href="embedded.html#scheduling">Embedded</a></b><span>Sensor-to-actuator timing chain, task and interrupt schedule, mode machine, health signals, and independently reachable safe state.</span></li>
           <li><b><a href="hardware.html#memory">Hardware</a></b><span>Workload envelope, memory and I/O paths, compute headroom, power rails, thermal limits, and observability hooks.</span></li>
           <li><b><a href="npu-acim.html#mapping">NPU + ACiM</a></b><span>Supported-op manifest, tile mapping, quantization and accuracy envelope, calibration identity, confidence telemetry, and fallback trigger.</span></li>
@@ -243,7 +243,7 @@ state_requirements_and_tradeoffs()</code></pre>
       <div class="section-heading"><p class="eyebrow">05 · Interview practice matrix</p><h2>Practice the right conversation for each role</h2><p>Each track ends with a timed 45–55 minute practice arena, revealable coaching notes, pressure tests, and a self-score.</p></div>
       <div class="practice-matrix">
         <a href="backend.html#practice"><span>Backend</span><strong>URL shortener · feed · chat</strong><small>Scale, storage, consistency, bottlenecks</small></a>
-        <a href="systems-engineering.html#practice"><span>Systems</span><strong>Autonomous delivery drone</strong><small>ConOps, allocation, interfaces, V&amp;V</small></a>
+        <a href="systems-engineering.html#practice"><span>Systems</span><strong>Autonomous delivery drone</strong><small>ConOps, allocation, optimization, interfaces, V&amp;V</small></a>
         <a href="hardware.html#practice"><span>Hardware</span><strong>Edge AI computer</strong><small>Workload, memory, PPA, thermal</small></a>
         <a href="embedded.html#practice"><span>Embedded</span><strong>Battery smart camera</strong><small>Real time, control, power, safety</small></a>
         <a href="npu-acim.html#practice"><span>ACiM NPU</span><strong>Hybrid analog AI stack</strong><small>Compiler, mapping, runtime, calibration</small></a>

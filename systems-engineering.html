@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A visual Systems Engineering field guide covering stakeholder needs, ConOps, requirements, architecture, interfaces, trade studies, risk, integration, verification, validation, and interview practice.">
+  <meta name="description" content="A visual Systems Engineering field guide covering stakeholder needs, ConOps, requirements, architecture, interfaces, budgets, optimization, trade studies, risk, verification, validation, and interview practice.">
   <meta name="theme-color" content="#07111f">
   <meta name="color-scheme" content="dark light">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="System Design Atlas">
   <meta property="og:title" content="Systems Engineering — System Design Atlas">
-  <meta property="og:description" content="A visual interview guide to stakeholder needs, ConOps, requirements, architecture, interfaces, risk, integration, verification, and validation.">
+  <meta property="og:description" content="A visual interview guide to stakeholder needs, requirements, architecture, optimization, trade studies, risk, integration, verification, and validation.">
   <meta property="og:url" content="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
   <meta property="og:image" content="https://buicongnguyen.github.io/SystemDesign/assets/social-systems.png">
   <meta property="og:image:type" content="image/png">
@@ -22,9 +22,9 @@
   <title>Systems Engineering · System Design Atlas</title>
   <link rel="canonical" href="https://buicongnguyen.github.io/SystemDesign/systems-engineering.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <script src="theme-init.js?v=20260729a"></script>
-  <link rel="stylesheet" href="styles.css?v=20260729a">
-  <script src="app.js?v=20260729a" defer></script>
+  <script src="theme-init.js?v=20260730a"></script>
+  <link rel="stylesheet" href="styles.css?v=20260730a">
+  <script src="app.js?v=20260730a" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -56,7 +56,7 @@
           <a class="button secondary" href="#practice">Practice the drone case</a>
         </div>
         <ul class="hero-stats" aria-label="Page summary">
-          <li><strong>14</strong><span>connected views</span></li>
+          <li><strong>15</strong><span>connected views</span></li>
           <li><strong>7</strong><span>decision artifacts</span></li>
           <li><strong>1</strong><span>full interview case</span></li>
         </ul>
@@ -84,6 +84,7 @@ validate(<b>solves the mission</b>)</code></pre>
       <a href="#allocation">Allocation</a>
       <a href="#interfaces">Interfaces</a>
       <a href="#budgets">Budgets</a>
+      <a href="#optimization">Optimization</a>
       <a href="#trades">Trade studies</a>
       <a href="#risk">Risk</a>
       <a href="#integration">Integration</a>
@@ -300,23 +301,191 @@ validate(<b>solves the mission</b>)</code></pre>
       <p class="section-source">Accounting anchor: <a href="https://ntrs.nasa.gov/api/citations/20170007239/downloads/20170007239.pdf">NASA technical-margin guidance ↗</a>. Tailor the convention, but keep its terms and sign visible.</p>
     </section>
 
+    <section class="section se-optimization-section" id="optimization">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">07 · Optimization and architecture search</p>
+        <h2>Search the feasible design space before choosing a winner</h2>
+        <p>Optimization is structured search over a declared model. It can expose promising feasible designs and trade-offs, but the decision authority still owns the choice, assumptions, and evidence.</p>
+      </div>
+
+      <figure class="concept-map se-optimization-map" aria-labelledby="optimization-purpose-title" aria-describedby="optimization-purpose-caption">
+        <header class="concept-map-heading">
+          <span>Purpose splitter</span>
+          <h3 id="optimization-purpose-title">Use each tool for the job it actually performs</h3>
+          <p>A strong interview answer separates prediction, search, preference, and proof instead of treating one weighted matrix or solver output as the design decision.</p>
+        </header>
+        <div class="se-purpose-split">
+          <article><span>Simulate</span><strong>Predict a specified design</strong><p>Estimate behavior under declared inputs, modes, and scenarios.</p><small>Does not choose the design.</small></article>
+          <article><span>Optimize</span><strong>Search a modeled design space</strong><p>Find feasible candidates that improve one or more objectives.</p><small>Does not own stakeholder preference.</small></article>
+          <article><span>Trade</span><strong>Evaluate and recommend with stakeholder value</strong><p>Compare viable candidates, uncertainty, risk, cost, and reversibility.</p><small>The decision authority still chooses.</small></article>
+          <article><span>Verify</span><strong>Produce objective, configuration-matched evidence</strong><p>Show that the selected configuration satisfies its baselined requirements.</p><small>Does not make the architecture optimal.</small></article>
+        </div>
+        <figcaption id="optimization-purpose-caption">The activities iterate: models guide search, tests update models, uncertainty can trigger more learning, and a trade-study decision can reopen when its assumptions or evidence change.</figcaption>
+      </figure>
+
+      <div class="se-formulation-grid">
+        <article class="se-model-card">
+          <span>Formal model</span>
+          <h3>Declare what the team controls and what the world controls</h3>
+          <div class="se-model-equation" role="group" aria-label="Generic constrained multi-objective optimization formulation">
+            <code>choose x ∈ X</code>
+            <code>minimize F_cost(x)</code>
+            <code>maximize F_effectiveness(x)</code>
+            <code>subject to g_i(x, u) ≤ 0 and h_j(x, u) = 0 for each applicable u ∈ U_required</code>
+          </div>
+          <dl>
+            <div><dt>x · design variables</dt><dd>Controllable continuous, integer, binary, or categorical choices and their allowed domains.</dd></div>
+            <div><dt>u · required cases</dt><dd>Qualification conditions, modes, and scenarios in which mandatory constraints must hold.</dd></div>
+            <div><dt>F · objectives</dt><dd>Directions, units, lifecycle boundary, and a declared scenario summary such as worst case, expectation, or percentile.</dd></div>
+            <div><dt>g, h · constraints</dt><dd>Mandatory requirements, physics, policies, interfaces, and resource limits.</dd></div>
+          </dl>
+        </article>
+        <article class="se-model-card se-model-output-card">
+          <span>Decision package</span>
+          <h3>Report more than “the optimizer says”</h3>
+          <ul>
+            <li><b>Scope:</b> model boundary, fidelity, units, data pedigree, and excluded effects.</li>
+            <li><b>Feasibility:</b> satisfied constraints and remaining margins against the current baseline.</li>
+            <li><b>Administrative disposition:</b> authorized relief or a baseline change, its decision authority, affected claims, and required re-verification—kept separate from proof of compliance.</li>
+            <li><b>Search status:</b> solver status, bound or gap when available, seeds, timeout, and repeatability.</li>
+            <li><b>Trade-space result:</b> search coverage, nondominated set among evaluated feasible candidates, sensitivity, scenarios, and fragile assumptions.</li>
+            <li><b>Independent check:</b> re-evaluate finalists with a higher-fidelity model, prototype, or test.</li>
+            <li><b>Governance:</b> decision authority, rationale, configuration baseline, and reopening trigger.</li>
+          </ul>
+        </article>
+      </div>
+      <p class="evidence-note"><b>Safety dependency:</b> preliminary hazard and risk analysis runs before and during architecture search so mandatory safety controls become constraints. The later risk section deepens that analysis; a newly discovered hazard, common cause, or control can invalidate a finalist and reopen variables, budgets, and the search.</p>
+
+      <figure class="se-option-generator" aria-labelledby="option-generator-title" aria-describedby="option-generator-caption">
+        <header>
+          <span>Alternative generator</span>
+          <h3 id="option-generator-title">Build a morphological box or trade tree, then prune incompatible combinations</h3>
+          <p>A morphological box prevents the team from comparing only its first three ideas. It is a generator—not an instruction to evaluate an infeasible Cartesian product.</p>
+        </header>
+        <div class="se-option-families">
+          <article><span>Autonomy placement</span><ul><li>Onboard</li><li>Supervised hybrid</li><li>Ground-assisted</li></ul></article>
+          <article><span>Energy architecture</span><ul><li>Fixed modules</li><li>Swappable modules</li><li>Vehicle + pad support</li></ul></article>
+          <article><span>Recovery concept</span><ul><li>Return to clinic</li><li>Approved alternate site</li><li>Immediate safe landing</li></ul></article>
+          <article><span>Route policy</span><ul><li>Direct corridor</li><li>Reserve-aware corridor</li><li>Weather-degraded corridor</li></ul></article>
+        </div>
+        <div class="se-compatibility-gate"><span>Compatibility gate</span><strong>Requirements + physics + interfaces + maturity</strong><p>Keep the status quo when it is a real option. Remove combinations that violate mandatory constraints, depend on incompatible interfaces, or cannot be supported at the required maturity.</p></div>
+        <figcaption id="option-generator-caption">Generate broadly, record why branches were pruned, and preserve materially different feasible concepts for analysis.</figcaption>
+      </figure>
+
+      <div class="se-table-wrap" tabindex="0" role="region" aria-label="Optimization method selection guide">
+        <table class="se-matrix se-method-selector-table">
+          <caption>Choose the lightest adequate method from the structure of the declared model</caption>
+          <thead><tr><th scope="col">Problem signature</th><th scope="col">Useful first method</th><th scope="col">Evidence and interview warning</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">A few named alternatives</th><td>Enumerate, analyze, and run a trade study.</td><td>Show coverage and pruning rationale; a solver adds little value.</td></tr>
+            <tr><th scope="row">Continuous variables; linear objective and constraints</th><td>Linear programming.</td><td>Confirm the relationships and feasible region are actually linear.</td></tr>
+            <tr><th scope="row">Binary or integer choices with linear relationships</th><td>Mixed-integer linear programming.</td><td>Report incumbent feasibility, bound or optimality gap, and timeout—not only the best value found.</td></tr>
+            <tr><th scope="row">Logical, temporal, or resource constraints dominate</th><td>Constraint programming.</td><td>State the constraint model, schedule/resource feasibility, and search limit.</td></tr>
+            <tr><th scope="row">Flow, assignment, routing, or network structure dominates</th><td>Specialized graph, flow, assignment, or routing model.</td><td>Exploit the structure before reaching for a general heuristic.</td></tr>
+            <tr><th scope="row">Smooth nonlinear model</th><td>Appropriate nonlinear optimization; use multistart to probe multiple basins. Use a validated global method with valid bounds only when a global guarantee is required.</td><td>A non-convex local solution is not automatically a global optimum.</td></tr>
+            <tr><th scope="row">Expensive black-box simulation</th><td>DOE and a checked surrogate or response surface, followed by suitable search.</td><td>Re-evaluate finalists in the original higher-fidelity model; the surrogate is not the system.</td></tr>
+            <tr><th scope="row">Derivatives unavailable; evaluations affordable</th><td>Derivative-free search may be sufficient.</td><td>Report search bounds, budget, repeatability, and any lack of global guarantee.</td></tr>
+            <tr><th scope="row">Competing objectives</th><td>Pareto analysis or an ε-constraint formulation.</td><td>Pareto efficiency removes dominated options; it does not express stakeholder preference or choose a winner.</td></tr>
+            <tr><th scope="row">Material uncertainty</th><td>Scenario and sensitivity analysis first; robust or stochastic formulations when their assumptions are defensible.</td><td>Monte Carlo propagates assumed input distributions and any dependencies explicitly encoded in the joint sampling model. It evaluates uncertainty; it is not an optimizer by itself.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="section-source">Method-selection anchors: <a href="https://www.nasa.gov/reference/4-4-design-solution-definition/">NASA Design Solution Definition ↗</a> <a href="https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm">NIST experimental-design selection ↗</a> <a href="https://developers.google.com/optimization/cp/">Google OR-Tools constraint-optimization guide ↗</a></p>
+
+      <figure class="concept-map se-pareto-figure" aria-labelledby="pareto-title" aria-describedby="pareto-caption">
+        <header class="concept-map-heading">
+          <span>Multi-objective view</span>
+          <h3 id="pareto-title">Keep nondominated designs; do not call all of them acceptable</h3>
+          <p>A design dominates another only when it is no worse on every shown objective and strictly better on at least one.</p>
+        </header>
+        <div class="se-pareto-layout">
+          <div class="se-pareto-plot" role="img" aria-label="Illustrative Pareto plot with relative lifecycle cost increasing to the right and mission effectiveness increasing upward. A, B, and C are feasible nondominated points; D and E are dominated; X is infeasible.">
+            <span class="se-pareto-y-axis">Mission effectiveness · higher ↑</span>
+            <span class="se-pareto-x-axis">Relative lifecycle cost · higher →</span>
+            <i class="se-pareto-guide se-pareto-guide-one" aria-hidden="true"></i>
+            <i class="se-pareto-guide se-pareto-guide-two" aria-hidden="true"></i>
+            <span class="se-pareto-point is-efficient" data-concept="A" data-cost-rank="1" data-effectiveness-rank="2" data-feasible="true" data-pareto-status="efficient" style="--plot-x: 24%; --plot-y: 27%;"><b>A ✓</b><small>Efficient</small></span>
+            <span class="se-pareto-point is-efficient" data-concept="B" data-cost-rank="2" data-effectiveness-rank="4" data-feasible="true" data-pareto-status="efficient" style="--plot-x: 39%; --plot-y: 65%;"><b>B ✓</b><small>Efficient</small></span>
+            <span class="se-pareto-point is-efficient" data-concept="C" data-cost-rank="4" data-effectiveness-rank="5" data-feasible="true" data-pareto-status="efficient" style="--plot-x: 67%; --plot-y: 83%;"><b>C ✓</b><small>Efficient</small></span>
+            <span class="se-pareto-point is-dominated" data-concept="D" data-cost-rank="3" data-effectiveness-rank="2" data-feasible="true" data-pareto-status="dominated" style="--plot-x: 52%; --plot-y: 27%;"><b>D ×</b><small>Dominated by A</small></span>
+            <span class="se-pareto-point is-dominated" data-concept="E" data-cost-rank="5" data-effectiveness-rank="4" data-feasible="true" data-pareto-status="dominated" style="--plot-x: 83%; --plot-y: 65%;"><b>E ×</b><small>Dominated by B and C</small></span>
+            <span class="se-pareto-point is-infeasible" data-concept="X" data-cost-rank="1" data-effectiveness-rank="5" data-feasible="false" data-pareto-status="infeasible" style="--plot-x: 24%; --plot-y: 83%;"><b>X !</b><small>Infeasible</small></span>
+          </div>
+          <ol class="se-pareto-legend">
+            <li><b>A · relative order (1 cost, 2 effectiveness)</b><span>Feasible and nondominated: lower cost, lower effectiveness.</span></li>
+            <li><b>B · relative order (2, 4)</b><span>Feasible and nondominated: improves effectiveness for more cost.</span></li>
+            <li><b>C · relative order (4, 5)</b><span>Feasible and nondominated: highest shown effectiveness.</span></li>
+            <li><b>D · relative order (3, 2)</b><span>Dominated by A, which has the same effectiveness order at lower cost.</span></li>
+            <li><b>E · relative order (5, 4)</b><span>Dominated by B and C.</span></li>
+            <li><b>X · relative order (1, 5)</b><span>Excluded before dominance analysis because it violates a mandatory constraint.</span></li>
+          </ol>
+        </div>
+        <figcaption id="pareto-caption">Positions show dominance relationships only; they are not cost or performance estimates. Pareto-efficient means “not dominated in the modeled objectives”—not safe, preferred, verified, or approved.</figcaption>
+      </figure>
+      <p class="section-source">Trade-space anchor: <a href="https://www.nasa.gov/directorates/stmd/space-tech-research-grants/design-and-optimization-of-space-system-architectures-applying-and-extracting-lessons-learned/">NASA architecture-search and Pareto research ↗</a>. The research page treats Pareto results as decision support and explicitly notes nonlinear, discrete, and local-optimum challenges.</p>
+
+      <article class="se-drone-optimization" aria-labelledby="drone-optimization-title">
+        <header>
+          <span>Worked interview formulation</span>
+          <h3 id="drone-optimization-title">Search the medical-drone architecture without inventing a precise optimum</h3>
+          <p>Use symbolic variables until the interview supplies defensible data. The goal is to expose model structure, feasibility, trade-offs, and the next evidence needed.</p>
+        </header>
+        <div class="se-drone-model-grid">
+          <article><span>Decision vector</span><strong>x = (n<sub>b</sub>, a, p, r, v)</strong><p>Battery-module count; autonomy partition; propulsion/safety architecture; corridor and recovery option; cruise or energy-management policy.</p></article>
+          <article><span>Hard constraints</span><strong>Must hold before scoring</strong><p>Takeoff mass, payload integrity, usable-energy reserve, sense-to-actuate latency, thermal limits, the baselined link-loss response, geofence and noise limits, baselined cybersecurity requirements, regulatory limits, and certification-basis constraints.</p></article>
+          <article><span>Objectives and measures</span><strong>Give every quantity one declared role</strong><p>Minimize lifecycle cost while maximizing delivery MOE. Classify energy, availability, maintainability, schedule, certification effort, and risk as a hard constraint, objective, or reported measure; never silently exchange mandatory safety for cost.</p></article>
+          <article><span>Cases and uncertainty</span><strong>Do not mix unlike unknowns</strong><p>Put cold, wind, ageing, link loss, and maintenance states in U_required when they are declared operating or qualification cases. Treat demand or uncertain parameters separately; handle model-form error through validation and discrepancy evidence.</p></article>
+        </div>
+        <div class="se-drone-constraints" data-calculation="drone-optimization-contract">
+          <code>M(x) ≤ M_max</code>
+          <code>E_remaining,ref(x) = E_initial,ref(x) − E_discharged,ref(x)</code>
+          <code>E_remaining,ref(x) ÷ C_u,ref(x) ≥ R_min</code>
+          <code>only for the controlled full-charge entry: E_initial,ref(x) = C_u,ref(x)</code>
+          <code>L_sense→actuate(x,u) ≤ L_max, ∀u ∈ U_required</code>
+          <code>0 ≤ t_enter(LINK_LOSS_CONTINGENCY,x,u) − t_declare ≤ T_mode,max, ∀u ∈ U_link_loss</code>
+          <code>0 ≤ t_reach(RECOVERY_APPROACH_GATE,x,u) − t_declare ≤ T_transit,max(u), ∀u ∈ U_link_loss_entry</code>
+          <code>0 ≤ t_enter(LANDED_SAFE,x,u) − t_reach(RECOVERY_APPROACH_GATE,x,u) ≤ T_land,max, ∀u ∈ U_landing_applicable</code>
+          <small>The reference-energy terms use the same configuration, condition, integration limits, and sign convention defined later in the worked budget. Other required scenarios need their own configuration-matched entry condition and energy accounting. Here t_declare is the baselined declaration event after confirmed detection; t_enter is the first entry into the named mode or state after its trigger; and t_reach is the first crossing of the assigned approach gate. Bound detection separately. Replace the placeholder deadlines and applicable entry-condition sets with the baselined link-loss response inside its declared envelope.</small>
+        </div>
+        <ol class="se-optimization-loop">
+          <li><span>01 · Frame</span><strong>Declare variables, domains, objectives, constraints, scenarios, and authority.</strong></li>
+          <li><span>02 · Search</span><strong>Enumerate architecture choices; size numeric variables with a suitable model.</strong></li>
+          <li><span>03 · Filter</span><strong>Reject infeasible designs; preserve the nondominated set among evaluated feasible candidates.</strong></li>
+          <li><span>04 · Stress</span><strong>Challenge finalists across scenarios and re-evaluate their margins outside the search model.</strong></li>
+          <li><span>05 · Hand off</span><strong>Give the trade study the shortlist, uncertainty, evidence gaps, and reopening triggers.</strong></li>
+        </ol>
+        <div class="se-drone-candidate-outcomes">
+          <article><span>Cloud-only concept</span><strong>Infeasible—not “low scoring”</strong><p>Reject it if immediate link-loss safety requires unavailable ground control.</p></article>
+          <article><span>Candidate L</span><strong>Lower cost · narrower reserve</strong><p>Keep it shortlisted while its required-case margins remain feasible; do not call it efficient without comparing every declared objective.</p></article>
+          <article><span>Candidate R</span><strong>Higher cost · broader scenario margin</strong><p>It is not dominated by Candidate L if robust delivery MOE or another declared objective improves. It belongs to the evaluated nondominated set only if no other evaluated feasible candidate dominates it.</p></article>
+          <article><span>Candidate O</span><strong>More cost · no modeled gain</strong><p>If Candidate R is feasible, costs less, and is no worse on every modeled objective, Candidate R dominates this option.</p></article>
+        </div>
+      </article>
+
+      <div class="memory-strip"><b>Interview memory hook</b><span>Frame <i>→</i> Formalize <i>→</i> Classify <i>→</i> Search <i>→</i> Pareto-filter <i>→</i> Stress <i>→</i> Check with separate evidence <i>→</i> Decide and record.</span></div>
+      <p class="evidence-note"><b>Optimization guardrail:</b> do not optimize subsystems independently and assume the whole system is optimal. Preserve coupling through interfaces, budgets, shared failure causes, lifecycle cost, operations, support, and enabling systems. A heuristic, local solver, or surrogate may produce a useful candidate without proving global optimality.</p>
+      <p class="section-source">Method anchors: <a href="https://www.nasa.gov/reference/4-4-design-solution-definition/">NASA Design Solution Definition ↗</a> <a href="https://www.nasa.gov/reference/6-8-decision-analysis/">NASA Decision Analysis ↗</a> <a href="https://sebokwiki.org/wiki/System_Analysis">SEBoK System Analysis ↗</a> <a href="https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm">NIST experimental-design selection ↗</a></p>
+    </section>
+
     <section class="section se-trade-section" id="trades">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">07 · Trade studies</p>
-        <h2>Compare alternatives without hiding judgment</h2>
-        <p>First remove concepts that violate mandatory constraints. Then score viable concepts, test sensitivity, document uncertainty, and record why the choice wins.</p>
+        <p class="eyebrow">08 · Trade studies</p>
+        <h2>Choose among shortlisted alternatives without hiding judgment</h2>
+        <p>Confirm that the alternative set covers the decision, remove concepts that violate mandatory constraints, then evaluate stakeholder value, uncertainty, risk, and reversibility.</p>
       </div>
 
       <ol class="interview-system-loop se-trade-flow">
         <li><span>01 · Frame</span><strong>Name the decision</strong><p>Set scope, decision owner, deadline, assumptions, and alternatives that are meaningfully different.</p><small>Output: decision statement</small></li>
-        <li><span>02 · Screen</span><strong>Apply hard constraints</strong><p>Reject concepts that cannot meet safety, policy, physical, schedule, or mission minimums.</p><small>Output: viable set</small></li>
-        <li><span>03 · Evaluate</span><strong>Score with evidence</strong><p>Weight criteria from stakeholder priorities; record data source, uncertainty, and risk.</p><small>Output: transparent matrix</small></li>
-        <li><span>04 · Stress</span><strong>Test sensitivity</strong><p>Vary weights and uncertain scores. If the winner changes easily, gather better evidence.</p><small>Output: robust decision</small></li>
+        <li><span>02 · Generate</span><strong>Confirm alternative coverage</strong><p>Use the trade tree, include the status quo when real, and record compatibility pruning.</p><small>Output: covered choice set</small></li>
+        <li><span>03 · Screen</span><strong>Apply hard constraints</strong><p>Reject concepts that cannot meet safety, policy, physical, schedule, or mission minimums.</p><small>Output: viable set</small></li>
+        <li><span>04 · Evaluate</span><strong>Use anchored stakeholder value</strong><p>Map criterion-specific measures to reviewed value scales; record data source, uncertainty, and risk.</p><small>Output: transparent comparison</small></li>
+        <li><span>05 · Stress</span><strong>Test sensitivity and correlation</strong><p>Vary weights, value functions, scenarios, and uncertain evidence; audit correlated criteria for double counting.</p><small>Output: stability assessment</small></li>
+        <li><span>06 · Decide</span><strong>Record authority and triggers</strong><p>Document the rationale, dissent, residual uncertainty, configuration, and evidence that would reopen the choice.</p><small>Output: decision record</small></li>
       </ol>
 
       <div class="se-table-wrap" tabindex="0" role="region" aria-label="Example trade study matrix">
         <table class="se-matrix se-trade-matrix">
-          <caption>Illustrative navigation architecture trade study — scores are 1 (weak) to 5 (strong)</caption>
+          <caption>Mechanics-only caution — hypothetical unanchored 1–5 labels are not decision-grade value scores</caption>
           <thead><tr><th scope="col">Criterion</th><th scope="col">Weight</th><th scope="col">Onboard only</th><th scope="col">Cloud assisted</th><th scope="col">Hybrid</th></tr></thead>
           <tbody>
             <tr data-calculation="trade-safe-without-link" data-weight="0.30" data-onboard="5" data-cloud="1" data-hybrid="5"><th scope="row">Safe without link</th><td>30%</td><td>5</td><td>1</td><td>5</td></tr>
@@ -326,11 +495,11 @@ validate(<b>solves the mission</b>)</code></pre>
             <tr data-calculation="trade-update-flexibility" data-weight="0.10" data-onboard="2" data-cloud="5" data-hybrid="4"><th scope="row">Update flexibility</th><td>10%</td><td>2</td><td>5</td><td>4</td></tr>
             <tr data-calculation="trade-certification" data-weight="0.10" data-onboard="4" data-cloud="2" data-hybrid="3"><th scope="row">Certification clarity</th><td>10%</td><td>4</td><td>2</td><td>3</td></tr>
           </tbody>
-          <tfoot><tr data-calculation="trade-totals" data-weight="1" data-onboard="3.75" data-cloud="3.05" data-hybrid="3.95"><th scope="row">Weighted total</th><td>100%</td><td>3.75</td><td>3.05</td><td><strong>3.95</strong></td></tr></tfoot>
+          <tfoot><tr data-calculation="trade-totals" data-weight="1" data-onboard="3.75" data-cloud="3.05" data-hybrid="3.95"><th scope="row">Illustrative arithmetic total</th><td>100%</td><td>3.75</td><td>3.05</td><td><strong>3.95</strong></td></tr></tfoot>
         </table>
       </div>
 
-      <p class="evidence-note"><b>Sensitivity result:</b> the illustrative winner is fragile. Hybrid scores 3.95 versus onboard-only 3.75; moving ten percentage points of weight from “safe without link” to “lifecycle cost” makes both 3.65. If safe-without-link is mandatory, screen cloud-assisted out before scoring. Otherwise gather better cost evidence, prototype both finalists, and record the trigger that reopens the decision.</p>
+      <p class="evidence-note"><b>Scale and sensitivity warning:</b> arithmetic on unanchored ordinal labels creates apparent precision. For a real selection, define criterion-specific measurable anchors or value functions, confirm their direction and lifecycle boundary, and check preference dependence and double counting before adding weighted values. This compact 1–5 matrix demonstrates mechanics only: hybrid has the highest toy arithmetic total at 3.95 versus onboard-only at 3.75, but there is no decision winner until criterion-specific value functions and evidence are established. Moving ten percentage points of weight from “safe without link” to “lifecycle cost” makes both 3.65. If safe-without-link is mandatory, screen cloud-assisted out before scoring. Otherwise gather better cost evidence, prototype both finalists, and record the trigger that reopens the decision.</p>
 
       <div class="decision-gates se-trade-gates">
         <article><span>Gate 1</span><strong>Mandatory constraints met?</strong><p>A high weighted score cannot compensate for violating a true must-have.</p></article>
@@ -342,7 +511,7 @@ validate(<b>solves the mission</b>)</code></pre>
 
     <section class="section se-risk-section" id="risk">
       <div class="section-heading">
-        <p class="eyebrow">08 · Risk, FMEA, and fault trees</p>
+        <p class="eyebrow">09 · Risk, FMEA, and fault trees</p>
         <h2>Find failure paths before the system finds them for you</h2>
         <p>Hazards describe potential harm. Failure modes describe how elements fail. Risk is characterized by a scenario, its likelihood, and its consequence; uncertainty belongs in the likelihood and consequence estimates. Exposure scores may help prioritize work, but they are derived metrics rather than a universal fourth component.</p>
       </div>
@@ -387,7 +556,7 @@ validate(<b>solves the mission</b>)</code></pre>
 
     <section class="section se-integration-section" id="integration">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">09 · Integration and the V-model</p>
+        <p class="eyebrow">10 · Integration and the V-model</p>
         <h2>Plan the evidence while decomposing the design</h2>
         <p>The left side refines the problem and architecture. Implementation connects the sides. The right side integrates upward and provides evidence at matching levels.</p>
       </div>
@@ -423,7 +592,7 @@ validate(<b>solves the mission</b>)</code></pre>
 
     <section class="section se-verification-section" id="verification">
       <div class="section-heading">
-        <p class="eyebrow">10 · Verification and validation</p>
+        <p class="eyebrow">11 · Verification and validation</p>
         <h2>Build the system right—and build the right system</h2>
         <p>Verification compares the realized system with requirements. Validation evaluates whether it fulfills stakeholder needs in the intended operational context.</p>
       </div>
@@ -470,7 +639,7 @@ validate(<b>solves the mission</b>)</code></pre>
 
     <section class="section deep-dive-section" id="evidence-package">
       <div class="section-heading">
-        <p class="eyebrow">11 · Review-ready evidence package</p>
+        <p class="eyebrow">12 · Review-ready evidence package</p>
         <h2>Make the decision chain auditable</h2>
         <p>A strong systems answer does not stop at a block diagram. It shows how a stakeholder outcome becomes a controlled baseline, how changes propagate, and which evidence authorizes the next lifecycle decision.</p>
       </div>
@@ -641,7 +810,7 @@ validate(<b>solves the mission</b>)</code></pre>
 
     <section class="section practice-arena se-practice" id="practice" data-interview-minutes="55">
       <div class="section-heading centered-heading">
-        <p class="eyebrow">12 · Interview practice arena</p>
+        <p class="eyebrow">13 · Interview practice arena</p>
         <h2>Design an autonomous delivery drone system</h2>
         <p>Use the prompts first. Open the coaching only after you have spoken and drawn your answer.</p>
       </div>
@@ -655,7 +824,7 @@ validate(<b>solves the mission</b>)</code></pre>
             <li>Safety critical</li><li>Energy limited</li><li>Intermittent link</li><li>Weather exposed</li><li>Human oversight</li>
           </ul>
         </div>
-        <div class="scenario-timer"><span>Target</span><strong>55:00</strong><small>Requirements 10 · Architecture 20 · Risk 10 · Evidence 10 · Close 5</small></div>
+        <div class="scenario-timer"><span>Target</span><strong>55:00</strong><small>Frame 10 · Architect 15 · Balance 10 · Risk 10 · Prove 7 · Close 3</small></div>
       </article>
 
       <div class="se-case-assumptions">
@@ -663,13 +832,13 @@ validate(<b>solves the mission</b>)</code></pre>
         <p>In an interview, confirm or replace these assumptions before designing. Regulation, acceptable risk, operating airspace, population exposure, weather, and medical handling rules can change the architecture.</p>
       </div>
 
-      <ol class="se-practice-timeline" aria-label="Interview time plan">
-        <li><span>0–10</span><strong>Frame</strong><small>Need · ConOps · requirements</small></li>
-        <li><span>10–25</span><strong>Architect</strong><small>Functions · allocation · interfaces</small></li>
-        <li><span>25–35</span><strong>Balance</strong><small>Budgets · alternatives</small></li>
-        <li><span>35–45</span><strong>Make safe</strong><small>Hazards · faults · recovery</small></li>
-        <li><span>45–52</span><strong>Prove</strong><small>Integration · V&amp;V</small></li>
-        <li><span>52–55</span><strong>Close lifecycle</strong><small>Transition · operate/sustain · retire</small></li>
+      <ol class="se-practice-timeline" aria-label="Interview time plan" data-time-plan="systems-interview" data-total-minutes="55">
+        <li data-summary-label="Frame" data-start-minute="0" data-end-minute="10"><span>0–10</span><strong>Frame</strong><small>Need · ConOps · requirements</small></li>
+        <li data-summary-label="Architect" data-start-minute="10" data-end-minute="25"><span>10–25</span><strong>Architect</strong><small>Functions · allocation · interfaces</small></li>
+        <li data-summary-label="Balance" data-start-minute="25" data-end-minute="35"><span>25–35</span><strong>Balance</strong><small>Budgets · one optimization deep dive</small></li>
+        <li data-summary-label="Risk" data-start-minute="35" data-end-minute="45"><span>35–45</span><strong>Make safe</strong><small>Hazards · faults · recovery</small></li>
+        <li data-summary-label="Prove" data-start-minute="45" data-end-minute="52"><span>45–52</span><strong>Prove</strong><small>Integration · V&amp;V</small></li>
+        <li data-summary-label="Close" data-start-minute="52" data-end-minute="55"><span>52–55</span><strong>Close lifecycle</strong><small>Transition · operate/sustain · retire</small></li>
       </ol>
 
       <div class="pattern-handbook se-case-coaching">
@@ -731,16 +900,26 @@ validate(<b>solves the mission</b>)</code></pre>
         </details>
 
         <details>
-          <summary><span>06</span><strong>Run a trade study and make the system safe</strong><small>Compare architectures; analyze hazards and fault paths</small></summary>
+          <summary><span>06</span><strong>Search the design space and select finalists</strong><small>Interviewer-selected deep dive: feasibility, Pareto efficiency, preference, and evidence</small></summary>
           <div>
-            <p><b>Your turn:</b> compare onboard-only, cloud-assisted, and hybrid autonomy; then choose three top hazards.</p>
-            <p><b>Coaching:</b> use safe operation without link, mission performance, energy, lifecycle cost, updateability, cybersecurity exposure, verification burden, and regulatory clarity as criteria. A hybrid can keep safety-critical control onboard while using ground services for fleet optimization, but it adds interfaces and configuration states. Confirm that the result remains stable as weights change.</p>
-            <p>Top hazards may include collision with people or aircraft, uncontrolled descent, delivery to an unauthorized person, battery thermal event, and loss of medical-package integrity. Apply elimination and architectural prevention before warning labels or operator procedures. Analyze propulsion loss, misleading navigation, corrupt commands, stale maps, common power loss, sensor obstruction, link loss, software timing failure, and maintenance error. Each mitigation needs an owner and verification evidence.</p>
+            <p><b>Your turn:</b> state the decision variables, domains, hard constraints, objectives, and uncertain scenarios for the autonomy and energy architecture. Generate alternatives, identify one infeasible option and one dominated option, then explain what evidence would distinguish two nondominated finalists.</p>
+            <p><b>Coaching:</b> use battery-module count, autonomy placement, propulsion/safety architecture, recovery corridor, and cruise policy as variables. Treat the baselined link-loss response, payload/range, takeoff mass, usable-energy reserve, thermal and latency limits, geofence and noise limits, baselined cybersecurity requirements, regulatory limits, and certification-basis constraints as hard constraints—not soft preferences. Track certification effort or evidence burden separately as a lifecycle measure. Keep lifecycle cost and delivery MOE as separate objectives long enough to expose a Pareto set.</p>
+            <p>Cloud-only is infeasible if immediate safety depends on the unavailable link. A lower-cost candidate with narrow cold/ageing reserve and a higher-cost candidate with broader scenario margin are both finalists; the higher-cost concept is not dominated by the lower-cost concept only when that margin improves a declared objective, such as robust delivery MOE. It belongs to the evaluated nondominated set only when no other evaluated feasible candidate dominates it. A higher-cost candidate is dominated only when a specific feasible comparator is no worse on every modeled objective and strictly better on at least one. Do not declare a winner until you state stakeholder value, sensitivity, uncertainty, and the prototype or test with the highest decision value.</p>
+            <p><b>Trade-study handoff:</b> compare only viable finalists. Define measurable criterion anchors or value functions, audit correlated criteria, test break-even weights and scenarios, then record the authority, rationale, residual uncertainty, and reopening trigger.</p>
           </div>
         </details>
 
         <details>
-          <summary><span>07</span><strong>Plan integration, verification, and validation</strong><small>Prove requirements and mission fitness at the right levels</small></summary>
+          <summary><span>07</span><strong>Analyze hazards and make the architecture safe</strong><small>Let failure paths reshape the shortlisted concepts</small></summary>
+          <div>
+            <p><b>Your turn:</b> choose three top hazards, trace credible causes, and show how their controls change the architecture or invalidate a finalist.</p>
+            <p><b>Coaching:</b> top hazards may include collision with people or aircraft, uncontrolled descent, delivery to an unauthorized person, battery thermal event, and loss of medical-package integrity. Apply elimination and architectural prevention before warning labels or operator procedures.</p>
+            <p>Analyze propulsion loss, misleading navigation, corrupt commands, stale maps, common power loss, sensor obstruction, link loss, software timing failure, and maintenance error. Each mitigation needs an owner and verification evidence. Re-run feasibility, budgets, and the trade study when a safety control changes mass, power, latency, interfaces, cost, or operating constraints.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span>08</span><strong>Plan integration, verification, and validation</strong><small>Prove requirements and mission fitness at the right levels</small></summary>
           <div>
             <p><b>Your turn:</b> build an integration sequence and choose evidence for the hardest requirements.</p>
             <p><b>Coaching integration path:</b> models and simulation → software-in-the-loop → processor-in-the-loop → sensor and actuator benches → propulsion and power rigs → hardware-in-the-loop flight-control bench → restrained vehicle tests → controlled field envelope expansion → operational pilot. Use interface simulators early and maintain representative faults, timing, environmental loads, and configuration.</p>
@@ -749,7 +928,7 @@ validate(<b>solves the mission</b>)</code></pre>
         </details>
 
         <details>
-          <summary><span>08</span><strong>Close transition and lifecycle ownership</strong><small>Summarize acceptance, field ownership, retirement, and remaining uncertainty</small></summary>
+          <summary><span>09</span><strong>Close transition and lifecycle ownership</strong><small>Summarize acceptance, field ownership, retirement, and remaining uncertainty</small></summary>
           <div>
             <p><b>Strong close:</b> “I chose supervised hybrid autonomy: immediate safety, stabilization, navigation fallback, geofence, and contingency landing remain onboard; ground services schedule the fleet and optimize routes. The design isolates the safety monitor and preserves safe behavior after link loss. Energy reserve, misleading navigation, common power loss, public exposure, package integrity, and operator workload drive the architecture. Before acceptance I would close receiver readiness, training, manuals, facilities, spares, keys, support data, residual-risk authority, and the operational baseline. Field owners monitor mission outcomes, safety events, energy, availability, maintenance and configuration; controlled evidence reopens requirements and hazards. Retirement has an owner for grounding, migration, credential revocation, protected-data disposition, records, batteries, spares and disposal.”</p>
             <p><b>State residual uncertainty:</b> certified operating envelope, population and airspace exposure, detect-and-avoid performance, regulatory basis, communication coverage, battery ageing, environmental qualification, support staffing, and acceptable mission failure rate. Name what evidence resolves each one.</p>
@@ -778,6 +957,7 @@ validate(<b>solves the mission</b>)</code></pre>
           <li><b>Allocation</b><span>Did I include hardware, software, humans, and support?</span></li>
           <li><b>Interfaces</b><span>Did I define critical exchanges and failure behavior?</span></li>
           <li><b>Budgets</b><span>Did limits and margins influence decisions?</span></li>
+          <li><b>Optimization</b><span>Did I separate variables, hard constraints, objectives, scenarios, and evidence?</span></li>
           <li><b>Risk</b><span>Did hazards and common causes shape the architecture?</span></li>
           <li><b>Evidence</b><span>Did I distinguish verification from validation?</span></li>
         </ul>
@@ -786,7 +966,7 @@ validate(<b>solves the mission</b>)</code></pre>
 
     <section class="section se-resources" id="resources">
       <div class="section-heading">
-        <p class="eyebrow">13 · Authoritative foundations</p>
+        <p class="eyebrow">14 · Authoritative foundations</p>
         <h2>Use primary guidance, then practice the artifacts</h2>
         <p>These references establish the lifecycle, process, architecture, and vocabulary behind this visual field guide.</p>
       </div>
@@ -800,9 +980,12 @@ validate(<b>solves the mission</b>)</code></pre>
         <article><span>NASA · Evidence</span><h3>Handbook Appendices</h3><p>Requirement quality checks, verification and validation matrices, functional/timing/state analysis, V&amp;V plan content, interface document outlines, and technical peer-review guidance.</p><a href="https://www.nasa.gov/reference/system-engineering-handbook-appendix/">Open the official appendices ↗</a></article>
         <article><span>NASA · Governance</span><h3>NPR 7123.1D</h3><p>NASA’s systems-engineering process requirements, lifecycle expectations, technical reviews, measurement, verification, and tailoring framework. NODIS is the controlled source for the current revision.</p><a href="https://nodis3.gsfc.nasa.gov/displayDir.cfm?Internal_ID=N_PR_7123_001D_">Read the current directive in NODIS ↗</a></article>
         <article><span>SEBoK · Decisions</span><h3>Decision Management</h3><p>Frame alternatives, criteria, uncertainty, stakeholder values, analysis methods, and a transparent decision record that can be revisited when evidence changes.</p><a href="https://sebokwiki.org/wiki/Decision_Management">Read the SEBoK article ↗</a></article>
+        <article><span>NASA · Optimization</span><h3>Design Solution Definition</h3><p>Connect design parameters, mathematical models, formal optimization, trade-space regions, cost-effectiveness, uncertainty, and design verification.</p><a href="https://www.nasa.gov/reference/4-4-design-solution-definition/">Study design-solution search ↗</a></article>
+        <article><span>SEBoK · Analysis</span><h3>System Analysis</h3><p>Use models, simulation, cost, risk, effectiveness, sensitivity, and progressively refined evidence to assess architectures and technical choices.</p><a href="https://sebokwiki.org/wiki/System_Analysis">Study system analysis ↗</a></article>
+        <article><span>NIST · Experiments</span><h3>Experimental Design Selection</h3><p>Select screening, modeling, and response-surface experiments when physical or simulated evaluations are expensive and the influential factors are not yet known.</p><a href="https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm">Open the NIST guidance ↗</a></article>
         <article><span>SEBoK · Risk</span><h3>Risk Management</h3><p>Connect scenarios, likelihood, consequence, handling actions, monitoring, ownership, and residual risk across the lifecycle.</p><a href="https://sebokwiki.org/wiki/Risk_Management">Read the SEBoK article ↗</a></article>
       </div>
-      <div class="practice-loop"><b>Weekly loop</b><span>Choose a mission</span><i>→</i><span>Draw the boundary</span><i>→</i><span>Write five requirements</span><i>→</i><span>Allocate three functions</span><i>→</i><span>Analyze one failure</span><i>→</i><span>Plan the evidence</span></div>
+      <div class="practice-loop"><b>Weekly loop</b><span>Choose a mission</span><i>→</i><span>Draw the boundary</span><i>→</i><span>Write five requirements</span><i>→</i><span>Allocate three functions</span><i>→</i><span>Search one design space</span><i>→</i><span>Analyze one failure</span><i>→</i><span>Plan the evidence</span></div>
     </section>
   </main>
 

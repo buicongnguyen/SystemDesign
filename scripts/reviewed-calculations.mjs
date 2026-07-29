@@ -371,6 +371,10 @@ export function assertReviewedCalculations(documents, backendJs) {
       throw new Error(`${file}: ${name} visible cells must be ${JSON.stringify(expected)}, found ${JSON.stringify(actual)}`);
     }
   };
+  const requireCalculationTokens = (file, name, tagName, tokens) => {
+    const element = calculationElement(file, name, tagName);
+    requireTokens(file, element[1], tokens);
+  };
 
   if (!near(urlShortener.writesPerSecond, 38.5802469136, 1e-9) || !near(urlShortener.readsPerSecond, 3858.02469136, 1e-8) || urlShortener.annualRawGigabytes !== 600) {
     throw new Error("Internal URL-shortener calculation failed");
@@ -438,8 +442,19 @@ export function assertReviewedCalculations(documents, backendJs) {
     cloud: 3.05,
     hybrid: 3.95
   });
-  requireCalculationCells("systems-engineering.html", "trade-totals", ["Weighted total", "100%", 3.75, 3.05, 3.95]);
+  requireCalculationCells("systems-engineering.html", "trade-totals", ["Illustrative arithmetic total", "100%", 3.75, 3.05, 3.95]);
   requireTokens("systems-engineering.html", documents["systems-engineering.html"], ["<td>3.75</td>", "<td>3.05</td>", "<strong>3.95</strong>", "makes both 3.65"]);
+  requireCalculationTokens("systems-engineering.html", "drone-optimization-contract", "div", [
+    "M(x) ≤ M_max",
+    "E_remaining,ref(x) = E_initial,ref(x) − E_discharged,ref(x)",
+    "E_remaining,ref(x) ÷ C_u,ref(x) ≥ R_min",
+    "only for the controlled full-charge entry: E_initial,ref(x) = C_u,ref(x)",
+    "L_sense→actuate(x,u) ≤ L_max, ∀u ∈ U_required",
+    "0 ≤ t_enter(LINK_LOSS_CONTINGENCY,x,u) − t_declare ≤ T_mode,max, ∀u ∈ U_link_loss",
+    "0 ≤ t_reach(RECOVERY_APPROACH_GATE,x,u) − t_declare ≤ T_transit,max(u), ∀u ∈ U_link_loss_entry",
+    "0 ≤ t_enter(LANDED_SAFE,x,u) − t_reach(RECOVERY_APPROACH_GATE,x,u) ≤ T_land,max, ∀u ∈ U_landing_applicable",
+    "t_enter is the first entry into the named mode or state after its trigger"
+  ]);
 
   if (droneEnergy.expectedUseWh !== 570 || droneEnergy.allowedConsumptionWh !== 720 || !near(droneEnergy.usableCapacityWh, 923.0769230769, 1e-9) || !near(droneEnergy.remainingWh, 203.0769230769, 1e-9)) {
     throw new Error("Internal drone-energy calculation failed");

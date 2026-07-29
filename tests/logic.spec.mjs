@@ -192,5 +192,10 @@ logicTest("source provenance requires the authoritative host and path prefix", (
   assert.equal(matchesSourceRequirement("https://attacker.example/nasa.gov/reference/appendix-c", "nasa.gov"), false);
   assert.equal(matchesSourceRequirement("https://nasa.gov.attacker.example/reference/appendix-c", "nasa.gov"), false);
   assert.equal(matchesSourceRequirement("http://nasa.gov/reference/appendix-c", "nasa.gov"), false);
+  assert.equal(matchesSourceRequirement("https://developers.google.com/optimization/cp", "developers.google.com/optimization/cp"), true);
+  assert.equal(matchesSourceRequirement("https://developers.google.com/optimization/cp/", "developers.google.com/optimization/cp"), true);
+  assert.equal(matchesSourceRequirement("https://developers.google.com/optimization/cp/cp_solver", "developers.google.com/optimization/cp"), true);
+  assert.equal(matchesSourceRequirement("https://developers.google.com/optimization/cp-not-real", "developers.google.com/optimization/cp"), false);
+  assert.equal(matchesSourceRequirement("https://developers.google.com/optimization/cp2", "developers.google.com/optimization/cp"), false);
   assert.throws(() => parseSourceRequirement("appendix-c-how-to-write-a-good-requirement"), /explicit hostname/);
 });

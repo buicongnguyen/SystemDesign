@@ -34,7 +34,7 @@ const pages = [
     path: "/systems-engineering.html",
     chapter: "Chapter 2",
     social: "social-systems.png",
-    sections: ["#top", "#context", "#conops", "#process", "#allocation", "#interfaces", "#budgets", "#trades", "#risk", "#integration", "#verification", "#evidence-package", "#practice", "#resources"]
+    sections: ["#top", "#context", "#conops", "#process", "#allocation", "#interfaces", "#budgets", "#optimization", "#trades", "#risk", "#integration", "#verification", "#evidence-package", "#practice", "#resources"]
   },
   {
     path: "/hardware.html",
@@ -446,6 +446,150 @@ test("deep links remain visible below the book header", async ({ page }) => {
   }
 });
 
+test("systems optimization view stays selected, unclipped, and legible at rail and phone breakpoints", async ({ page }) => {
+  for (const theme of ["dark", "light"]) {
+    await page.emulateMedia({ colorScheme: theme });
+    for (const width of [1440, 1220, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`${origin}/systems-engineering.html#optimization`);
+      await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+      await expect(page.locator('[data-book-section="optimization"]')).toHaveAttribute("aria-current", "location");
+      await expect(page.locator(".se-pareto-point")).toHaveCount(6);
+      await expect(page.locator(".se-pareto-plot")).toBeVisible();
+      await expect(page.locator(".se-pareto-point").first()).toBeVisible();
+      await expect(page.locator(".se-pareto-y-axis")).toBeVisible();
+      await expect(page.locator(".se-pareto-x-axis")).toBeVisible();
+      await expect(page.locator(".se-pareto-legend")).toBeVisible();
+
+      const contract = await page.evaluate(() => {
+        const header = document.querySelector(".site-header").getBoundingClientRect();
+        const section = document.querySelector("#optimization");
+        const sectionBox = section.getBoundingClientRect();
+        const plotElement = document.querySelector(".se-pareto-plot");
+        const plot = plotElement.getBoundingClientRect();
+        const plotStyle = getComputedStyle(plotElement);
+        const axes = [...document.querySelectorAll(".se-pareto-y-axis, .se-pareto-x-axis")].map(axis => {
+          const box = axis.getBoundingClientRect();
+          return { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+        });
+        const points = [...document.querySelectorAll(".se-pareto-point")].map(point => {
+          const box = point.getBoundingClientRect();
+          const classStatus = point.classList.contains("is-efficient")
+            ? "efficient"
+            : point.classList.contains("is-dominated")
+              ? "dominated"
+              : point.classList.contains("is-infeasible")
+                ? "infeasible"
+                : "unclassified";
+          return {
+            concept: point.dataset.concept,
+            cost: Number(point.dataset.costRank),
+            effectiveness: Number(point.dataset.effectivenessRank),
+            feasible: point.dataset.feasible === "true",
+            declaredStatus: point.dataset.paretoStatus,
+            classStatus,
+            label: point.querySelector("small")?.textContent.trim().toLowerCase() ?? "",
+            symbol: point.querySelector("b")?.textContent ?? "",
+            left: box.left,
+            right: box.right,
+            top: box.top,
+            bottom: box.bottom,
+            centerX: box.left + box.width / 2,
+            centerY: box.top + box.height / 2
+          };
+        });
+        const feasiblePoints = points.filter(point => point.feasible);
+        const expectedStatus = point => {
+          if (!point.feasible) return "infeasible";
+          const isDominated = feasiblePoints.some(other => (
+            other.concept !== point.concept
+            && other.cost <= point.cost
+            && other.effectiveness >= point.effectiveness
+            && (other.cost < point.cost || other.effectiveness > point.effectiveness)
+          ));
+          return isDominated ? "dominated" : "efficient";
+        };
+        const expectedSymbol = { efficient: "✓", dominated: "×", infeasible: "!" };
+        const paretoMismatches = points.filter(point => {
+          const status = expectedStatus(point);
+          return point.declaredStatus !== status
+            || point.classStatus !== status
+            || !point.label.startsWith(status)
+            || !point.symbol.includes(expectedSymbol[status]);
+        }).map(point => point.concept);
+        const rankPositionsAccurate = points.every(first => points.every(second => {
+          if (first.concept === second.concept) return true;
+          const costOrderMatches = first.cost === second.cost
+            ? Math.abs(first.centerX - second.centerX) <= 1
+            : first.cost < second.cost
+              ? first.centerX < second.centerX
+              : first.centerX > second.centerX;
+          const effectivenessOrderMatches = first.effectiveness === second.effectiveness
+            ? Math.abs(first.centerY - second.centerY) <= 1
+            : first.effectiveness < second.effectiveness
+              ? first.centerY > second.centerY
+              : first.centerY < second.centerY;
+          return costOrderMatches && effectivenessOrderMatches;
+        }));
+        const rectanglesOverlap = (first, second) => (
+          first.left < second.right
+          && first.right > second.left
+          && first.top < second.bottom
+          && first.bottom > second.top
+        );
+        const overlaps = points.flatMap((first, index) => points.slice(index + 1).map(second => (
+          rectanglesOverlap(first, second)
+        ))).filter(Boolean).length;
+        const axisCollisions = points.flatMap(point => axes.map(axis => (
+          rectanglesOverlap(point, axis)
+        ))).filter(Boolean).length;
+        return {
+          clearance: sectionBox.top - header.bottom,
+          documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          sectionOverflow: section.scrollWidth - section.clientWidth,
+          purposeColumns: getComputedStyle(document.querySelector(".se-purpose-split")).gridTemplateColumns.trim().split(/\s+/).length,
+          loopColumns: getComputedStyle(document.querySelector(".se-optimization-loop")).gridTemplateColumns.trim().split(/\s+/).length,
+          paretoColumns: getComputedStyle(document.querySelector(".se-pareto-layout")).gridTemplateColumns.trim().split(/\s+/).length,
+          axisFontSize: Number.parseFloat(getComputedStyle(document.querySelector(".se-pareto-y-axis")).fontSize),
+          pointFontSize: Number.parseFloat(getComputedStyle(document.querySelector(".se-pareto-point small")).fontSize),
+          legendFontSize: Number.parseFloat(getComputedStyle(document.querySelector(".se-pareto-legend span")).fontSize),
+          paretoMismatches,
+          rankPositionsAccurate,
+          plotVisible: plotStyle.display !== "none"
+            && plotStyle.visibility !== "hidden"
+            && plot.width > 0
+            && plot.height > 0
+            && points.every(point => point.right > point.left && point.bottom > point.top),
+          pointsInsidePlot: points.every(point => (
+            point.left >= plot.left - 1
+            && point.right <= plot.right + 1
+            && point.top >= plot.top - 1
+            && point.bottom <= plot.bottom + 1
+          )),
+          overlaps,
+          axisCollisions
+        };
+      });
+
+      expect(contract.clearance).toBeGreaterThanOrEqual(-1);
+      expect(contract.documentOverflow).toBeLessThanOrEqual(1);
+      expect(contract.sectionOverflow).toBeLessThanOrEqual(1);
+      expect(contract.purposeColumns).toBe(width === 1440 ? 4 : width === 1220 ? 2 : 1);
+      expect(contract.loopColumns).toBe(width === 1440 ? 5 : 1);
+      expect(contract.paretoColumns).toBe(width === 1440 ? 2 : 1);
+      expect(contract.axisFontSize).toBeGreaterThanOrEqual(11.2);
+      expect(contract.pointFontSize).toBeGreaterThanOrEqual(11.2);
+      expect(contract.legendFontSize).toBeGreaterThanOrEqual(11.2);
+      expect(contract.paretoMismatches).toEqual([]);
+      expect(contract.rankPositionsAccurate).toBeTruthy();
+      expect(contract.plotVisible).toBeTruthy();
+      expect(contract.pointsInsidePlot).toBeTruthy();
+      expect(contract.overlaps).toBe(0);
+      expect(contract.axisCollisions).toBe(0);
+    }
+  }
+});
+
 test("lifecycle phase contracts remain complete and ordered", async ({ page }) => {
   const contracts = [
     {
@@ -663,6 +807,15 @@ test("relationship diagrams expose the intended choices and reflow as vertical m
       counts: [[".backend-causal-cycle > li", 5], [".backend-causal-return", 1]]
     },
     {
+      path: "/systems-engineering.html#optimization",
+      selector: ".se-optimization-map",
+      stack: ".se-purpose-split",
+      desktopColumns: 2,
+      arrowCount: 0,
+      orders: [[".se-purpose-split > article > strong", ["Predict a specified design", "Search a modeled design space", "Evaluate and recommend with stakeholder value", "Produce objective, configuration-matched evidence"]]],
+      counts: [[".se-purpose-split > article", 4]]
+    },
+    {
       path: "/systems-engineering.html#evidence-package",
       selector: ".se-evidence-plan-map",
       stack: ".se-evidence-plan-choices",
@@ -821,6 +974,38 @@ test("wide tables expose directional edge cues as users pan", async ({ page }) =
   });
   await expect(wrapper).toHaveClass(/can-scroll-left/);
   await expect(wrapper).not.toHaveClass(/can-scroll-right/);
+});
+
+test("optimization method table remains keyboard-scrollable with a viewport-anchored caption", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto(`${origin}/systems-engineering.html#optimization`);
+  const wrapper = page.locator(".se-method-selector-table").locator("..");
+  const caption = wrapper.locator("caption");
+  await expect(wrapper).toHaveAttribute("role", "region");
+  await expect(wrapper).toHaveAttribute("tabindex", "0");
+  await expect(wrapper).toHaveAttribute("data-horizontal-scroll", "available");
+  await expect(wrapper).toHaveClass(/can-scroll-right/);
+
+  await wrapper.focus();
+  await expect(wrapper).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => wrapper.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+  await expect(wrapper).toHaveClass(/can-scroll-left/);
+
+  await wrapper.evaluate(element => {
+    element.scrollLeft = element.scrollWidth;
+  });
+  await expect(wrapper).not.toHaveClass(/can-scroll-right/);
+  const captionContract = await caption.evaluate(element => {
+    const box = element.getBoundingClientRect();
+    const viewport = element.closest(".se-table-wrap").getBoundingClientRect();
+    return {
+      left: box.left - viewport.left,
+      right: viewport.right - box.right
+    };
+  });
+  expect(captionContract.left).toBeGreaterThanOrEqual(-1);
+  expect(captionContract.right).toBeGreaterThanOrEqual(-1);
 });
 
 test("preview server exposes only the deployable allowlist", async ({ request }) => {
