@@ -17,7 +17,7 @@
     "node": ">=24"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.1",
     "html-validate": "11.5.6"
   }
 }
