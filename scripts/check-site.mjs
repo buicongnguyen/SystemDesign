@@ -486,7 +486,7 @@ for (const [file, claims] of Object.entries(forbiddenClaims)) {
   }
 }
 
-for (const selector of [":root", ".site-header", ".hero", ".section", ":focus-visible", "@media", "prefers-reduced-motion", ".track-grid", ".se-context-map", ".detail-table", ".compact-flow", ".reference-trail", ".concept-map", ".book-sidebar", ".book-nav-toggle", ".book-chapter-link", ".book-section-link", ".book-chapter-pagination"]) {
+for (const selector of [":root", ".site-header", ".hero", ".section", ":focus-visible", "@media", "prefers-reduced-motion", ".track-grid", ".se-context-map", ".detail-table", ".compact-flow", ".reference-trail", ".concept-map", ".book-sidebar", ".book-nav-toggle", ".book-companion-link", ".book-chapter-link", ".book-section-link", ".book-chapter-pagination"]) {
   if (!css.includes(selector)) throw new Error(`styles.css: missing shared responsive selector ${selector}`);
 }
 if (!js.includes("theme-toggle") || !js.includes("dsa-theme")) throw new Error("app.js: theme persistence is missing");
@@ -589,6 +589,8 @@ for (const token of [
   "atlas:book-drawer-opening",
   "book-current-bookmark",
   "book-save-status",
+  "book-companion-link",
+  "https://buicongnguyen.github.io/Leetcode/",
   "book-navigation-ready",
   "book-nav-open",
   "aria-current",

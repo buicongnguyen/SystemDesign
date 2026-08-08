@@ -108,6 +108,9 @@ for (const entry of pages) {
 
     const bookSidebar = page.locator("#book-sidebar");
     await expect(bookSidebar).toHaveCount(1);
+    await expect(bookSidebar.locator(".book-companion-link")).toHaveCount(1);
+    await expect(bookSidebar.locator(".book-companion-link")).toHaveAttribute("href", "https://buicongnguyen.github.io/Leetcode/");
+    await expect(bookSidebar.locator(".book-companion-link")).toContainText("DSA Atlas");
     await expect(bookSidebar.locator(".book-chapter-link")).toHaveCount(6);
     await expect(bookSidebar.locator('.book-chapter-link[aria-current="page"]')).toHaveCount(1);
     await expect(bookSidebar.locator('.book-chapter-link[aria-current="page"] span')).toHaveText(entry.chapter);
@@ -120,6 +123,57 @@ for (const entry of pages) {
     expect(runtimeErrors).toEqual([]);
   });
 }
+
+test("companion DSA book link is usable from the desktop rail and mobile drawer", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await page.goto(`${origin}/systems-engineering.html`);
+  const companion = page.getByRole("link", { name: "Open companion book: DSA Atlas" });
+  await expect(companion).toBeVisible();
+  await expect(companion).toHaveAttribute("href", "https://buicongnguyen.github.io/Leetcode/");
+  await companion.focus();
+  await expect(companion).toBeFocused();
+
+  for (const viewport of [
+    { width: 760, height: 390 },
+    { width: 390, height: 568 },
+    { width: 390, height: 320 },
+    { width: 1220, height: 390 },
+    { width: 1280, height: 390 }
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.reload();
+    if (viewport.width < 1220) {
+      await expect(companion).toBeHidden();
+      await page.locator(".book-nav-toggle").click();
+    }
+    await expect(companion).toBeVisible();
+    const interviewTrigger = page.getByRole("button", { name: /Interview mode/ });
+    await expect(interviewTrigger).toBeVisible();
+    await interviewTrigger.focus();
+    await expect(interviewTrigger).toBeFocused();
+    const geometry = await page.locator("#book-sidebar").evaluate((sidebar, link) => {
+      const sidebarBox = sidebar.getBoundingClientRect();
+      const linkBox = link.getBoundingClientRect();
+      const contents = sidebar.querySelector(".book-contents");
+      const actionGroup = sidebar.querySelector(".book-sidebar-actions").getBoundingClientRect();
+      const close = sidebar.querySelector(".book-sidebar-close").getBoundingClientRect();
+      return {
+        inside: linkBox.top >= sidebarBox.top - 1 && linkBox.bottom <= sidebarBox.bottom + 1,
+        height: linkBox.height,
+        width: linkBox.width,
+        contentsHeight: contents.clientHeight,
+        actionGroupHeight: actionGroup.height,
+        controlsShareRow: close.width === 0 || Math.abs(linkBox.top - close.top) <= 1
+      };
+    }, await companion.elementHandle());
+    expect(geometry.inside).toBeTruthy();
+    expect(geometry.height).toBeGreaterThanOrEqual(44);
+    expect(geometry.width).toBeGreaterThanOrEqual(44);
+    expect(geometry.actionGroupHeight).toBeLessThanOrEqual(45);
+    expect(geometry.controlsShareRow).toBeTruthy();
+    expect(geometry.contentsHeight, `${viewport.width}×${viewport.height} chapter list height`).toBeGreaterThanOrEqual(44);
+  }
+});
 
 test("book outline exposes every chapter and current-page section", async ({ page }) => {
   const expectedChapters = [

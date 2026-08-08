@@ -634,7 +634,13 @@ function initializeBookNavigation() {
         <strong id="book-sidebar-title">System Design Atlas</strong>
         <small>6 chapters · 5 design tracks · interview practice</small>
       </div>
-      <button class="book-sidebar-close" type="button" aria-label="Close book contents">×</button>
+      <div class="book-sidebar-actions">
+        <a class="book-companion-link" href="https://buicongnguyen.github.io/Leetcode/">
+          <strong aria-hidden="true">DSA ↗</strong>
+          <span class="sr-only">Open companion book: DSA Atlas</span>
+        </a>
+        <button class="book-sidebar-close" type="button" aria-label="Close book contents">×</button>
+      </div>
     </header>
     <section class="book-reader-tools" aria-label="Reading tools">
       <div class="book-location">
