@@ -132,6 +132,7 @@ test("companion DSA book link is usable from the desktop rail and mobile drawer"
   await expect(companion).toHaveAttribute("href", "https://buicongnguyen.github.io/Leetcode/");
   await companion.focus();
   await expect(companion).toBeFocused();
+  await page.getByRole("button", { name: "Save current place" }).click();
 
   for (const viewport of [
     { width: 760, height: 390 },
@@ -148,7 +149,9 @@ test("companion DSA book link is usable from the desktop rail and mobile drawer"
     }
     await expect(companion).toBeVisible();
     const interviewTrigger = page.getByRole("button", { name: /Interview mode/ });
+    const resume = page.getByRole("link", { name: /Resume reading/ });
     await expect(interviewTrigger).toBeVisible();
+    await expect(resume).toBeVisible();
     await interviewTrigger.focus();
     await expect(interviewTrigger).toBeFocused();
     const geometry = await page.locator("#book-sidebar").evaluate((sidebar, link) => {

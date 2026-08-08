@@ -1890,7 +1890,7 @@ body.book-nav-open {
   }
 
   .book-reader-tools {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     margin: .35rem 0;
     padding: .4rem;
     gap: .3rem;
@@ -1898,26 +1898,43 @@ body.book-nav-open {
 
   .book-location,
   .book-sidebar-header small,
-  .book-resume-place > span,
+  .book-resume-place strong,
   .book-resume-place small {
     display: none;
   }
 
   .book-reader-actions {
-    grid-column: 1 / -1;
+    min-width: 0;
   }
 
   .book-save-place,
   .book-resume-place {
     min-width: 0;
     min-height: 44px;
+    padding: .35rem;
+    font-size: .65rem;
   }
 
-  .book-resume-place strong {
-    margin-top: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .book-save-place > span:first-child,
+  .book-reader-actions .interview-mode-trigger > span {
+    display: none;
+  }
+
+  .book-reader-actions .interview-mode-trigger {
+    padding: .3rem;
+    gap: 0;
+    font-size: .65rem;
+    line-height: 1.1;
+    white-space: normal;
+  }
+
+  .book-resume-place > span {
+    font-size: .6rem;
+    letter-spacing: .03em;
+    line-height: 1.1;
+    text-align: center;
+    text-transform: none;
+    white-space: normal;
   }
 }
 
